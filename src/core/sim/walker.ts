@@ -180,8 +180,9 @@ export class Walker implements WalkerSim {
     this.reset();
   }
 
-  /** 指令回転数(rad/s)。|rpm| は MAX_RPM まで */
+  /** 指令回転数(rad/s)。|rpm| は MAX_RPM まで。クランクのない設計ではモーターもない(0) */
   get commandSpeed(): number {
+    if (this.design.cranks.length === 0) return 0;
     const rpm = Math.max(-MAX_RPM, Math.min(MAX_RPM, this.design.motor.rpm || 0));
     return (rpm * 2 * Math.PI) / 60;
   }

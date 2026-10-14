@@ -119,6 +119,11 @@
   flex: none;
 }
 
+/* 幅が狭い画面では道具の名前を省いてアイコンとキーだけにする(帯を 1 行に収める) */
+.ds-root.is-compact .ds-editor .ed-btn-label {
+  display: none;
+}
+
 /* 全体表示はこの画面では使わない(紙そのものがビュー) */
 .ds-editor .ed-toolbar > .ed-btn:last-child,
 .ds-editor .ed-toolbar > .ed-sep:nth-last-child(2) {

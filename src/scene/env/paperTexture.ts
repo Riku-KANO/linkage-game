@@ -8,14 +8,32 @@ import { PAPER_DESIGN } from '../layout';
  */
 export function createPaperTexture(width = 2048): CanvasTexture | null {
   if (typeof document === 'undefined') return null;
-  const d = PAPER_DESIGN;
   const W = width;
-  const H = Math.round((W * (d.yMax - d.yMin)) / (d.xMax - d.xMin));
+  const H = paperSheetHeight(W);
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
+  drawPaperSheet(ctx, W, H);
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+/** 幅 W で描いたときの紙の高さ(px)。紙の縦横比 */
+export function paperSheetHeight(W: number): number {
+  const d = PAPER_DESIGN;
+  return Math.round((W * (d.yMax - d.yMin)) / (d.xMax - d.xMin));
+}
+
+/**
+ * 紙の絵(紙色・方眼・原点・縁取り・表題欄)を ctx の (0,0)–(W,H) に描く。
+ * 呼ぶ側が ctx に変換を掛ければ、紙の一部を別の解像度で描ける(設計画面の画素に合わせた描き直しなど)。
+ */
+export function drawPaperSheet(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  const d = PAPER_DESIGN;
   const sx = (x: number) => ((x - d.xMin) / (d.xMax - d.xMin)) * W;
   const sy = (y: number) => ((d.yMax - y) / (d.yMax - d.yMin)) * H;
 
@@ -71,9 +89,4 @@ export function createPaperTexture(width = 2048): CanvasTexture | null {
   ctx.fillText(t('scene.paper.title'), W - m - tbW + tbH * 0.25, H - m - tbH * 0.75);
   ctx.font = `${Math.round(tbH * 0.22)}px 'Hiragino Sans', 'Noto Sans JP', sans-serif`;
   ctx.fillText(t('scene.paper.units'), W - m - tbW + tbH * 0.25, H - m - tbH * 0.25);
-
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  tex.anisotropy = 8;
-  return tex;
 }

@@ -6,11 +6,15 @@ import type { DesignRect } from '@/scene/rig/paper';
 
 /**
  * 3D の製図用紙に描く「インクの図面」(INT-1)。今の設計を、設計画面のエディタ(DesignCanvas)と
- * 同じ見た目で Canvas 2D に描き、紙の上に重ねる板のテクスチャにする。
- * 設計画面に降りきってエディタの SVG に切り替わる瞬間に線が変わらないよう、太さ(画面 px)・色・
- * 重なり順をエディタに合わせてある(editor.css / DesignCanvas.tsx の値。変えたらここも合わせる)。
- * 描くのは静止した図面だけ:軌道・リンク・ピン・固定点・クランクの矢印・脚先。
- * 動いている機構・寸法線・バッジはエディタだけが描く(切り替わりでふわっと現れる)。
+ * 同じ見た目で Canvas 2D に描き、紙にぴったり重ねる板のテクスチャにする。
+ *
+ * - 板は紙の絵(scene の drawPaperSheet)ごと描いた不透明なテクスチャ。インクの半透明・縁のにじみは
+ *   Canvas の中で(ブラウザがエディタの SVG を重ねるのと同じ sRGB で)混ぜてから 3D で照らすので、
+ *   後処理の有無(低性能モード)にかかわらずエディタと同じ太さ・濃さに見える
+ * - 解像度は設計画面での紙の画素と 1:1(降りきったときテクスチャの画素が画面の画素に重なる)
+ * - 線の太さ(画面 px)・色・重なり順はエディタに合わせてある(editor.css / DesignCanvas.tsx の値。
+ *   変えたらここも合わせる)。描くのは静止した図面だけ:軌道・リンク・ピン・固定点・クランクの矢印・脚先。
+ *   動いている機構・寸法線・バッジはエディタだけが描く(切り替わりでふわっと現れる)
  */
 
 export const INK_STYLE = {
@@ -45,11 +49,9 @@ const PX = {
   labelHalo: 3,
 } as const;
 
-/** 図面の外側に足す余白(画面 px):線の太さ、固定点の記号(下に 18px)、クランクの矢印、脚先のラベル */
-export const INK_MARGIN_PX = 40;
-
-export interface InkRegion {
-  /** テクスチャが覆う設計座標の範囲(cm) */
+/** 紙の板のテクスチャ:覆う範囲・描画座標・解像度 */
+export interface SheetRegion {
+  /** テクスチャが覆う設計座標の範囲(cm)。紙の矩形(画素の境目まで内側に縮めたもの) */
   rect: WorldRect;
   /** 設計 cm → 描画座標(設計画面での画面 px 相当。テクスチャ px はこれの k 倍) */
   cam: Camera;
@@ -58,7 +60,7 @@ export interface InkRegion {
   /** テクスチャの大きさ(px) */
   width: number;
   height: number;
-  /** 紙の範囲(描画座標)。これより外は描かない(エディタの SVG も紙の縁で切れる) */
+  /** 紙の範囲(描画座標)。図面はこれより外に描かない(エディタの SVG も紙の縁で切れる) */
   clip: { x: number; y: number; w: number; h: number };
 }
 
@@ -77,98 +79,102 @@ export function trajectoryJoints(analysis: MechanismAnalysis): number[] {
   return out.sort((a, b) => Number(a === m.footIndex) - Number(b === m.footIndex));
 }
 
-/** 図面が占める設計座標の範囲(設計姿勢の点と、組み立てられた区間の軌道)。点がなければ null */
-export function inkBounds(design: DesignDoc, analysis: MechanismAnalysis): WorldRect | null {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  const add = (x: number, y: number) => {
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-    if (x < minX) minX = x;
-    if (x > maxX) maxX = x;
-    if (y < minY) minY = y;
-    if (y > maxY) maxY = y;
-  };
-  for (const j of design.joints) add(j.x, j.y);
-  const { cycle } = analysis;
-  for (const i of trajectoryJoints(analysis)) {
-    cycle.positions.forEach((p, s) => {
-      if (cycle.ok[s]) add(p[i * 2]!, p[i * 2 + 1]!);
-    });
-  }
-  return Number.isFinite(minX) ? { minX, minY, maxX, maxY } : null;
-}
-
-export interface InkRegionOptions {
-  marginPx?: number;
+export interface SheetRegionOptions {
   /** テクスチャの一辺の上限(px) */
   maxTexture?: number;
-  /** テクスチャの大きさをこの倍数に切り上げる(編集のたびに作り直さないため) */
-  quantum?: number;
   /**
-   * 設計画面での紙の左上の画面位置(CSS px)。渡すとテクスチャの縁を画面の画素の境目にそろえ、
-   * 降りきったときテクスチャの画素と画面の画素がずれずに重なる(にじまない)
+   * 設計画面での紙の左上の画面位置(CSS px)。渡すと板の縁を画面の画素の境目まで内側に縮め、
+   * 降りきったときテクスチャの画素と画面の画素がずれずに重なる(にじまない)。
+   * 縮めた 1 画素未満の縁には下の紙(scene の紙)がそのまま見える
    */
   origin?: { x: number; y: number };
 }
 
 /**
- * 図面のテクスチャが覆う範囲と解像度。設計画面での 1 cm の画面 px(pxPerCm)と画素比(dpr)から、
+ * 紙の板のテクスチャの範囲と解像度。設計画面での 1 cm の画面 px(pxPerCm)と画素比(dpr)から、
  * 降りきったときにテクスチャの 1 px が画面の 1 画素にちょうど重なる大きさにする。
- * 範囲は図面の外接矩形+余白を紙で切り取ったもの。紙の外だけなら null。
  */
-export function inkRegion(
-  bounds: WorldRect,
+export function sheetRegion(
   paper: DesignRect,
   pxPerCm: number,
   dpr: number,
-  opts: InkRegionOptions = {},
-): InkRegion | null {
-  const marginPx = opts.marginPx ?? INK_MARGIN_PX;
+  opts: SheetRegionOptions = {},
+): SheetRegion | null {
   const maxTexture = opts.maxTexture ?? 4096;
-  const quantum = opts.quantum ?? 64;
   if (!(pxPerCm > 0)) return null;
-  const pad = marginPx / pxPerCm;
-  let minX = Math.max(paper.xMin, bounds.minX - pad);
-  const maxX = Math.min(paper.xMax, bounds.maxX + pad);
-  const minY = Math.max(paper.yMin, bounds.minY - pad);
-  let maxY = Math.min(paper.yMax, bounds.maxY + pad);
-  if (!(maxX > minX && maxY > minY)) return null;
-  const k0 = Math.max(1, dpr);
-  const k = Math.max(
-    0.25,
-    Math.min(k0, maxTexture / ((maxX - minX) * pxPerCm), maxTexture / ((maxY - minY) * pxPerCm)),
-  );
+  const s = pxPerCm;
+  const wPx = (paper.xMax - paper.xMin) * s;
+  const hPx = (paper.yMax - paper.yMin) * s;
+  const k = Math.min(Math.max(1, dpr), maxTexture / wPx, maxTexture / hPx);
+  let minX = paper.xMin;
+  let maxX = paper.xMax;
+  let minY = paper.yMin;
+  let maxY = paper.yMax;
+  let width = Math.ceil(wPx * k);
+  let height = Math.ceil(hPx * k);
   if (opts.origin) {
-    // 左上の角を画面の画素の境目へ(左・上へ 1 画素未満広げる)
-    const sx = opts.origin.x + (minX - paper.xMin) * pxPerCm;
-    const sy = opts.origin.y + (paper.yMax - maxY) * pxPerCm;
-    minX -= (sx - Math.floor(sx * k) / k) / pxPerCm;
-    maxY += (sy - Math.floor(sy * k) / k) / pxPerCm;
+    const EPS = 1e-6;
+    const l = opts.origin.x;
+    const tp = opts.origin.y;
+    const l2 = Math.ceil(l * k - EPS) / k;
+    const t2 = Math.ceil(tp * k - EPS) / k;
+    const r2 = Math.floor((l + wPx) * k + EPS) / k;
+    const b2 = Math.floor((tp + hPx) * k + EPS) / k;
+    if (!(r2 > l2 && b2 > t2)) return null;
+    minX = paper.xMin + (l2 - l) / s;
+    maxX = paper.xMin + (r2 - l) / s;
+    maxY = paper.yMax - (t2 - tp) / s;
+    minY = paper.yMax - (b2 - tp) / s;
+    width = Math.round((r2 - l2) * k);
+    height = Math.round((b2 - t2) * k);
+  } else {
+    maxX = minX + width / k / s;
+    minY = maxY - height / k / s;
   }
-  const wPx = (maxX - minX) * pxPerCm;
-  const hPx = (maxY - minY) * pxPerCm;
-  const width = Math.min(maxTexture, Math.ceil((wPx * k) / quantum) * quantum);
-  const height = Math.min(maxTexture, Math.ceil((hPx * k) / quantum) * quantum);
-  // 切り上げたぶん右と下に広げる(左上の角は図面に合わせたまま)
-  const rect: WorldRect = {
-    minX,
-    maxY,
-    maxX: minX + width / k / pxPerCm,
-    minY: maxY - height / k / pxPerCm,
-  };
-  const cam: Camera = { scale: pxPerCm, ox: -minX * pxPerCm, oy: maxY * pxPerCm };
+  const cam: Camera = { scale: s, ox: -minX * s, oy: maxY * s };
   const c0 = toScreen(cam, paper.xMin, paper.yMax);
   const c1 = toScreen(cam, paper.xMax, paper.yMin);
   return {
-    rect,
+    rect: { minX, minY, maxX, maxY },
     cam,
     k,
     width,
     height,
     clip: { x: c0.x, y: c0.y, w: c1.x - c0.x, h: c1.y - c0.y },
   };
+}
+
+/** 紙の絵を描く関数(scene の drawPaperSheet)。(0,0)–(W,H) に紙全体を描く */
+export type PaperPainter = (ctx: CanvasRenderingContext2D, W: number, H: number) => void;
+
+/**
+ * 板のテクスチャを描く:紙の絵(全体を W0 × H0 の座標で描く関数を、この範囲・解像度に写して呼ぶ)と、
+ * ink があればその上に図面。
+ */
+export function drawSheet(
+  ctx: Ctx & Pick<CanvasRenderingContext2D, 'fillRect'>,
+  region: SheetRegion,
+  paper: DesignRect,
+  painter: { draw: PaperPainter; width: number; height: number },
+  ink: { design: DesignDoc; analysis: MechanismAnalysis; footLabel: string } | null,
+  style: InkStyle = INK_STYLE,
+): void {
+  const { cam, k } = region;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, region.width, region.height);
+  // 紙の絵の座標 (u, v) → 設計座標 → 描画座標 → テクスチャ px
+  const qx = (cam.scale * (paper.xMax - paper.xMin)) / painter.width;
+  const qy = (cam.scale * (paper.yMax - paper.yMin)) / painter.height;
+  ctx.setTransform(
+    k * qx,
+    0,
+    0,
+    k * qy,
+    k * (cam.ox + cam.scale * paper.xMin),
+    k * (cam.oy - cam.scale * paper.yMax),
+  );
+  painter.draw(ctx as CanvasRenderingContext2D, painter.width, painter.height);
+  if (ink) drawDesignInk(ctx, ink.design, ink.analysis, region, ink.footLabel, style);
 }
 
 type Ctx = Pick<
@@ -205,19 +211,18 @@ type Pt = { x: number; y: number };
 
 /**
  * 今の設計を図面として描く(エディタの設計姿勢の層と同じ順:軌道 → リンク → 固定点・ピン・脚先)。
- * ctx はテクスチャの Canvas(大きさ region.width × region.height)。
+ * ctx はテクスチャの Canvas(大きさ region.width × region.height)。紙の絵の上に重ねて描く。
  */
 export function drawDesignInk(
   ctx: Ctx,
   design: DesignDoc,
   analysis: MechanismAnalysis,
-  region: InkRegion,
+  region: SheetRegion,
   footLabel: string,
   style: InkStyle = INK_STYLE,
 ): void {
   const { cam, k } = region;
   ctx.setTransform(k, 0, 0, k, 0, 0);
-  ctx.clearRect(0, 0, region.width / k, region.height / k);
   ctx.save();
   ctx.beginPath();
   ctx.rect(region.clip.x, region.clip.y, region.clip.w, region.clip.h);

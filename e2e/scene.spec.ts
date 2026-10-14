@@ -6,7 +6,8 @@ test('boots into the workshop, flies to the drafting table and back', async ({ p
   await page.goto('/');
   // T-00 のロゴはクリックで飛ばせる
   await page.mouse.click(640, 360);
-  const cont = page.getByText('続きから', { exact: true });
+  // 3D の物体に浮かぶラベルと区別して、テキストメニューの項目を使う
+  const cont = page.getByRole('menuitem', { name: /続きから/ });
   await expect(cont).toBeVisible();
   await cont.click();
   // T-07:作業台の製図用紙へ。設計画面のパネルが出る

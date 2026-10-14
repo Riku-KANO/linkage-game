@@ -18,6 +18,8 @@ import { CrossFade } from './rig/CrossFade';
 import { rayFromNdc } from './rig/projection';
 import { liveAnchors } from './rig/stations';
 import { Effects } from './effects/Effects';
+import { FxLayer } from './fx/FxLayer';
+import { useFx } from './fx/store';
 import { BootLogo } from './env/BootLogo';
 import { CourseModel } from './env/CourseModel';
 import { Lights } from './env/Lights';
@@ -137,6 +139,7 @@ export function WorkshopCanvas({
         </MenuObject>
         <BootLogo />
         <TestTrackMachine />
+        <FxLayer />
         {children}
         <CameraRig />
         <CrossFade />
@@ -153,6 +156,9 @@ function TestTrackMachine() {
   useFrame(() => {
     activity.current = useApp.getState().screen === 'result' ? 0 : 1;
   });
+  // 試走・結果の画面と、そこへ出入りする演出の間は、演出(scene/fx)と試走の機体がコースを受け持つ
+  const owned = useFx((s) => s.ownsTrack);
+  if (owned) return null;
   return (
     <KinematicWalker
       scale={TEST_TRACK.scale}

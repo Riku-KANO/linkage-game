@@ -15,6 +15,9 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,
+  // 他のエージェントのビルド・ブラウザと同時に走ると、ソフトウェア描画の WebGL が遅くなり時間切れが起きる。
+  // 1 回だけ再試行する(再試行で通ったものは flaky として表示されるので、不安定さは隠れない)
+  retries: process.env.CI ? 2 : 1,
   workers: 4,
   reporter: [['list']],
   use: {

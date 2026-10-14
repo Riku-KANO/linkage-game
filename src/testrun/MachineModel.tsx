@@ -80,7 +80,8 @@ interface Rig {
   disposables: BufferGeometry[];
 }
 
-function extrude(outline: readonly P2[], thickness: number): ExtrudeGeometry {
+/** 輪郭を厚み方向(z)に押し出す(角に小さな面取り)。組み上げ演出(scene/fx)も同じ形を使う */
+export function extrude(outline: readonly P2[], thickness: number): ExtrudeGeometry {
   const shape = new Shape();
   outline.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.y) : shape.lineTo(p.x, p.y)));
   shape.closePath();

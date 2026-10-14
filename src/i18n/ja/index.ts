@@ -9,6 +9,7 @@ import { result } from './result';
 import { flow } from './flow';
 import { hud } from './hud';
 import { guide } from './guide';
+import { world } from './world';
 
 export const ja: Record<string, string> = {
   ...common,
@@ -22,4 +23,5 @@ export const ja: Record<string, string> = {
   ...flow,
   ...hud,
   ...guide,
+  ...world,
 };

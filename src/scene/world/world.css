@@ -1,0 +1,99 @@
+/* world(ステージ選択のジオラマ・工房が育つ) */
+
+/* 目印のラベル(.ak-label を拡張) */
+.ak-world-label__code {
+  margin-right: 8px;
+  color: var(--accent, #f2a65a);
+  font-variant-numeric: tabular-nums;
+}
+
+.ak-world-label.is-locked {
+  border-color: rgba(160, 150, 140, 0.6);
+  box-shadow: none;
+}
+
+.ak-world-label .ak-label__sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ak-world-medals {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ak-world-medal {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+}
+
+.ak-world-medal.is-gold {
+  background: #f0c24a;
+}
+
+.ak-world-medal.is-silver {
+  background: #cfd5dc;
+}
+
+.ak-world-medal.is-bronze {
+  background: #c07a43;
+}
+
+.ak-world-medal.is-none {
+  background: #3a312a;
+}
+
+/* 開発用パネル(?dev=scene) */
+.ak-world-dev {
+  position: absolute;
+  left: 12px;
+  bottom: 40px;
+  width: 280px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(10, 10, 14, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e8e8f0;
+  font:
+    12px/1.5 ui-monospace,
+    'SFMono-Regular',
+    Menlo,
+    monospace;
+  z-index: 40;
+}
+
+.ak-world-dev summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ak-world-dev p {
+  margin: 4px 0;
+  color: #9aa0b0;
+}
+
+.ak-world-dev__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.ak-world-dev button,
+.ak-world-dev select {
+  font: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+.ak-world-dev button:hover {
+  background: rgba(242, 166, 90, 0.3);
+}

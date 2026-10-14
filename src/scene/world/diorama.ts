@@ -24,7 +24,7 @@ export const PATH_LIFT = 0.0025;
 /** 目印の台座の中心と小道の中心の距離(m) */
 export const MARKER_OFFSET = 0.034;
 /** 目印の台座の半径(m) */
-export const MARKER_RADIUS = 0.011;
+export const MARKER_RADIUS = 0.012;
 /** ステージ選択で模型が膨らむ倍率(CourseModel が使う) */
 export const MODEL_GROW = 1.2;
 /** 段差のあるステージの段(小道の下に敷く台)の長さ・幅(m) */
@@ -275,19 +275,26 @@ export function buildDioramaLayout(
   }
   markers.sort((a, b) => a.index - b.index);
 
-  // 段:目印の前後の小道を持ち上げる(機械が段に上って立つ)
+  // 段:目印の前後の小道を持ち上げる(機械が段に上って立つ)。斜面は台の縁の内側に収める
   for (const m of markers) {
     if (m.terrace <= 0) continue;
-    const half = TERRACE_LENGTH / 2;
+    const flat = TERRACE_LENGTH / 2 - TERRACE_RAMP;
     for (let i = 0; i < n; i++) {
       const d = Math.abs(route.s[i]! - m.s);
-      if (d >= half + TERRACE_RAMP) continue;
-      const k = d <= half ? 1 : smooth(1 - (d - half) / TERRACE_RAMP);
+      if (d >= flat + TERRACE_RAMP) continue;
+      const k = d <= flat ? 1 : smooth(1 - (d - flat) / TERRACE_RAMP);
       route.y[i] = route.y[i]! + m.terrace * k;
     }
   }
 
   return { plateaus, route, markers, bridges, chapterSpan };
+}
+
+let cachedLayout: DioramaLayout | null = null;
+/** ゲームのステージ(STAGES)のジオラマの配置。一度だけ作って使い回す */
+export function getDioramaLayout(): DioramaLayout {
+  cachedLayout ??= buildDioramaLayout();
+  return cachedLayout;
 }
 
 export interface RouteSample {

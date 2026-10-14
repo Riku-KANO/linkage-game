@@ -5,6 +5,7 @@ import { TRANSITIONS, type Screen, type TransitionId } from '@/ui/tokens';
 import { GameShell } from '@/scene/GameShell';
 import { rigDebug, rigSignals, useSceneUi } from '@/scene/store';
 import { setLowPerfManually } from '@/scene/perf/PerfProbe';
+import { WorldDevPanel } from '@/scene/world/WorldDevPanel';
 
 /**
  * 開発用プレイグラウンド(?dev=scene)。ゲームと同じ工房に、デバッグパネルを重ねる:
@@ -21,6 +22,7 @@ export default function ScenePlayground() {
   return (
     <GameShell>
       <DebugPanel />
+      <WorldDevPanel />
     </GameShell>
   );
 }

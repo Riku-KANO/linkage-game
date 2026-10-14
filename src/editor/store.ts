@@ -22,6 +22,8 @@ export interface EditorState {
   design: DesignDoc;
   /** 設計をまるごと差し替える(読み込み・共有リンク・ステージ開始)。履歴と選択はリセットする */
   replaceDesign(design: DesignDoc): void;
+  /** replaceDesign を呼んだ回数(エディタはこれが変わると全体表示し直す) */
+  loadCount: number;
 
   /** 元に戻す・やり直しの履歴(present は常に design と同じ) */
   history: History<DesignDoc>;
@@ -67,8 +69,15 @@ export const useEditor = create<EditorState>((set, get) => {
   return {
     design: initial,
     replaceDesign(design) {
-      set({ design, history: createHistory(design), selection: EMPTY_SELECTION, pasteCount: 0 });
+      set({
+        design,
+        history: createHistory(design),
+        selection: EMPTY_SELECTION,
+        pasteCount: 0,
+        loadCount: get().loadCount + 1,
+      });
     },
+    loadCount: 0,
 
     history: createHistory(initial),
     commit(next, opts) {

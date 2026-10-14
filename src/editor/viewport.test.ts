@@ -4,6 +4,7 @@ import {
   fitPoints,
   gridSteps,
   panBy,
+  snapStep,
   toScreen,
   toWorld,
   visibleRect,
@@ -87,7 +88,14 @@ describe('viewport transforms', () => {
 
   it('adapts grid density to the zoom level', () => {
     expect(gridSteps(10)).toEqual({ minor: 1, major: 10 });
+    expect(gridSteps(4.5)).toEqual({ minor: 1, major: 10 });
     expect(gridSteps(3)).toEqual({ minor: 10, major: 100 });
-    expect(gridSteps(0.5)).toEqual({ minor: 100, major: 1000 });
+    expect(gridSteps(0.3)).toEqual({ minor: 100, major: 1000 });
+  });
+
+  it('snaps to 1 cm at normal zoom and coarser when zoomed far out', () => {
+    expect(snapStep(4)).toBe(1);
+    expect(snapStep(1)).toBe(5);
+    expect(snapStep(0.5)).toBe(10);
   });
 });

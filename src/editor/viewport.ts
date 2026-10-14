@@ -113,13 +113,18 @@ export function visibleRect(cam: Camera, size: Size): WorldRect {
  * 方眼の間隔(cm)。細線は 1cm、太線は 10cm が基本。
  * 細線の間隔が minPx 未満になるほど縮小したら 10 倍ずつ粗くする。
  */
-export function gridSteps(scale: number, minPx = 6): { minor: number; major: number } {
+export function gridSteps(scale: number, minPx = 4): { minor: number; major: number } {
   let minor = 1;
   while (minor * scale < minPx && minor < 1e6) minor *= 10;
   return { minor, major: minor * 10 };
 }
 
-/** グリッドスナップの間隔(cm):表示中の細線の間隔に合わせる */
-export function snapStep(scale: number): number {
-  return gridSteps(scale).minor;
+const SNAP_STEPS = [1, 5, 10, 50, 100, 500, 1000];
+
+/**
+ * グリッドスナップの間隔(cm)。基本は 1cm で、1 目盛りが 3px 未満になるほど縮小したら粗くする
+ * (5cm → 10cm → …)。
+ */
+export function snapStep(scale: number, minPx = 3): number {
+  return SNAP_STEPS.find((s) => s * scale >= minPx) ?? SNAP_STEPS[SNAP_STEPS.length - 1]!;
 }

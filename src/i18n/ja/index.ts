@@ -9,6 +9,7 @@ import { result } from './result';
 import { flow } from './flow';
 import { hud } from './hud';
 import { guide } from './guide';
+import { home } from './home';
 import { app } from './app';
 
 export const ja: Record<string, string> = {
@@ -23,5 +24,6 @@ export const ja: Record<string, string> = {
   ...flow,
   ...hud,
   ...guide,
+  ...home,
   ...app,
 };

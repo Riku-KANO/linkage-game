@@ -54,7 +54,9 @@ export type CompileIssueCode =
   | 'crank-link-missing'
   | 'crank-link-has-other-fixed'
   | 'link-all-fixed'
-  | 'floating-joint';
+  | 'floating-joint'
+  /** ニュートン法でまとめて解く点が多すぎる(計算が重くなる。試走前チェックで止める) */
+  | 'newton-too-large';
 
 export interface CompileIssue {
   code: CompileIssueCode;
@@ -88,6 +90,12 @@ export interface CompiledMechanism {
 }
 
 const EPS = 1e-9;
+
+/**
+ * ニュートン法でまとめて解く点の上限。密行列の解法なので計算量は点の数の 3 乗で増える
+ * (sec の計測:上限いっぱいの設計で 1 ステップ 17ms)。これを超える設計は試走前チェックで止める。
+ */
+export const MAX_NEWTON_JOINTS = 12;
 
 export function compileMechanism(design: DesignDoc): CompiledMechanism {
   const issues: CompileIssue[] = [];
@@ -303,6 +311,9 @@ export function compileMechanism(design: DesignDoc): CompiledMechanism {
           }
         }
       });
+      if (unknowns.length > MAX_NEWTON_JOINTS) {
+        issues.push({ code: 'newton-too-large', jointIds: unknowns.map((j) => jointIds[j]!) });
+      }
       const stepIndex = plan.length;
       plan.push({ kind: 'newton', unknowns, constraints });
       unknowns.forEach((j) => (solvedBy[j] = stepIndex));

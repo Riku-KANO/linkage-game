@@ -1,15 +1,31 @@
-import type { ScreenOverlay } from '@/scene/overlay/placeholders';
+import type { ScreenOverlay } from '@/scene';
 import type { Screen } from '@/ui/tokens';
-import { DesignScreen } from './design/DesignScreen';
+import { HomeScreen } from './HomeScreen';
+import { SettingsScreen } from './SettingsScreen';
+import { StageSelectScreen } from './StageSelectScreen';
+import { SandboxScreen } from './SandboxScreen';
+import { ZukanScreen } from './ZukanScreen';
 
 /**
- * 画面ごとの DOM(GameShell の overlays)。ここにない画面は scene の仮のオーバーレイのまま。
- * 統合が進んだ画面からここに足していく(INT-2 試走、INT-3 結果、INT-4 ステージ選択 …)。
+ * ホーム側の画面(stream int-home:INT-4 ステージ選択、INT-5 ホーム・設定・図鑑・サンドボックス)。
+ * GameShell の overlays に渡す。設計・試走・結果の画面は別のストリームが足す。
  */
-export const APP_OVERLAYS: Partial<Record<Screen, ScreenOverlay>> = {
-  design: DesignScreen,
+export const HOME_OVERLAYS: Partial<Record<Screen, ScreenOverlay>> = {
+  home: HomeScreen,
+  stageSelect: StageSelectScreen,
+  settings: SettingsScreen,
+  zukan: ZukanScreen,
+  sandbox: SandboxScreen,
 };
 
+export { HomeScreen, homeItems } from './HomeScreen';
+export { StageSelectScreen } from './StageSelectScreen';
+export { SettingsScreen } from './SettingsScreen';
+export { ZukanScreen } from './ZukanScreen';
+export { SandboxScreen } from './SandboxScreen';
+export { NoticeLayer } from './NoticeLayer';
+
+// 設計画面(INT-1):製図用紙に重ねるエディタと、3D の紙に描く今の設計
 export { DesignScreen, useDesignPaperInsets, type DesignScreenProps } from './design/DesignScreen';
 export { PaperInk } from './design/PaperInk';
 export { designSignals } from './design/signals';

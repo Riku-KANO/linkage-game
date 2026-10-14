@@ -31,6 +31,7 @@ import {
 import type { Locked } from './ops';
 import type { WorldRect } from './viewport';
 import './editor.css';
+import { MAX_JOINTS, MAX_LINKS } from '@/core/model/validate';
 
 export interface MechanismEditorProps {
   /** 使える部品(チュートリアル用)。'link' / 'fixed' / 'crank' が道具に、'pin' が既存の点への接続に対応。省略で全部 */
@@ -54,6 +55,8 @@ export interface MechanismEditorProps {
   panels?: boolean;
   /** 最初から機構を動かすか。既定 true */
   autoPlay?: boolean;
+  /** 脚列(E-06)を変更できるか。false なら脚列パネルは表示だけ(章 2 で解放)。既定 true */
+  legArray?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -89,6 +92,7 @@ export function MechanismEditor({
   readOnly = false,
   panels = true,
   autoPlay = true,
+  legArray = true,
   className,
   style,
 }: MechanismEditorProps) {
@@ -164,6 +168,15 @@ export function MechanismEditor({
     const id = window.setTimeout(() => setNotice(null), 2300);
     return () => window.clearTimeout(id);
   }, [notice]);
+
+  // 大きさの上限で編集を断ったとき
+  const limitHits = useEditor((s) => s.limitHits);
+  const lastLimitHits = useRef(limitHits);
+  useEffect(() => {
+    if (limitHits === lastLimitHits.current) return;
+    lastLimitHits.current = limitHits;
+    onNotice('editor.notice.limit', 'error', { joints: MAX_JOINTS, links: MAX_LINKS });
+  }, [limitHits, onNotice]);
 
   // 自由度がちょうど 1 になった瞬間、一度だけ試しに動かす(ED-8)
   const [dofPulse, setDofPulse] = useState(0);
@@ -360,7 +373,13 @@ export function MechanismEditor({
             onNotice={onNotice}
           />
           <MotorPanel design={design} engine={engine} readOnly={readOnly} />
-          <LegsPanel design={design} analysis={analysis} engine={engine} readOnly={readOnly} />
+          <LegsPanel
+            design={design}
+            analysis={analysis}
+            engine={engine}
+            readOnly={readOnly || !legArray}
+            lockedNote={!readOnly && !legArray}
+          />
           <BillPanel design={design} budget={budget} />
         </aside>
       )}

@@ -37,6 +37,7 @@ export const editor: Record<string, string> = {
   'editor.notice.crankNoFixed': 'クランクにするリンクには固定点が 1 つ必要です',
   'editor.notice.crankMultiFixed': '固定点が 2 つあるリンクは回せません',
   'editor.notice.locked': 'この点は動かせません',
+  'editor.notice.limit': '部品が多すぎます(点は {joints} 個、棒は {links} 本まで)',
   'editor.notice.noPin': 'このステージでは既存の点に棒をつなげません',
   'editor.notice.copied': '{n} 点をコピーしました',
 
@@ -103,6 +104,7 @@ export const editor: Record<string, string> = {
 
   // 脚列(E-06)
   'editor.legs.title': '脚列',
+  'editor.legs.locked': '脚列の設定は章 2 で使えるようになります',
   'editor.legs.count': '組数',
   'editor.legs.phase': '位相差(°)',
   'editor.legs.spacing': '間隔(cm)',

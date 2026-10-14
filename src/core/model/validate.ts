@@ -1,6 +1,14 @@
 import type { Crank, DesignDoc, Joint, LegLayout, Link } from './types';
 import { DEFAULT_LEGS, DESIGN_VERSION, MAX_RPM } from './types';
-import { isBoolean, isFiniteNumber, isRecord, isString, show } from './guards';
+import {
+  hasUnsafeChars,
+  isBoolean,
+  isFiniteNumber,
+  isRecord,
+  isString,
+  sanitizeText,
+  show,
+} from './guards';
 
 /**
  * 設計データの検査と正規化(MOD-1、非機能「データ互換」)。
@@ -8,7 +16,12 @@ import { isBoolean, isFiniteNumber, isRecord, isString, show } from './guards';
  * 外から来たデータ(共有リンク・JSON ファイル・localStorage)は必ずここを通す。
  *  - 形と型(有限の数、真偽値、文字列)、id の一意性、参照先の存在を検査し、だめなら理由を返す
  *  - 直せるもの(範囲外の rpm、脚列の組数、リンク内の重複ジョイントなど)は直して警告を返す
- *  - 知らないフィールドは捨て、新しいオブジェクトを返す(入力は変更しない)
+ *  - 知らないフィールドは捨て、新しいオブジェクトを返す(入力は変更しない。入力のオブジェクトを
+ *    展開・コピーしないので、`__proto__` などのキーが結果に混ざることはない)
+ *  - 数・配列の長さに上限を置き、運動学ソルバーと試走が有限の時間で終わる大きさに抑える(SEC-3)
+ *  - id は Object.prototype のメンバー名(`__proto__`, `constructor` など)と制御文字を拒否する。
+ *    下流で id をオブジェクトのキーに使っても衝突しないように
+ *  - 名前の制御文字・双方向の上書き文字は取り除く(画面やファイル名の見た目をごまかせないように)
  *
  * 機構として成り立つか(クランク軸が固定点か、自由度など)は運動学の解析の仕事なので見ない。
  * 理由の文字列は開発者・ログ向けの短い日本語。画面には呼び出し側が t() の文言を出す。
@@ -16,9 +29,44 @@ import { isBoolean, isFiniteNumber, isRecord, isString, show } from './guards';
 
 export const MAX_NAME_LENGTH = 40;
 export const MAX_ID_LENGTH = 64;
-export const MAX_JOINTS = 256;
-export const MAX_LINKS = 256;
+/**
+ * ジョイント数の上限(脚 1 本分。脚列で最大 16 組に複製される)。
+ * 解けない部分はニュートン法(密な行列、ジョイント数の 3 乗)に回るので、これが計算量の上限を決める。
+ * 256 だと 1 姿勢 0.8 秒・設計ビューの解析(180 姿勢)で 2 分近くかかった(SEC-3)。64 で 0.2 秒程度
+ */
+export const MAX_JOINTS = 64;
+export const MAX_LINKS = 96;
+/** 1 本のリンク(剛体プレート)に載せられる点の数 */
+export const MAX_LINK_JOINTS = 16;
+/**
+ * 全リンクの点の数の合計。ニュートン法の距離拘束はリンクごとに点の数の 2 乗だけ増えるので、
+ * 大きなプレートを何枚も重ねた設計で解析が遅くならないように合計も抑える
+ * (16 点 × 95 枚で 1 万 1 千本の拘束になり、解析に 2 秒かかった)
+ */
+export const MAX_LINK_MEMBERSHIPS = 256;
 export const MAX_CRANKS = 16;
+/** 理由をこれ以上は集めない(巨大な入力で理由の配列が膨らまないように) */
+export const MAX_ERRORS = 50;
+/**
+ * id に使えない名前:Object.prototype のメンバーと prototype。id を普通のオブジェクトのキーに
+ * 使う処理(`obj[id] = …`)でプロトタイプを書き換えたり、継承したメンバーを読んだりしないように。
+ * エンジンごとの差で検査結果が変わらないよう、実行時に集めずに固定の一覧にする
+ */
+export const RESERVED_IDS: ReadonlySet<string> = new Set([
+  '__proto__',
+  '__defineGetter__',
+  '__defineSetter__',
+  '__lookupGetter__',
+  '__lookupSetter__',
+  'constructor',
+  'hasOwnProperty',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+  'toLocaleString',
+  'toString',
+  'valueOf',
+  'prototype',
+]);
 /** 設計座標の上限(cm)。製図用紙から大きく外れた値は壊れたデータとみなす */
 export const MAX_COORD_CM = 10000;
 /** 脚列の組数の上限 */
@@ -28,6 +76,25 @@ export const MAX_LEG_SPACING_CM = 200;
 
 export type ValidateResult =
   { ok: true; design: DesignDoc; warnings: string[] } | { ok: false; errors: string[] };
+
+/**
+ * 設計が読み込める大きさの上限を超えているか(エディタが編集を止めるのに使う)。
+ * 超えた設計は自動保存されても読み込めなくなるため、作る段階で防ぐ。
+ */
+export function exceedsDesignLimits(d: {
+  joints: readonly unknown[];
+  links: readonly { joints: readonly unknown[] }[];
+  cranks: readonly unknown[];
+}): boolean {
+  if (d.joints.length > MAX_JOINTS || d.links.length > MAX_LINKS || d.cranks.length > MAX_CRANKS)
+    return true;
+  let memberships = 0;
+  for (const l of d.links) {
+    if (l.joints.length > MAX_LINK_JOINTS) return true;
+    memberships += l.joints.length;
+  }
+  return memberships > MAX_LINK_MEMBERSHIPS;
+}
 
 export function validateDesign(input: unknown): ValidateResult {
   try {
@@ -42,8 +109,14 @@ function validateInner(input: unknown): ValidateResult {
   if (!isRecord(input)) return { ok: false, errors: ['設計データがオブジェクトではありません'] };
   const errors: string[] = [];
   const warnings: string[] = [];
-  const fail = (path: string, msg: string) => errors.push(`${path}: ${msg}`);
-  const warn = (path: string, msg: string) => warnings.push(`${path}: ${msg}`);
+  let dropped = 0;
+  const fail = (path: string, msg: string) => {
+    if (errors.length < MAX_ERRORS) errors.push(`${path}: ${msg}`);
+    else dropped++;
+  };
+  const warn = (path: string, msg: string) => {
+    if (warnings.length < MAX_ERRORS) warnings.push(`${path}: ${msg}`);
+  };
   /** 失敗を記録して null を返す */
   const bad = (path: string, msg: string): null => {
     fail(path, msg);
@@ -61,8 +134,19 @@ function validateInner(input: unknown): ValidateResult {
   let name = '';
   if (!isString(input.name)) fail('name', '文字列ではありません');
   else {
-    const chars = Array.from(input.name);
-    name = input.name;
+    // 巨大な文字列を全部 1 文字ずつに分けないよう、先に符号単位で大まかに切る(1 文字は最大 2 単位。
+    // 取り除く文字のぶん余裕を持たせる)。切り口でサロゲートの対を割らない
+    const limit = MAX_NAME_LENGTH * 4;
+    let head = input.name.length > limit ? input.name.slice(0, limit) : input.name;
+    if (head.length < input.name.length && /[\ud800-\udbff]$/.test(head)) head = head.slice(0, -1);
+    const cleaned = sanitizeText(head);
+    if (cleaned !== head) warn('name', '制御文字・双方向の制御文字・壊れた文字を取り除きました');
+    const chars = Array.from(cleaned);
+    name = cleaned;
+    if (head.length < input.name.length && chars.length <= MAX_NAME_LENGTH) {
+      // 取り除いた文字が多くて切った後ろが残る場合(制御文字だらけの名前)。残りは捨てる
+      warn('name', `${MAX_NAME_LENGTH} 文字に切り詰めました`);
+    }
     if (chars.length > MAX_NAME_LENGTH) {
       name = chars.slice(0, MAX_NAME_LENGTH).join('');
       warn('name', `${MAX_NAME_LENGTH} 文字に切り詰めました`);
@@ -73,6 +157,8 @@ function validateInner(input: unknown): ValidateResult {
     if (!isString(v)) return bad(path, '文字列ではありません');
     if (v.length === 0) return bad(path, 'id が空です');
     if (v.length > MAX_ID_LENGTH) return bad(path, `id が長すぎます(上限 ${MAX_ID_LENGTH})`);
+    if (RESERVED_IDS.has(v)) return bad(path, `id ${show(v)} は予約された名前です`);
+    if (hasUnsafeChars(v)) return bad(path, 'id に使えない文字(制御文字など)があります');
     if (used.has(v)) return bad(path, `id ${show(v)} が重複しています`);
     used.add(v);
     return v;
@@ -80,7 +166,7 @@ function validateInner(input: unknown): ValidateResult {
   const checkCoord = (v: unknown, path: string): number | null => {
     if (!isFiniteNumber(v)) return bad(path, `有限の数ではありません(${show(v)})`);
     if (Math.abs(v) > MAX_COORD_CM) return bad(path, `座標が範囲外です(±${MAX_COORD_CM})`);
-    return v;
+    return flushTiny(v);
   };
   const checkArray = (v: unknown, path: string, max: number): unknown[] | null => {
     if (!Array.isArray(v)) return bad(path, '配列ではありません');
@@ -121,6 +207,7 @@ function validateInner(input: unknown): ValidateResult {
   const links: Link[] = [];
   const linkIds = new Set<string>();
   const rawLinks = checkArray(input.links, 'links', MAX_LINKS);
+  let memberships = 0;
   if (rawLinks) {
     for (let i = 0; i < rawLinks.length; i++) {
       const l = rawLinks[i];
@@ -130,15 +217,24 @@ function validateInner(input: unknown): ValidateResult {
         continue;
       }
       const id = checkId(l.id, `${p}.id`, linkIds);
-      const members = checkArray(l.joints, `${p}.joints`, MAX_JOINTS);
+      const members = checkArray(l.joints, `${p}.joints`, MAX_LINK_JOINTS);
       if (!members) continue;
+      memberships += members.length;
+      if (memberships > MAX_LINK_MEMBERSHIPS) {
+        fail('links', `リンクの点の合計が多すぎます(上限 ${MAX_LINK_MEMBERSHIPS})`);
+        break;
+      }
       const out: string[] = [];
+      const seen = new Set<string>();
       let dup = false;
       for (let k = 0; k < members.length; k++) {
         const jid = jointRef(members[k], `${p}.joints[${k}]`);
         if (jid === null) continue;
-        if (out.includes(jid)) dup = true;
-        else out.push(jid);
+        if (seen.has(jid)) dup = true;
+        else {
+          seen.add(jid);
+          out.push(jid);
+        }
       }
       if (dup) warn(`${p} (${id ?? '?'})`, '重複したジョイントを取り除きました');
       if (id !== null) links.push({ id, joints: out });
@@ -166,7 +262,11 @@ function validateInner(input: unknown): ValidateResult {
       const pivot = jointRef(c.pivot, `${p}.pivot`);
       let phase: number | null = null;
       if (!isFiniteNumber(c.phase)) fail(`${p}.phase`, `有限の数ではありません(${show(c.phase)})`);
-      else phase = c.phase;
+      else if (Math.abs(c.phase) > TAU) {
+        // 同じ角度に戻す。巨大な値は共有リンクの量子化(×1e4)で Infinity になり読めなくなるため
+        phase = flushTiny(c.phase % TAU);
+        warn(`${p}.phase`, '±2π の範囲に戻しました');
+      } else phase = flushTiny(c.phase);
       if (id !== null && link !== null && pivot !== null && phase !== null) {
         cranks.push({ id, link, pivot, phase });
       }
@@ -184,7 +284,7 @@ function validateInner(input: unknown): ValidateResult {
   else if (!isFiniteNumber(input.motor.rpm)) {
     fail('motor.rpm', `有限の数ではありません(${show(input.motor.rpm)})`);
   } else {
-    rpm = input.motor.rpm;
+    rpm = flushTiny(input.motor.rpm);
     if (Math.abs(rpm) > MAX_RPM) {
       rpm = Math.sign(rpm) * MAX_RPM;
       warn('motor.rpm', `±${MAX_RPM} に制限しました`);
@@ -194,6 +294,7 @@ function validateInner(input: unknown): ValidateResult {
   // 脚列
   const legs = checkLegs(input.legs, fail, warn);
 
+  if (dropped > 0) errors.push(`ほか ${dropped} 件`);
   if (errors.length > 0 || !legs) return { ok: false, errors };
   return {
     ok: true,
@@ -223,7 +324,7 @@ function checkLegs(
   let ok = true;
   const num = (key: string): number => {
     const x = v[key];
-    if (isFiniteNumber(x)) return x;
+    if (isFiniteNumber(x)) return flushTiny(x);
     fail(`legs.${key}`, `有限の数ではありません(${show(x)})`);
     ok = false;
     return 0;
@@ -243,7 +344,7 @@ function checkLegs(
     count = c;
   }
   if (Math.abs(phaseStepDeg) >= 360) {
-    phaseStepDeg = phaseStepDeg % 360;
+    phaseStepDeg = flushTiny(phaseStepDeg % 360);
     warn('legs.phaseStepDeg', `${phaseStepDeg} にしました`);
   }
   if (spacing <= 0) {
@@ -254,4 +355,11 @@ function checkLegs(
     warn('legs.spacing', `${MAX_LEG_SPACING_CM} に制限しました`);
   }
   return { count, phaseStepDeg, spacing, mirrorX: v.mirrorX as boolean };
+}
+
+const TAU = 2 * Math.PI;
+
+/** -0 と非正規化数(2.2e-308 未満)を 0 にする。意味のない極小値で計算が遅い経路に入らないように */
+function flushTiny(v: number): number {
+  return Math.abs(v) < 2.2250738585072014e-308 ? 0 : v;
 }

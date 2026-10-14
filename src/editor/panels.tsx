@@ -555,11 +555,14 @@ export function LegsPanel({
   analysis,
   engine,
   readOnly,
+  lockedNote = false,
 }: {
   design: DesignDoc;
   analysis: MechanismAnalysis;
   engine: MotionEngine;
   readOnly: boolean;
+  /** 脚列がまだ解放されていないことを添える */
+  lockedNote?: boolean;
 }) {
   const hid = useId();
   const countId = useId();
@@ -637,6 +640,7 @@ export function LegsPanel({
   return (
     <section className="ed-panel" aria-labelledby={hid}>
       <h3 id={hid}>{t('editor.legs.title')}</h3>
+      {lockedNote && <p className="ed-note">{t('editor.legs.locked')}</p>}
       <div className="ed-row">
         <label htmlFor={countId}>{t('editor.legs.count')}</label>
         <input

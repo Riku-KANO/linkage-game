@@ -83,8 +83,11 @@ const migrateV0: Migration = (d, warn) => {
     : d.joints;
   for (const id of fixed)
     if (!seen.has(id)) warn(`fixed: 存在しないジョイント ${show(id)} を無視しました`);
+  // 入力のオブジェクトは展開しない(知らないキーや __proto__ を持ち込まない)。必要な項目だけ読む
   const cranks = Array.isArray(d.cranks)
-    ? d.cranks.map((c: unknown) => (isRecord(c) ? { ...c, phase: c.phase ?? 0 } : c))
+    ? d.cranks.map((c: unknown) =>
+        isRecord(c) ? { id: c.id, link: c.link, pivot: c.pivot, phase: c.phase ?? 0 } : c,
+      )
     : d.cranks;
   return {
     name: isString(d.name) ? d.name : DEFAULT_V0_NAME,
@@ -160,7 +163,8 @@ function migrateInner(raw: unknown): MigrateResult {
   }
   let body: unknown = raw;
   let envelopeVersion: unknown = undefined;
-  if ('design' in raw && !('joints' in raw)) {
+  // `in` だとプロトタイプ上のキーも数えるので、自前のキーだけを見る
+  if (Object.hasOwn(raw, 'design') && !Object.hasOwn(raw, 'joints')) {
     body = raw.design;
     envelopeVersion = raw.version;
   }

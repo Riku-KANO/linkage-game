@@ -142,6 +142,9 @@ export const hud: Record<string, string> = {
   'hud.notice.severity.success': '完了',
   'hud.notice.severity.warn': '注意',
   'hud.notice.severity.error': 'エラー',
+  'hud.notice.imported': '設計ファイルを読み込みました',
+  'hud.notice.exported': '設計を書き出しました',
+  'hud.notice.progressReset': '進行をリセットしました',
 
   // ---- 試走中(HUD-5) ----
   'hud.run.region': '試走中の計器',
@@ -203,4 +206,9 @@ export const hud: Record<string, string> = {
   'hud.dev.log': '呼ばれたコールバック',
   'hud.dev.logEmpty': 'まだありません',
   'hud.dev.cost': 'コスト',
+  'hud.dev.hover': '3D で光っている物体',
+  'hud.dev.none': 'なし',
+  'hud.dev.osRm': 'OS の動きを減らす(模擬)',
+  'hud.dev.badges': '状態の札',
+  'hud.dev.lastCall': '最後の呼び出し',
 };

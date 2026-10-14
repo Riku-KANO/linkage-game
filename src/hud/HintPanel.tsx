@@ -65,6 +65,7 @@ export function HintPanel({
         <h2 className="hud-hints__title">{t('hud.hint.title')}</h2>
         <span
           className="hud-hints__count"
+          role="img"
           aria-label={t('hud.hint.count', { revealed: shown.length, total })}
         >
           {Array.from({ length: total }, (_, i) => (

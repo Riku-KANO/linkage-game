@@ -707,7 +707,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: min(46vh, 340px);
+  max-height: min(38vh, 300px);
   margin-top: 8px;
   overflow-y: auto;
 }
@@ -1421,9 +1421,10 @@
   gap: 8px;
 }
 .hud-row__hint {
+  /* ボタンは下に台の分(12px)があるので、天板の中心に文字をそろえる */
+  padding-bottom: 12px;
   font-size: 11px;
   color: var(--muted, #b9a68f);
-  margin-top: -10px;
 }
 /* 真鍮のフェーダー(音量) */
 .hud-fader {

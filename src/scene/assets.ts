@@ -37,7 +37,7 @@ export const MODEL_MANIFEST = {
   },
   shelf: {
     file: 'shelf.glb',
-    present: false,
+    present: true,
     note: '棚の枠と本(Shelf)。引き出しと模型は手続き生成',
   },
   toolbox: {

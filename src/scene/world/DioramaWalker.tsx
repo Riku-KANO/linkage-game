@@ -23,7 +23,7 @@ import { closeUpPose, T06_WALK, t06WalkEnd, t06WalkProgress } from './t06';
  */
 
 /** 模型の大きさ(m) */
-export const WALKER_SIZE = 0.04;
+export const WALKER_SIZE = 0.048;
 /** ホームでコース模型にマウスを乗せたときの足踏みの速さ(rad/s) */
 const IDLE_OMEGA = 5;
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab']);

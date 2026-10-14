@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyDesign } from '@/core/model/types';
 import { fourBar, jansenWalker } from '@/core/model/presets';
-import { basicLeg } from '@/game/designs';
+import { basicLeg, highStepLeg } from '@/game/designs';
 import { createWalkerModel } from '../walker/walkerRig';
 import {
   crankDirection,
@@ -12,14 +12,20 @@ import {
 } from './miniature';
 
 describe('模型の大きさ', () => {
-  it('ヤンセン型の見本機はおよそ基準の大きさ', () => {
-    const e = designExtent(jansenWalker());
-    expect(e).toBeGreaterThan(REFERENCE_EXTENT * 0.6);
-    expect(e).toBeLessThan(REFERENCE_EXTENT * 1.4);
+  it('ヤンセン型の見本機がほぼ基準の大きさ(前後反転で x を折り返す)', () => {
+    expect(Math.abs(designExtent(jansenWalker()) - REFERENCE_EXTENT)).toBeLessThan(1);
+  });
+
+  it('脚列の奥行きも大きさに数える', () => {
+    const d = basicLeg();
+    const one = { ...d, legs: { count: 1, phaseStepDeg: 0, spacing: 12, mirrorX: false } };
+    expect(designExtent(d)).toBeGreaterThan(designExtent(one));
+    // 6 組 × 前後反転 = 12 本、間隔 12cm
+    expect(designExtent(d)).toBeGreaterThanOrEqual(11 * 12);
   });
 
   it('縮尺を掛けると目標の大きさになる', () => {
-    const d = basicLeg();
+    const d = highStepLeg();
     expect(designExtent(d) * fitScale(d, 0.04)).toBeCloseTo(0.04, 9);
   });
 

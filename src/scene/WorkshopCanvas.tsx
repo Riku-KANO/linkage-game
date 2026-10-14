@@ -2,16 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Canvas, events as createPointerEvents, useFrame } from '@react-three/fiber';
 import { Selection } from '@react-three/postprocessing';
 import { useApp } from '@/app/store';
-import {
-  BENCH,
-  BENCH_WALK,
-  COURSE_MODEL,
-  PAPER_WORLD,
-  SHELF,
-  TEST_TRACK,
-  TOOLBOX,
-  WINDOW,
-} from './layout';
+import { BENCH, COURSE_MODEL, PAPER_WORLD, SHELF, TEST_TRACK, TOOLBOX, WINDOW } from './layout';
 import { BlendCamera } from './rig/BlendCamera';
 import { CameraRig } from './rig/CameraRig';
 import { CrossFade } from './rig/CrossFade';
@@ -31,6 +22,8 @@ import { Workbench } from './env/Workbench';
 import { MenuObject } from './home/MenuObject';
 import { PerfProbe } from './perf/PerfProbe';
 import { KinematicWalker } from './walker/KinematicWalker';
+import { BenchWalker } from './world/BenchWalker';
+import { ZukanFrames } from './world/ZukanFrames';
 
 type PointerEventsFactory = typeof createPointerEvents;
 
@@ -96,20 +89,8 @@ export function WorkshopCanvas({
         >
           <Workbench />
         </MenuObject>
-        {/* 作業台の見本機(初回はヤンセン型)。ドラッグで持ち上げて向きを変えられる */}
-        <KinematicWalker
-          scale={BENCH_WALK.scale}
-          bounds={BENCH_WALK}
-          groundY={BENCH.top}
-          rpm={24}
-          draggable
-          dragArea={{
-            xMin: BENCH.center[0] - BENCH.width / 2 + 0.2,
-            xMax: BENCH.center[0] + BENCH.width / 2 - 0.2,
-            zMin: BENCH.center[2] - BENCH.depth / 2 + 0.15,
-            zMax: BENCH.center[2] + BENCH.depth / 2 - 0.15,
-          }}
-        />
+        {/* 作業台の見本機(自分の最新の機械、初回はヤンセン型)。ドラッグで持ち上げて向きを変えられる */}
+        <BenchWalker />
         <MenuObject
           id="stageSelect"
           labelAt={[
@@ -135,6 +116,8 @@ export function WorkshopCanvas({
         <MenuObject id="settings" labelAt={[TOOLBOX.center[0], 0.62, TOOLBOX.center[2]]}>
           <Toolbox />
         </MenuObject>
+        {/* 図鑑の額(奥の壁、コース模型の右上) */}
+        <ZukanFrames />
         <BootLogo />
         <TestTrackMachine />
         {children}

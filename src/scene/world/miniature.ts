@@ -6,8 +6,15 @@ import { WalkerGait, type WalkerModel } from '../walker/walkerRig';
  * 単位:設計は cm、模型は m。縮尺 = m / 設計 cm。
  */
 
-/** 設計の大きさ(cm):全ジョイントの x と y の広がりの大きい方。ジョイントがなければ 0 */
+/**
+ * 機械の大きさ(cm):脚列まで含めた外形の幅(x)・高さ(y)・奥行き(z)のいちばん大きいもの。
+ * 前後反転の脚は最初のクランクの軸で x を折り返し、奥行きは脚の並び(legInstances と同じ間隔)。
+ * ジョイントがなければ 0。
+ */
 export function designExtent(design: DesignDoc): number {
+  const pivotId = design.cranks[0]?.pivot;
+  const px = design.joints.find((j) => j.id === pivotId)?.x ?? 0;
+  const mirror = design.legs.mirrorX;
   let xMin = Infinity;
   let xMax = -Infinity;
   let yMin = Infinity;
@@ -16,18 +23,25 @@ export function designExtent(design: DesignDoc): number {
     if (!Number.isFinite(j.x) || !Number.isFinite(j.y)) continue;
     xMin = Math.min(xMin, j.x);
     xMax = Math.max(xMax, j.x);
+    if (mirror) {
+      xMin = Math.min(xMin, 2 * px - j.x);
+      xMax = Math.max(xMax, 2 * px - j.x);
+    }
     yMin = Math.min(yMin, j.y);
     yMax = Math.max(yMax, j.y);
   }
   if (!Number.isFinite(xMin)) return 0;
-  return Math.max(xMax - xMin, yMax - yMin);
+  const slots = Math.max(1, Math.floor(design.legs.count)) * (mirror ? 2 : 1);
+  const depth = (slots - 1) * Math.max(0, design.legs.spacing);
+  return Math.max(xMax - xMin, yMax - yMin, depth);
 }
 
 /**
  * 大きさが target(m)になる縮尺。極端に小さい・大きい設計でも模型が消えたり
  * はみ出したりしないよう、見本機と同じ大きさ(REFERENCE_EXTENT)の縮尺の 0.5〜2 倍に収める。
  */
-export const REFERENCE_EXTENT = 110;
+/** ヤンセン型の見本機(jansenWalker)の大きさ(cm) */
+export const REFERENCE_EXTENT = 150;
 
 export function fitScale(design: DesignDoc, target: number): number {
   const base = target / REFERENCE_EXTENT;

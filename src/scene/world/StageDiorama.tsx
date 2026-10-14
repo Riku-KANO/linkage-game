@@ -288,15 +288,17 @@ function Markers({
     const beacon = beacons.current;
     if (!glow || !beacon) return;
     let any = false;
-    layout.markers.forEach((m, i) => {
-      if (states.current[i] !== 'playable') return;
+    const list = layout.markers;
+    for (let i = 0; i < list.length; i++) {
+      const m = list[i]!;
+      if (states.current[i] !== 'playable') continue;
       any = true;
       const pulse = reducedMotion ? 1 : 1 + 0.12 * Math.sin(time * 3.2 + i);
       place(glow, i, m.x, m.y + 0.0012, m.z, FLAT, S.set(pulse, pulse, pulse));
       const bob = reducedMotion ? 0 : 0.003 * Math.sin(time * 2.1 + i * 0.7);
       Q.setFromEuler(E.set(0, reducedMotion ? 0 : time * 1.6, 0));
       place(beacon, i, m.x, m.y + 0.034 + bob, m.z);
-    });
+    }
     if (any) {
       glow.instanceMatrix.needsUpdate = true;
       beacon.instanceMatrix.needsUpdate = true;

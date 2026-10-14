@@ -14,6 +14,7 @@ import { chebyshevLambda, fourBar } from '@/core/model/presets';
 import { SHELF } from '../layout';
 import { useActivity } from '../home/activity';
 import { LinkageToy } from '../walker/LinkageToy';
+import { ShelfMachines } from '../world/ShelfMachines';
 import { box, mergeParts, seeded, type Part } from './geometry';
 import { PALETTE, brass, steel, vcMatte } from './materials';
 import { ModelSlot } from './ModelSlot';
@@ -81,6 +82,8 @@ export function Shelf() {
       <mesh ref={scissorB} material={steel} castShadow>
         <boxGeometry args={[0.012, 0.012, 1]} />
       </mesh>
+      {/* 章をクリアした機械の模型(1 段目、world) */}
+      <ShelfMachines />
       {/* 模型:四節リンク(3 段目)とチェビシェフのラムダ機構(2 段目) */}
       <group position={[W * 0.22, BOARDS[2]! + 0.16, D * 0.15]}>
         <mesh position={[0.05, -0.14, -0.02]} material={vcMatte}>

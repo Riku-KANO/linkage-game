@@ -12,6 +12,7 @@ import { guide } from './guide';
 import { home } from './home';
 import { fx } from './fx';
 import { app } from './app';
+import { world } from './world';
 
 export const ja: Record<string, string> = {
   ...common,
@@ -28,4 +29,5 @@ export const ja: Record<string, string> = {
   ...home,
   ...fx,
   ...app,
+  ...world,
 };

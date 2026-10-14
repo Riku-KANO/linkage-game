@@ -46,3 +46,4 @@ export * as layout from './layout';
 export { MODEL_MANIFEST, modelUrl } from './assets';
 export { KinematicWalker } from './walker/KinematicWalker';
 export { MENU_ITEMS, activateMenu, setMenuHandler, type MenuItem } from './home/menu';
+export * from './world';

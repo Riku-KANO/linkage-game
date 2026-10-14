@@ -51,6 +51,11 @@ export interface StageDioramaProps {
   onHoverStage?: (id: StageId | null) => void;
   /** 目印をクリックした(未解放でも呼ぶ。弾くのは受け取る側) */
   onSelectStage?: (id: StageId) => void;
+  /**
+   * ステージ名のラベルを浮かべる目印(省略時はホバー中の目印)。キーボードで一覧を選んでいるときも
+   * 3D に名前が出るよう、統合はホバー中 ?? 選択中を渡す
+   */
+  labelStageId?: StageId | null;
   /** 目印が操作を受け付けるか(ステージ選択で遷移していない間)。false の間は操作を素通しする */
   interactive?: boolean;
   /** 光の脈動などの動きを止める */
@@ -61,6 +66,7 @@ export function StageDiorama({
   progress,
   hoveredStageId = null,
   selectedStageId = null,
+  labelStageId,
   onHoverStage,
   onSelectStage,
   interactive = true,
@@ -71,6 +77,8 @@ export function StageDiorama({
   useEffect(() => () => terrain.dispose(), [terrain]);
   const hovered = layout.markers.find((m) => m.stageId === hoveredStageId);
   const selected = layout.markers.find((m) => m.stageId === selectedStageId);
+  const labelId = labelStageId === undefined ? hoveredStageId : labelStageId;
+  const labeled = layout.markers.find((m) => m.stageId === labelId);
 
   return (
     <group>
@@ -95,21 +103,23 @@ export function StageDiorama({
         </mesh>
       )}
       {hovered && (
-        <>
-          <mesh position={[hovered.x, hovered.y + 0.003, hovered.z]} material={hullMat}>
-            <cylinderGeometry
-              args={[MARKER_RADIUS * 0.9 + 0.0035, MARKER_RADIUS + 0.0035, 0.0105, 12]}
-            />
-          </mesh>
-          <Html
-            position={[hovered.x, hovered.y + 0.075, hovered.z]}
-            center
-            zIndexRange={[20, 10]}
-            pointerEvents="none"
-          >
-            <MarkerLabel marker={hovered} progress={progress} />
-          </Html>
-        </>
+        <mesh position={[hovered.x, hovered.y + 0.003, hovered.z]} material={hullMat}>
+          <cylinderGeometry
+            args={[MARKER_RADIUS * 0.9 + 0.0035, MARKER_RADIUS + 0.0035, 0.0105, 12]}
+          />
+        </mesh>
+      )}
+      {labeled && (
+        <Html
+          position={[labeled.x, labeled.y + 0.075, labeled.z]}
+          center
+          zIndexRange={[20, 10]}
+          // drei の Html は transform なしだと pointerEvents を内側の div に付けないので、style で渡す
+          style={{ pointerEvents: 'none' }}
+          wrapperClass="ak-world-label-wrap"
+        >
+          <MarkerLabel marker={labeled} progress={progress} />
+        </Html>
       )}
     </group>
   );

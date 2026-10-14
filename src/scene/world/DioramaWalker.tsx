@@ -4,8 +4,6 @@ import type { Group, InstancedMesh } from 'three';
 import { useApp, type ActiveTransition } from '@/app/store';
 import { jansenWalker } from '@/core/model/presets';
 import { useActivity } from '../home/activity';
-import { createPose } from '../rig/pose';
-import { setStationOverride } from '../rig/stations';
 import { planTransition } from '../rig/timeline';
 import { worldDebug } from './debug';
 import { createRouteSample, getDioramaLayout, markerOf, sampleRoute } from './diorama';
@@ -13,13 +11,14 @@ import { MachineMeshes, useMachineRig, writeMachineInstances } from './machine';
 import { fitScale } from './miniature';
 import { planWalk, restingStage, type WalkPlan } from './stageView';
 import { useWorld } from './store';
-import { closeUpPose, T06_WALK, t06WalkEnd, t06WalkProgress } from './t06';
+import { stageCamera } from './stageCamera';
+import { T06_WALK, t06WalkEnd, t06WalkProgress } from './t06';
 
 /**
  * ジオラマの上の小さな機械(プレイヤーの最新の機械、なければヤンセン型の見本機)。
  * ふだんは今のステージの目印の横(小道の上)に立ち、T-06 では次のステージまで歩く(時間割は t06.ts)。
  * 脚は運動学で動かし、進んだ距離からクランク角を決める(脚先が滑らない)。
- * 歩く間はステージ選択のカメラの定位置を「歩く区間に寄った姿勢」に差し替える(歩き終えて少し後に戻す)。
+ * 歩く間はステージ選択のカメラを「歩く区間に寄った構図」にする(stageCamera。歩き終えて少し後に戻す)。
  */
 
 /** 模型の大きさ(m) */
@@ -59,9 +58,6 @@ export function DioramaWalker() {
       minFootY: 0,
       needsPose: true,
       sample: createRouteSample(),
-      a: [0, 0, 0] as [number, number, number],
-      b: [0, 0, 0] as [number, number, number],
-      pose: createPose(),
       /** 歩き終えたとき(毎フレームの処理から呼ぶ) */
       complete: (_hold: boolean) => {},
       releaseCamera: () => {},
@@ -87,8 +83,8 @@ export function DioramaWalker() {
       st.holdUntil = 0;
       if (!st.closeUp) return;
       st.closeUp = false;
+      stageCamera.closeUp = false;
       worldDebug.closeUp = false;
-      setStationOverride('stageSelect', null);
     };
     /** 次の目印に着く。hold なら寄ったカメラを少し見せてから戻す */
     const complete = (hold: boolean) => {
@@ -123,18 +119,16 @@ export function DioramaWalker() {
       }
       const p = st.sample;
       sampleRoute(layout.route, from.s, p);
-      st.a[0] = p.x;
-      st.a[1] = p.y;
-      st.a[2] = p.z;
+      stageCamera.a[0] = p.x;
+      stageCamera.a[1] = p.y;
+      stageCamera.a[2] = p.z;
       sampleRoute(layout.route, to.s, p);
-      st.b[0] = p.x;
-      st.b[1] = p.y;
-      st.b[2] = p.z;
+      stageCamera.b[0] = p.x;
+      stageCamera.b[1] = p.y;
+      stageCamera.b[2] = p.z;
       st.closeUp = true;
+      stageCamera.closeUp = true;
       worldDebug.closeUp = true;
-      setStationOverride('stageSelect', (_, ctx) =>
-        closeUpPose(st.a, st.b, ctx.width / Math.max(1, ctx.height), st.pose),
-      );
     };
 
     const unsubApp = useApp.subscribe((s, prev) => {

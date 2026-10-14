@@ -1,16 +1,12 @@
-import { COURSE_MODEL } from '../layout';
-import type { CameraPose } from '../rig/pose';
-import { dioramaToWorld } from './diorama';
-
 /**
- * T-06(結果 → ステージ選択)の時間割と、歩く機械に寄るカメラ。純粋な計算。
+ * T-06(結果 → ステージ選択)の時間割。純粋な計算。
  *
  * カメラは屋外の試走コースから窓を通って模型へ戻ってくるので、模型が見えるのは遷移の終わり近くになる
  * (遷移の長さはトークンの 2.0 / 1.0 秒で、カメラの移動はリグが受け持つ)。
  * そこで機械は模型が見え始める頃(遷移の start)に歩き出し、カメラが着いた後も少し歩いて次の目印に着く
  * (長さは遷移の length 倍)。カメラの移動中はクリック・キーでリグがスキップし、着いた後の残りの歩きは
- * ジオラマがクリック・キーでスキップする。歩く間はステージ選択の定位置を「歩く区間に寄った姿勢」に差し替え、
- * 着いて hold 秒後に戻す(カメラはばねで全体が見える定位置へ引く)。
+ * ジオラマがクリック・キーでスキップする。歩く間はステージ選択の定位置を「歩く区間に寄った姿勢」
+ * (framing.ts の closeUpPose)にし、着いて hold 秒後に戻す(カメラはばねで全体の構図へ引く)。
  */
 export const T06_WALK = {
   /** 歩き出す時刻(遷移の長さに対する比) */
@@ -38,47 +34,4 @@ export function t06WalkProgress(elapsed: number, duration: number): number {
 /** 歩き終える時刻(遷移が始まってから、s) */
 export function t06WalkEnd(duration: number): number {
   return Math.max(0, duration) * (T06_WALK.start + T06_WALK.length);
-}
-
-/** 寄るカメラ:見下ろす角度(rad)・最小の横の画角(度)・画面の左寄りに置く量(距離に対する比) */
-const CLOSE_UP = { elevation: 0.7, fov: 34, minHFov: 52, shift: 0.16 } as const;
-
-function fitFov(fov: number, minHFov: number, aspect: number): number {
-  const needed = (Math.atan(Math.tan((minHFov * Math.PI) / 360) / aspect) * 360) / Math.PI;
-  return Math.max(fov, needed);
-}
-
-const A: [number, number, number] = [0, 0, 0];
-const B: [number, number, number] = [0, 0, 0];
-
-/**
- * 模型の上の 2 点(ローカル座標、m)の間を歩く機械を見下ろす姿勢。歩く区間が長いほど引く。
- * 被写体は画面の少し左に置く(右側にステージ一覧のパネルが出るため)。out に書いて返す。
- */
-export function closeUpPose(
-  a: readonly [number, number, number],
-  b: readonly [number, number, number],
-  aspect: number,
-  out: CameraPose,
-): CameraPose {
-  dioramaToWorld(COURSE_MODEL.center, a[0], a[1], a[2], A);
-  dioramaToWorld(COURSE_MODEL.center, b[0], b[1], b[2], B);
-  const span = Math.hypot(B[0] - A[0], B[2] - A[2]);
-  const dist = Math.min(1.15, Math.max(0.5, 0.42 + 1.25 * span));
-  const shift = CLOSE_UP.shift * dist;
-  const tx = (A[0] + B[0]) / 2 + shift;
-  const ty = (A[1] + B[1]) / 2;
-  const tz = (A[2] + B[2]) / 2;
-  out.target[0] = tx;
-  out.target[1] = ty;
-  out.target[2] = tz;
-  out.position[0] = tx;
-  out.position[1] = ty + dist * Math.sin(CLOSE_UP.elevation);
-  out.position[2] = tz + dist * Math.cos(CLOSE_UP.elevation);
-  out.up[0] = 0;
-  out.up[1] = 1;
-  out.up[2] = 0;
-  out.fov = fitFov(CLOSE_UP.fov, CLOSE_UP.minHFov, Math.max(0.1, aspect));
-  out.ortho = 0;
-  return out;
 }

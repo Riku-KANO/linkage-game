@@ -29,20 +29,32 @@ async function waitSettled(page: Page, screen: string) {
   }, screen);
 }
 
+/** 描画を n フレーム進める(負荷が高くフレームが遅いときも、カメラが実際に動いた後に読む) */
+async function frames(page: Page, n: number) {
+  await page.evaluate(
+    (count) =>
+      new Promise<void>((resolve) => {
+        let k = 0;
+        const step = () => (++k >= count ? resolve() : requestAnimationFrame(step));
+        requestAnimationFrame(step);
+      }),
+    n,
+  );
+}
+
 /** 目印の画面上の位置(カメラが止まって位置が動かなくなるまで待つ) */
 async function markerAt(page: Page, id: string) {
-  let last = { x: -1, y: -1 };
-  for (let i = 0; i < 40; i++) {
-    const p = await page.evaluate(
-      (sid) => window.__worldDev!.worldDebug.markerScreen?.(sid) ?? null,
-      id,
-    );
+  const read = () =>
+    page.evaluate((sid) => window.__worldDev!.worldDebug.markerScreen?.(sid) ?? null, id);
+  let last = await read();
+  for (let i = 0; i < 60; i++) {
+    await frames(page, 12);
+    const p = await read();
     expect(p).not.toBeNull();
-    if (p && Math.hypot(p.x - last.x, p.y - last.y) < 0.5) return p;
-    if (p) last = p;
-    await page.waitForTimeout(150);
+    if (p && last && Math.hypot(p.x - last.x, p.y - last.y) < 0.5) return p;
+    last = p;
   }
-  return last;
+  throw new Error(`marker ${id} did not settle`);
 }
 
 test('ステージ選択:目印のホバーでステージ名、クリアを偽装すると T-06 で機械が次のステージへ歩く', async ({

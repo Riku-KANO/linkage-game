@@ -1,6 +1,12 @@
 /* world(ステージ選択のジオラマ・工房が育つ) */
 
-/* 目印のラベル(.ak-label を拡張) */
+/* 目印のラベル(.ak-label を拡張)。下の目印のホバー・クリックを邪魔しない */
+.ak-world-label-wrap,
+.ak-world-label,
+.ak-world-label * {
+  pointer-events: none;
+}
+
 .ak-world-label__code {
   margin-right: 8px;
   color: var(--accent, #f2a65a);

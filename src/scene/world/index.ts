@@ -46,6 +46,17 @@ export {
   type RouteSample,
   type TerrainHint,
 } from './diorama';
-export { T06_WALK, t06WalkProgress, t06WalkEnd, closeUpPose } from './t06';
+export { T06_WALK, t06WalkProgress, t06WalkEnd } from './t06';
+export {
+  closeUpPose,
+  overviewPose,
+  freeRegion,
+  frameSubject,
+  playableBounds,
+  STAGE_PANEL,
+} from './framing';
+export { stageCamera, installStageSelectCamera } from './stageCamera';
+export { installWorldSave } from './store';
+export { WORLD_SAVE_KEY, loadWorldSave, saveWorldSave, parseWorldSave } from './save';
 export { designExtent, fitScale } from './miniature';
 export { worldDebug } from './debug';

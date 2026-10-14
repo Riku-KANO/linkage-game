@@ -188,7 +188,7 @@
 
 | ID | 内容 | 依存 | 状態 |
 | --- | --- | --- | --- |
-| INT-1 | 設計画面:製図用紙の上に MechanismEditor を位置合わせ(usePaperViewport)、3D の用紙にも今の設計を描いて遷移中も途切れない、パネル分の余白、戻る・試走ボタン | scene, editor | todo |
+| INT-1 | 設計画面:製図用紙の上に MechanismEditor を位置合わせ(usePaperViewport)、3D の用紙にも今の設計を描いて遷移中も途切れない、パネル分の余白、戻る・試走ボタン | scene, editor | done(`src/app/screens/design/`:`DesignScreen` はエディタの描画面を紙の画面矩形にぴったり置き(view = 紙の設計範囲、1cm = 1cm、パン・ズームなし)、道具の帯・横のパネル(狭い画面では下)を `designLayout` の余白に置く。余白は App の `useDesignPaperInsets` が遷移の前から `setPaperInsets` に渡す。`PaperInk` は紙の絵ごと設計画面の画素の細かさで描き直した不透明な板(紙+図面/紙だけの 2 枚)で、ホーム・T-02/T-07/T-03 の間も紙の上はプレイヤーの機械、降りきるとエディタの SVG と画素単位で同じ図に切り替わる(色は照らされた紙で測ってエディタ側を合わせた)。見出しはセッションのステージ(番号・名前・課題)、エディタにステージの部品・動かせない点・予算・開いたヒントの影。差し込み口:stageHeader / hints(上の帯)、tutorial(全面の層)、onTestRun(既定 go('testRun'))、editor(制約の上書き)。Esc はエディタが作図→選択→道具の順に戻し、残りが「戻る」(editor の escape を変更)。紙の上の右クリックは何もしない(紙の外は戻る)。scene は `drawPaperSheet` を切り出しただけ。E2E `e2e/design-screen.spec.ts`。残り:INT-7 で HUD を差し込み口へ、FLOW-2 の試走前チェックを onTestRun へ、パン・ズームするならカメラも追従させる) |
 | INT-2 | 試走画面:屋外の試走コースに TestRunScene、flow の試走ライフサイクル、追従カメラ(setStationOverride)、RunHud、ゴースト | testrun, flow, hud | doing(stream `int-run`) |
 | INT-3 | 結果画面:ResultPanel、T-04、やり直し・設計へ・次へ | result, flow | doing(stream `int-run`) |
 | INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | done(`src/app/screens/StageSelectScreen.tsx`:進行から解放・最高メダル・「次」にフォーカス、右下に寄せてジオラマと右上の通知を空ける。選ぶと startStage + go('design')(T-02)、Esc・閉じるでホーム。設計・試走・結果からホーム・ステージ選択へ出たら leaveStage。ジオラマへの流し込み `src/app/worldBridge.ts`(useWorld があるときだけ働く:進行・enterStage・noteRun・目印のクリック・選択の同期)。E2E `e2e/home.spec.ts`。残り:world 合流後にジオラマのカメラをパネルの左に収める) |

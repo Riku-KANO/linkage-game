@@ -1,10 +1,12 @@
 import { dyadPoint, JANSEN_LENGTHS, jansenLeg } from '@/core/model/presets';
 import type { DesignDoc, Joint, LegLayout, Link } from '@/core/model/types';
 import { DESIGN_VERSION } from '@/core/model/types';
+import { t } from '@/i18n';
 
 /**
  * ステージで使う設計(参考解・壊れた機械・ヒントの影)を作る関数。
  * 単位は cm、クランク角 0 の姿勢。どの関数も新しいオブジェクトを返す(共有しない)。
+ * 設計の名前はプレイヤーに見えるので i18n の文言から付ける(作った時点の言語で保存される)。
  */
 
 /** 章 1 の脚列(固定)と章 2 の既定値。ヤンセン型見本機と同じ、前後反転ペアを 3 組・120°ずらし */
@@ -81,7 +83,7 @@ export function fourBarLeg(p: FourBarLegParams): DesignDoc {
  */
 export function basicLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
   return fourBarLeg({
-    name: '四節リンクの脚',
+    name: t('game.design.basicLeg'),
     crank: 15,
     coupler: 45,
     rocker: 20,
@@ -100,7 +102,7 @@ export function basicLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
  */
 export function highStepLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
   return fourBarLeg({
-    name: '足を高く上げる脚',
+    name: t('game.design.highStepLeg'),
     crank: 18,
     coupler: 30,
     rocker: 35,
@@ -115,7 +117,7 @@ export function highStepLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
 
 /** ヤンセンリンクの機械(見本機と同じ脚列)。歩幅 約 57cm・足上げ 約 22cm */
 export function jansenMachine(legs: LegLayout = STANDARD_LEGS): DesignDoc {
-  return { ...jansenLeg(JANSEN_LENGTHS, { ...legs }), name: 'ヤンセンリンクの機械' };
+  return { ...jansenLeg(JANSEN_LENGTHS, { ...legs }), name: t('game.design.jansen') };
 }
 
 // ---- 設計の加工(壊れた機械を作る・影を切り出す) ----

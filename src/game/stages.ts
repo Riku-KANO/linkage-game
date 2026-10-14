@@ -1,5 +1,6 @@
 import type { DesignDoc, LegLayout, PartKind } from '@/core/model/types';
 import { CM, createEmptyDesign, DEFAULT_LEGS } from '@/core/model/types';
+import { t } from '@/i18n';
 import { partsUpToChapter } from './chapters';
 import { ditchCourse, flatCourse, stepCourse, terrainHeightAt } from './courses';
 import {
@@ -63,7 +64,7 @@ const c1s1 = (): StageDef => {
     features: { legArray: false },
     defaultLegs: STANDARD_LEGS,
     // 揺動節が外れて自由度 2(ぐらつく)。O4 と B をリンクでつなげば直る
-    initialDesign: withName(withoutLinks(ref, ['rocker']), 'こわれた機械'),
+    initialDesign: withName(withoutLinks(ref, ['rocker']), t('game.design.broken')),
     lockedJoints: ['O2', 'O4', 'A', 'B', 'F'],
     reference: ref,
     medals: {
@@ -105,7 +106,7 @@ const c1s2 = (): StageDef => {
     features: { legArray: false },
     defaultLegs: STANDARD_LEGS,
     // クランクが 30cm と長すぎて一回転できない(参考解は 15cm)。A を軸に近づければ直る
-    initialDesign: withName(withJointAt(ref, 'A', 0, 30), '回らない機械'),
+    initialDesign: withName(withJointAt(ref, 'A', 0, 30), t('game.design.stuckCrank')),
     lockedJoints: ['O2', 'O4', 'B', 'F'],
     reference: ref,
     medals: {
@@ -252,7 +253,7 @@ const c2s1 = (): StageDef => {
     parts: CH2_PARTS,
     features: { legArray: true },
     defaultLegs: STANDARD_LEGS,
-    initialDesign: withName(basicLeg(), 'すり足の機械'),
+    initialDesign: withName(basicLeg(), t('game.design.shuffler')),
     reference: ref,
     medals: {
       time: [8, 12, 18],
@@ -290,7 +291,7 @@ const c2s2 = (): StageDef => {
     features: { legArray: true },
     defaultLegs: STANDARD_LEGS,
     // 脚が 1 本だけなので立っていられない。脚列の複製で脚を増やせば直る
-    initialDesign: withName(withLegs(ref, SINGLE_LEG), '一本足の機械'),
+    initialDesign: withName(withLegs(ref, SINGLE_LEG), t('game.design.oneLeg')),
     reference: ref,
     medals: {
       time: [9, 13, 19],
@@ -329,7 +330,7 @@ const c2s3 = (): StageDef => {
     // 余分なリンク C-E で三角形 A-C-E が固まり、自由度 0(動かない)
     initialDesign: withName(
       withExtraLinks(ref, [{ id: 'brace', joints: ['C', 'E'] }]),
-      '動かない機械',
+      t('game.design.locked'),
     ),
     reference: ref,
     medals: {
@@ -456,7 +457,7 @@ export function stageLegs(stage: StageDef): LegLayout {
 /** ステージ開始時の設計(複製)。initialDesign がなければ空の設計に既定の脚列を入れる */
 export function startDesign(stage: StageDef): DesignDoc {
   if (stage.initialDesign) return structuredClone(stage.initialDesign);
-  return { ...createEmptyDesign(), legs: stageLegs(stage) };
+  return { ...createEmptyDesign(t('game.design.new')), legs: stageLegs(stage) };
 }
 
 /**

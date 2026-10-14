@@ -31,6 +31,17 @@ export const game: Record<string, string> = {
   'game.feature.legArray': '脚列の複製',
   'game.feature.bodyPreset': '外装プリセット',
 
+  // ---- 設計の名前(ステージの見本・壊れた機械) ----
+  'game.design.basicLeg': '四節リンクの脚',
+  'game.design.highStepLeg': '足を高く上げる脚',
+  'game.design.jansen': 'ヤンセンリンクの機械',
+  'game.design.broken': 'こわれた機械',
+  'game.design.stuckCrank': '回らない機械',
+  'game.design.shuffler': 'すり足の機械',
+  'game.design.oneLeg': '一本足の機械',
+  'game.design.locked': '動かない機械',
+  'game.design.new': '新しい機械',
+
   // ---- 解放 ----
   'game.unlock.stage': '新しいステージ「{title}」',
   'game.unlock.chapter': '第 {chapter} 章「{title}」が解放されました',

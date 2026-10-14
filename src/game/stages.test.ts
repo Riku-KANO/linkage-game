@@ -277,3 +277,14 @@ describe('repair and lesson stages', () => {
     expect(stagesOfChapter(2).some((s) => s.budget !== null)).toBe(true);
   });
 });
+
+describe('design names', () => {
+  it('come from i18n texts', () => {
+    for (const s of STAGES) {
+      for (const d of [s.reference, s.initialDesign, startDesign(s)]) {
+        if (!d) continue;
+        expect(Object.values(ja)).toContain(d.name);
+      }
+    }
+  });
+});

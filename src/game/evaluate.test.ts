@@ -9,7 +9,7 @@ const stage = getStage('c1-s4')!;
 const design = stage.reference!;
 
 const run = (patch: Partial<RunSummary> = {}): RunSummary => ({
-  time: 7.5,
+  time: 2.7,
   distance: 3.05,
   reachedGoal: true,
   fallen: false,
@@ -50,14 +50,14 @@ describe('evaluateRun (GAME-2)', () => {
       stageId: 'c1-s4',
       cleared: true,
       reason: null,
-      time: 7.5,
+      time: 2.7,
       parts: bill.parts,
       cost: bill.cost,
       energy: 100,
       distance: 3.05,
     });
     expect(r.medals).toEqual({
-      time: medalFor(7.5, stage.medals.time),
+      time: medalFor(2.7, stage.medals.time),
       parts: medalFor(bill.parts, stage.medals.parts),
       cost: medalFor(bill.cost, stage.medals.cost),
       energy: medalFor(100, stage.medals.energy),

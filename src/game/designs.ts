@@ -9,8 +9,12 @@ import { t } from '@/i18n';
  * 設計の名前はプレイヤーに見えるので i18n の文言から付ける(作った時点の言語で保存される)。
  */
 
-/** 章 1 の脚列(固定)と章 2 の既定値。ヤンセン型見本機と同じ、前後反転ペアを 3 組・120°ずらし */
-export const STANDARD_LEGS: LegLayout = { count: 3, phaseStepDeg: 120, spacing: 22, mirrorX: true };
+/**
+ * 章 1 の脚列(固定)と章 2 の既定値。ヤンセン型見本機と同じ両側配置:前後反転ペアを 6 組・120°ずらし
+ * (計 12 脚)。位相 0/120/240 の組が左右に 1 つずつ来るので、支えが「線」でなく「面」になる。
+ * 片側 3 組(6 脚)では接地する脚先が一直線に並び、本物の sim で 2 秒ほどで横に倒れる(TUNE-1)。
+ */
+export const STANDARD_LEGS: LegLayout = { count: 6, phaseStepDeg: 120, spacing: 12, mirrorX: true };
 
 /** 脚が 1 本だけ(章 2「脚をふやす」の壊れた機械) */
 export const SINGLE_LEG: LegLayout = { count: 1, phaseStepDeg: 0, spacing: 22, mirrorX: false };
@@ -97,18 +101,25 @@ export function basicLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
 }
 
 /**
- * 足を高く上げる四節リンクの脚。歩幅 約 55cm・足上げ 約 20cm。脚先は軸から 約 63cm 下。
- * 時計回り(rpm < 0)で +x へ歩く。
+ * 足を高く上げる四節リンクの脚(c1-s5 と章 2 の四節ステージの参考解)。歩幅 約 46cm・足上げ 約 22cm。
+ * 脚先は軸から 約 71cm 下。時計回り(rpm < 0)で +x へ歩く。
+ *
+ * 段差を越えられるかは足上げの高さだけでなく軌道の形で決まる(TUNE-1 の実測)。脚先が低いまま前へ
+ * 進んで段差の側面に突き当たると、クランクが止まって動けなくなる。この脚は前後の端で脚先を
+ * 「後ろへ引きながら」上げ下ろしするので、前後反転した脚も含めて段差の側面に突き当たりにくい。
+ * 寸法は、軌道の形の指標で絞り込んだ候補を、本物の sim で段差 4〜16cm・溝・スタート位置 16 通りに
+ * 通して選んだ(段差 14cm と溝のコースで 16/16 合格)。以前の寸法(クランク 18・連結棒 30・揺動節 35)は
+ * 足上げ 20cm でも前の端で脚先を 2cm の高さで引きずるため、4cm の段差でも止まった。
  */
 export function highStepLeg(legs: LegLayout = STANDARD_LEGS): DesignDoc {
   return fourBarLeg({
     name: t('game.design.highStepLeg'),
-    crank: 18,
-    coupler: 30,
-    rocker: 35,
-    ground: 40,
-    groundAngleDeg: 45,
-    foot: { u: 30, v: -60 },
+    crank: 21,
+    coupler: 47,
+    rocker: 26,
+    ground: 49,
+    groundAngleDeg: 47,
+    foot: { u: 12, v: -75 },
     branch: 'down',
     rpm: -60,
     legs,

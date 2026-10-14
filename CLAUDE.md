@@ -14,6 +14,7 @@
 | `pnpm e2e` / `pnpm verify --e2e` | Playwright の E2E:本番ビルドを本番ヘッダー(CSP)つきで配信し、実 Chromium で開く(`e2e/`)。並行実行時は `E2E_PORT=<空きポート>` |
 | `pnpm test -- <path>` | 一部のテストだけ実行 |
 | `scripts/wt.sh new/sync/gate/rm <name>` | ワークツリーの作成・同期・合流(`docs/loop/README.md`) |
+| `pnpm calibrate` | ステージの参照解を本物の sim で走らせ、メダル基準・制限時間・予算の校正表を出す(値は `src/game/stages.ts` に書く) |
 | `pnpm deps:check` / `pnpm deps:update` | 依存の脆弱性と鮮度のゲート / 最新へ更新(セキュリティ方針:できるだけ最新) |
 | `pnpm deploy:dry` / `pnpm deploy` | Cloudflare への配信(`cf` CLI、`docs/deploy.md`)。`deploy` は deps:check と verify に合格したときだけ実行 |
 

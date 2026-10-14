@@ -16,6 +16,7 @@ import { fourBar, jansenWalker } from './presets';
 import { createEmptyDesign, type DesignDoc } from './types';
 import { syntheticWalkGhost } from './ghostFixture';
 import { timed } from './fuzzing';
+import { safeJsonParse } from './guards';
 
 /**
  * 外から来るデータの点検(SEC-3)で見つけた問題の回帰テスト。1 つの問題に 1 つ以上。
@@ -196,6 +197,26 @@ describe('prototype pollution and type confusion', () => {
     }
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     expect(Object.getOwnPropertyNames(Object.prototype).sort()).toEqual(before);
+  });
+
+  it('drops prototype keys when parsing untrusted JSON (also when \\u-escaped)', () => {
+    const text =
+      '{"__proto__":{"polluted":1},"a":{"constructor":{"prototype":{"p":1}},"b":[{"__pro\\u0074o__":2}]}}';
+    const r = safeJsonParse(text);
+    expect(r.ok).toBe(true);
+    const v = (r.ok ? r.value : null) as Record<string, Record<string, unknown>>;
+    expect(Object.keys(v)).toEqual(['a']);
+    expect(Object.keys(v.a!)).toEqual(['b']);
+    expect(Object.keys((v.a!.b as object[])[0]!)).toEqual([]);
+    // Object.assign しても汚染されない
+    const target: Record<string, unknown> = {};
+    Object.assign(target, v);
+    expect(Object.getPrototypeOf(target)).toBe(Object.prototype);
+    // 普通の JSON はそのまま
+    expect(safeJsonParse('{"x":[1,"constructor-like"]}')).toEqual({
+      ok: true,
+      value: { x: [1, 'constructor-like'] },
+    });
   });
 
   it('migrates v0 data without copying unknown keys of the input', () => {

@@ -51,10 +51,23 @@ export function sanitizeText(s: string): string {
   return s.replace(UNSAFE_CHARS_G, '').replace(LONE_SURROGATE_G, '\ufffd');
 }
 
-/** JSON.parse の例外を結果に変える */
+/** プロトタイプに関わるキー。外から来た JSON からは取り除く */
+const PROTO_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+/** これらのキーがありうるか(\u でエスケープしたキーも同じ名前になるので、\u があれば調べる) */
+const MAY_HAVE_PROTO_KEYS = /__proto__|constructor|prototype|\\u/;
+const dropProtoKeys = (key: string, value: unknown) => (PROTO_KEYS.has(key) ? undefined : value);
+
+/**
+ * JSON.parse の例外を結果に変える。外から来た JSON 用なので、`__proto__`・`constructor`・
+ * `prototype` のキーは取り除く(後でオブジェクトをコピー・Object.assign しても
+ * プロトタイプを書き換えないように。多層の防御で、検査側も新しいオブジェクトを作る)
+ */
 export function safeJsonParse(text: string): { ok: true; value: unknown } | { ok: false } {
   try {
-    return { ok: true, value: JSON.parse(text) as unknown };
+    const value: unknown = MAY_HAVE_PROTO_KEYS.test(text)
+      ? JSON.parse(text, dropProtoKeys)
+      : JSON.parse(text);
+    return { ok: true, value };
   } catch {
     return { ok: false };
   }

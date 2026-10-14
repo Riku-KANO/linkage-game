@@ -8,7 +8,14 @@ import {
   type SharePayload,
   type ShareRun,
 } from './share';
-import { MAX_CRANKS, MAX_JOINTS, MAX_LINK_JOINTS, MAX_LINKS, validateDesign } from './validate';
+import {
+  MAX_CRANKS,
+  MAX_JOINTS,
+  MAX_LINK_JOINTS,
+  MAX_LINK_MEMBERSHIPS,
+  MAX_LINKS,
+  validateDesign,
+} from './validate';
 import { migrate, readDesign } from './migrate';
 import { designToJSONText, parseDesignFile } from './file';
 import {
@@ -148,6 +155,8 @@ function checkFile(text: string, label: string): boolean {
 /** どの読み込み口も例外を投げない */
 function everyEntryPoint(v: unknown, label: string) {
   const text = JSON.stringify(v) ?? 'null';
+  // 圧縮(テストの準備)は時間に含めない
+  const packed = pack(v);
   const calls: [string, () => unknown][] = [
     ['validateDesign', () => validateDesign(v)],
     ['readDesign', () => readDesign(v)],
@@ -157,7 +166,7 @@ function everyEntryPoint(v: unknown, label: string) {
     ['validateRun', () => validateRun(v)],
     ['validateProgress', () => validateProgress(v)],
     ['parseDesignFile', () => parseDesignFile(text)],
-    ['decodeShare', () => decodeShare(pack(v))],
+    ['decodeShare', () => decodeShare(packed)],
   ];
   for (const [name, call] of calls) {
     const { ms } = timed(() => expect(call, `${name} ${label}`).not.toThrow());
@@ -238,7 +247,7 @@ describe('fuzz: share links (SEC-3)', () => {
   });
 
   it('reads the largest valid payload within the budget', () => {
-    // 上限いっぱいの設計(64 ジョイント、96 リンク × 16 点)と 6000 フレームのゴースト
+    // 上限いっぱいの設計(64 ジョイント、96 リンク、点の合計 256)と 6000 フレームのゴースト
     const d = createEmptyDesign('x'.repeat(40));
     for (let i = 0; i < MAX_JOINTS; i++) {
       d.joints.push({
@@ -248,10 +257,17 @@ describe('fuzz: share links (SEC-3)', () => {
         fixed: i < 2,
       });
     }
-    for (let i = 0; i < MAX_LINKS; i++) {
+    // リンクは本数の上限まで、点の合計も上限まで(16 点のプレート 8 枚 + 残りは 2 点の棒)
+    const plates = 8;
+    const bars = Math.min(
+      MAX_LINKS - plates,
+      (MAX_LINK_MEMBERSHIPS - plates * MAX_LINK_JOINTS) / 2,
+    );
+    for (let i = 0; i < plates + bars; i++) {
+      const size = i < plates ? MAX_LINK_JOINTS : 2;
       d.links.push({
         id: `link-${i}-${'r'.repeat(50)}`,
-        joints: Array.from({ length: MAX_LINK_JOINTS }, (_, k) => d.joints[(i + k * 3) % 64]!.id),
+        joints: Array.from({ length: size }, (_, k) => d.joints[(i + k * 3) % 64]!.id),
       });
     }
     for (let i = 0; i < MAX_CRANKS; i++) {

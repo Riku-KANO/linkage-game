@@ -38,6 +38,12 @@ export const MAX_JOINTS = 64;
 export const MAX_LINKS = 96;
 /** 1 本のリンク(剛体プレート)に載せられる点の数 */
 export const MAX_LINK_JOINTS = 16;
+/**
+ * 全リンクの点の数の合計。ニュートン法の距離拘束はリンクごとに点の数の 2 乗だけ増えるので、
+ * 大きなプレートを何枚も重ねた設計で解析が遅くならないように合計も抑える
+ * (16 点 × 95 枚で 1 万 1 千本の拘束になり、解析に 2 秒かかった)
+ */
+export const MAX_LINK_MEMBERSHIPS = 256;
 export const MAX_CRANKS = 16;
 /** 理由をこれ以上は集めない(巨大な入力で理由の配列が膨らまないように) */
 export const MAX_ERRORS = 50;
@@ -182,6 +188,7 @@ function validateInner(input: unknown): ValidateResult {
   const links: Link[] = [];
   const linkIds = new Set<string>();
   const rawLinks = checkArray(input.links, 'links', MAX_LINKS);
+  let memberships = 0;
   if (rawLinks) {
     for (let i = 0; i < rawLinks.length; i++) {
       const l = rawLinks[i];
@@ -193,6 +200,11 @@ function validateInner(input: unknown): ValidateResult {
       const id = checkId(l.id, `${p}.id`, linkIds);
       const members = checkArray(l.joints, `${p}.joints`, MAX_LINK_JOINTS);
       if (!members) continue;
+      memberships += members.length;
+      if (memberships > MAX_LINK_MEMBERSHIPS) {
+        fail('links', `リンクの点の合計が多すぎます(上限 ${MAX_LINK_MEMBERSHIPS})`);
+        break;
+      }
       const out: string[] = [];
       const seen = new Set<string>();
       let dup = false;

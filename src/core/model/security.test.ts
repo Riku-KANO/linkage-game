@@ -5,6 +5,7 @@ import {
   MAX_CRANKS,
   MAX_JOINTS,
   MAX_LINK_JOINTS,
+  MAX_LINK_MEMBERSHIPS,
   MAX_LINKS,
   RESERVED_IDS,
   validateDesign,
@@ -133,6 +134,19 @@ describe('limits that keep the solver and the simulation bounded', () => {
     expect(validateDesign(plate).ok).toBe(false);
     plate.links[0]!.joints.pop();
     expect(validateDesign(plate).ok).toBe(true);
+
+    // 点の合計:上限ちょうどは通り、1 つでも超えると拒否
+    const many = createEmptyDesign();
+    for (let i = 0; i < MAX_LINK_JOINTS; i++) {
+      many.joints.push({ id: `p${i}`, x: i, y: i * i, fixed: false });
+    }
+    const all = many.joints.map((j) => j.id);
+    for (let k = 0; k < MAX_LINK_MEMBERSHIPS / MAX_LINK_JOINTS; k++) {
+      many.links.push({ id: `L${k}`, joints: all });
+    }
+    expect(validateDesign(many).ok).toBe(true);
+    many.links.push({ id: 'one-more', joints: ['p0'] });
+    expect(validateDesign(many).ok).toBe(false);
   });
 
   it('keeps every shipped design within the limits', () => {

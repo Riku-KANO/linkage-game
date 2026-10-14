@@ -198,8 +198,11 @@ export function mutateJson(rng: Rng, v: unknown, rate = 0.08): unknown {
     if (rng.bool(rate) && out.length > 0) out.splice(rng.int(out.length), 1);
     if (rng.bool(rate)) out.splice(rng.int(out.length + 1), 0, randomJson(rng, 2));
     if (rng.bool(rate / 4) && out.length > 0) {
-      // 巨大な配列(上限の検査を試す)
-      const big = new Array<unknown>(300 + rng.int(3000)).fill(out[0]);
+      // 巨大な配列(上限の検査を試す)。中身は小さな値にして、テストの圧縮・展開を重くしない
+      const first: unknown = out[0];
+      const big = new Array<unknown>(300 + rng.int(3000)).fill(
+        typeof first === 'object' && first !== null ? 0 : first,
+      );
       out.splice(rng.int(out.length), 0, ...big);
     }
     return out;

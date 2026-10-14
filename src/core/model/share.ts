@@ -356,8 +356,17 @@ function decodeDesignV1(
   };
 }
 
-/** 記録の検査。だめなら null */
+/** 記録の検査。だめなら null。例外は投げない */
 export function validateRun(v: unknown): ShareRun | null {
+  try {
+    return validateRunInner(v);
+  } catch {
+    // getter が例外を投げるような異常なオブジェクト
+    return null;
+  }
+}
+
+function validateRunInner(v: unknown): ShareRun | null {
   if (!isRecord(v)) return null;
   const { stageId, time, energy, parts, cost, cleared } = v;
   if (!isString(stageId) || stageId.length === 0 || stageId.length > MAX_STAGE_ID_LENGTH)

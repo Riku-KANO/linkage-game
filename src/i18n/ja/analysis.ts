@@ -12,6 +12,13 @@ export const analysis: Record<string, string> = {
     '赤いリンクのあたりが固まっています(余分なリンクが {count} 本分あります。どれかを外すと動きます)',
   'analysis.looseJoints':
     '赤い点はクランクを止めても動いてしまいます(あと {count} 本リンクを足して支えてください)',
+  'analysis.metric.stride': '歩幅',
+  'analysis.metric.lift': '足上げ',
+  'analysis.metric.flatness': '接地の平らさ',
+  'analysis.metric.duty': '接地の割合',
+  'analysis.metric.direction.forward': '前へ進む',
+  'analysis.metric.direction.backward': '後ろへ進む',
+  'analysis.metric.direction.none': '進む向きが定まりません',
   'analysis.issue.unknown-joint': '存在しないジョイントを参照しています',
   'analysis.issue.link-too-few-joints': 'つながっていないリンクがあります',
   'analysis.issue.crank-pivot-not-fixed': 'クランクの軸は固定点に置いてください',

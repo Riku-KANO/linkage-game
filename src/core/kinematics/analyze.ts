@@ -3,6 +3,7 @@ import { compileMechanism, type CompiledMechanism, type CompileIssue } from './c
 import { sampleCycle, type CycleSample } from './solve';
 import { findGrashofLoops, grashofVariant } from './grashof';
 import { analyzeConstraints, type ConstraintAnalysis } from './constraints';
+import { footMetrics, type FootMetrics } from './metrics';
 
 /**
  * 機構の静的・動的な解析結果(E-04 自由度、E-05 不正状態の警告)。
@@ -42,6 +43,8 @@ export interface MechanismAnalysis {
   looseLinks?: string[];
   /** E-04 拘束のヤコビアンによる解析の詳細 */
   constraints?: ConstraintAnalysis;
+  /** E-03 脚先の軌道の指標(脚先が未指定なら null) */
+  foot?: FootMetrics | null;
 }
 
 /** モーター角の区間(rad)。サンプル順に start → end(1 周をまたぐことがある) */
@@ -235,6 +238,7 @@ export function analyzeMechanism(
     looseJoints: constraints.looseJoints,
     looseLinks: constraints.looseLinks,
     constraints,
+    foot: compiled.footIndex >= 0 ? footMetrics(cycle, compiled.footIndex) : null,
   };
 }
 

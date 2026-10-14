@@ -552,6 +552,13 @@
 .hud-run-btn[data-state='ok'] .hud-run-btn__status {
   color: #a9dbac;
 }
+/* 一覧をたたんでいるとき(collapsed)の状態の行 */
+.hud-run-btn[data-state='blocked'] .hud-run-btn__status {
+  color: #f4a896;
+}
+.hud-run-btn[data-state='warn'] .hud-run-btn__status {
+  color: #f0c470;
+}
 .hud-problems {
   width: 340px;
   max-width: calc(100vw - 32px);

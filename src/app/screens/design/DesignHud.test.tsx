@@ -117,6 +117,30 @@ describe('設計画面の HUD(INT-7a)', () => {
     fireEvent.click(within(header).getByRole('button', { name: t('hud.expand') }));
     expect(header.textContent).toContain(`${stage11.timeLimit} 秒`);
     expect(document.querySelector('[data-slot="stage"] .ds-sub')).toBeNull();
+    expect(header.textContent).not.toContain(t('hud.header.best'));
+    // クリア済みなら最高記録のメダル
+    act(() =>
+      useSession.setState((st) => ({
+        progress: {
+          ...st.progress,
+          best: {
+            ...st.progress.best,
+            'c1-s1': {
+              stageId: 'c1-s1',
+              cleared: true,
+              reason: null,
+              time: 2,
+              parts: 10,
+              cost: 1200,
+              energy: 50,
+              distance: 1.5,
+              medals: { time: 'gold', parts: 'gold', cost: 'silver', energy: null },
+            },
+          },
+        },
+      })),
+    );
+    expect(header.textContent).toContain(t('hud.header.best'));
   });
 
   it('ヒント:開くと中身が出て、影はエディタに重なり、切り替えで消せる', () => {

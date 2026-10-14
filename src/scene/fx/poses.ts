@@ -56,6 +56,11 @@ export function buildLegSweeps(design: DesignDoc, samples = 24): LegSweeps {
   const solver = createLegSolver(design);
   solver.solve(0);
   const end = solver.positions.map((p) => Float64Array.from(p));
+  // 組み立てられない設計(試走前チェックで止まるはず)でも壊れない:解けない値は設計位置にする
+  const designPos = Float64Array.from(normal.designPos);
+  for (const e of end) {
+    for (let j = 0; j < e.length; j++) if (!Number.isFinite(e[j]!)) e[j] = designPos[j] ?? 0;
+  }
   const table: Float64Array[] = [];
   const start: Float64Array[] = [];
   let restMinY = Infinity;

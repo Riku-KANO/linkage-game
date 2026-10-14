@@ -7,6 +7,7 @@ import {
   instanceOrder,
   partRise,
   planAssembly,
+  soundFor,
   riseOrder,
   spanProgress,
   staggerSpans,
@@ -160,6 +161,34 @@ describe('eventsBetween', () => {
   it('is silent on jumps (skip) and when standing still', () => {
     expect(eventsBetween(ev, 0, 1, out)).toBe(0);
     expect(eventsBetween(ev, 0.2, 0.2, out)).toBe(0);
+  });
+});
+
+describe('soundFor', () => {
+  it('plays the forward sound when assembling and the reverse one (or none) when taking apart', () => {
+    const plain: FxEvent = { u: 0.5, sfx: 'snap', volume: 0.3, rate: 1 };
+    const silent: FxEvent = { ...plain, reverse: null };
+    const swapped: FxEvent = { ...plain, reverse: { sfx: 'release', volume: 0.1, rate: 1.2 } };
+    expect(soundFor(plain, false)?.sfx).toBe('snap');
+    expect(soundFor(plain, true)?.sfx).toBe('snap');
+    expect(soundFor(silent, true)).toBeNull();
+    expect(soundFor(swapped, true)?.sfx).toBe('release');
+    expect(soundFor(swapped, false)?.sfx).toBe('snap');
+  });
+  it('gives the crane a gear and the touchdown a step', () => {
+    const plan = planAssembly(
+      {
+        links: [[0, 1]],
+        crankLinks: [0],
+        fixedJoints: [0],
+        jointCount: 2,
+        instances: [{ z: 0, mirrored: false }],
+      },
+      2,
+    );
+    const at = (u: number) => plan.events.filter((e) => Math.abs(e.u - u) < 0.02).map((e) => e.sfx);
+    expect(at(ASSEMBLY_PHASES.carry.start)).toContain('gear');
+    expect(at(ASSEMBLY_PHASES.lower.end)).toContain('step');
   });
 });
 

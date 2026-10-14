@@ -37,6 +37,7 @@ import {
 import { buildLegSweeps, sampleSweep, type LegSweeps } from './poses';
 import {
   ASSEMBLY_PHASES,
+  clamp01,
   easeInOut,
   easeOutCubic,
   partRise,
@@ -581,9 +582,7 @@ export class FxMachineRenderer {
           const pin = layout.pins[pi]!;
           const idx = k * np + pi;
           const lock = m.plan.pinLock[pin.joint] ?? 0;
-          const pop = vis
-            ? easeOutCubic(spanProgress(level, { start: lock, end: lock + PIN_POP }))
-            : 0;
+          const pop = vis ? easeOutCubic(clamp01((level - lock) / PIN_POP)) : 0;
           if (pop <= 0) {
             hide(pinArr, idx);
             continue;
@@ -605,9 +604,7 @@ export class FxMachineRenderer {
       }
       if (footArr && m.foot >= 0) {
         const lock = m.plan.pinLock[m.foot] ?? 0;
-        const pop = vis
-          ? easeOutCubic(spanProgress(level, { start: lock, end: lock + PIN_POP }))
-          : 0;
+        const pop = vis ? easeOutCubic(clamp01((level - lock) / PIN_POP)) : 0;
         if (pop <= 0) hide(footArr, k);
         else {
           const pin = m.footPin;
@@ -665,11 +662,11 @@ export class FxMachineRenderer {
     const [cx, cy] = m.frameCenter;
     const drop = layout.barWidth * 6;
     if (fa && m.frames) {
-      layout.frameZ.forEach((fz, i) => {
+      for (let i = 0; i < layout.frameZ.length; i++) {
         const e = easeOutCubic(spanProgress(level, m.plan.frames[i] ?? P.chassis));
         if (e <= 0) {
           hide(fa, i);
-          return;
+          continue;
         }
         const el = this.mL.elements;
         el.fill(0);
@@ -678,10 +675,10 @@ export class FxMachineRenderer {
         el[10] = e;
         el[12] = cx - e * cx;
         el[13] = cy - e * cy + drop * (1 - e);
-        el[14] = fz;
+        el[14] = layout.frameZ[i]!;
         el[15] = 1;
         this.mL.toArray(fa, i * 16);
-      });
+      }
       m.frames.instanceMatrix.needsUpdate = true;
     }
     const chassis = easeOutCubic(spanProgress(level, P.chassis));
@@ -690,10 +687,11 @@ export class FxMachineRenderer {
       const [z0, z1] = layout.shaftZ;
       const r = layout.pinRadius * 1.35;
       const p = m.sweeps.start[0];
-      layout.fixedJoints.forEach((j, i) => {
+      for (let i = 0; i < layout.fixedJoints.length; i++) {
+        const j = layout.fixedJoints[i]!;
         if (chassis <= 0 || !p) {
           hide(sa, i);
-          return;
+          continue;
         }
         setTRS(
           this.mL,
@@ -707,7 +705,7 @@ export class FxMachineRenderer {
           (z0 + z1) / 2,
         );
         this.mL.toArray(sa, i * 16);
-      });
+      }
       m.shafts.instanceMatrix.needsUpdate = true;
     }
     if (m.motor) {

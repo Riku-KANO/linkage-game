@@ -1,6 +1,6 @@
 import type { ActiveTransition, AppSettings } from '@/app/store';
 import type { Screen } from '@/ui/tokens';
-import { planTransition, sampleTransition, type TransitionPlan } from '../rig/timeline';
+import { planTransition, type TransitionPlan } from '../rig/timeline';
 import { GOAL_SLOWMO, goalTimeScale } from './timeline';
 
 /**
@@ -11,7 +11,7 @@ import { GOAL_SLOWMO, goalTimeScale } from './timeline';
  *  - disassemble 結果・試走 → 設計(T-05、T-03 の逆再生):機械を吊り上げて図面に戻す(1 → 0)
  *  - goal        試走 → 結果(T-04):時間がゆっくりになり、カメラが機械の周りを半周する
  *
- * 時間は遷移と同じ(rig/timeline の planTransition・sampleTransition)。reduced-motion(フェード)では
+ * 時間は遷移と同じ(rig/timeline の planTransition と同じ計画・同じ線形の進み)。reduced-motion(フェード)では
  * 演出を飛ばして終わりの状態にする。スキップは終わりへ跳ぶ。途中で逆向きの遷移が来たら(割り込み)、
  * 今の組み上がり具合から逆へたどる。
  */
@@ -97,7 +97,12 @@ export class FxDirector {
     }
     if (skip && f.kind) this.skipped = true;
     if (f.kind && f.plan && f.t < 1) {
-      const t = this.skipped || f.plan.mode === 'fade' ? 1 : sampleTransition(f.plan, nowMs).t;
+      const p = f.plan;
+      // sampleTransition と同じ線形の進み(毎フレームの割り当てを避けて直接求める)
+      const t =
+        this.skipped || p.mode === 'fade' || p.duration <= 0
+          ? 1
+          : Math.min(1, Math.max(0, nowMs - p.startedAt) / 1000 / p.duration);
       this.advance(t);
     } else if (!tr) {
       f.level = restingLevel(app.screen);

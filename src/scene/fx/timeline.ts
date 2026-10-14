@@ -252,6 +252,18 @@ export function eventsBetween(
   return out.length;
 }
 
+export interface FxSound {
+  sfx: SfxName;
+  volume: number;
+  rate: number;
+}
+
+/** 出来事を通ったときに鳴らす音(分解の向きでは reverse。null なら鳴らさない) */
+export function soundFor(e: FxEvent, backwards: boolean): FxSound | null {
+  if (!backwards || e.reverse === undefined) return e;
+  return e.reverse;
+}
+
 /** 部品の立ち上がり:回転角(rad、−π/2 = 紙に寝ている、0 = 立っている)・跳ね上がり・厚みの倍率 */
 export interface PartRise {
   angle: number;

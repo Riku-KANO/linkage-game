@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useApp } from '@/app/store';
 import { playSfx } from '@/audio/sfx';
 import { useEditor } from '@/editor/store';
@@ -25,7 +25,7 @@ import {
   type TrackMachine,
 } from './store';
 import { TrackStandIn } from './StandIn';
-import { eventsBetween, type FxEvent } from './timeline';
+import { eventsBetween, soundFor, type FxEvent } from './timeline';
 
 /**
  * 演出の層(工房の Canvas の中に 1 つ置く)。
@@ -33,8 +33,12 @@ import { eventsBetween, type FxEvent } from './timeline';
  *  - カメラリグに演出中のカメラ(組み上げを見る → 機械を追う → 半周)を渡す
  *  - 統合側の試走の機体がなければ、代わりの機体をコースに置く(TrackStandIn)
  */
+/** 設計がこの時間(ms)変わらなければ、試走ボタンを押す前に演出の機械を作っておく */
+const PREBUILD_AFTER_MS = 400;
+
 export function FxLayer() {
   const lowPerf = useApp((s) => s.settings.lowPerf);
+  const get = useThree((s) => s.get);
   const r = useMemo(
     () => ({
       machine: new FxMachineRenderer(),
@@ -54,6 +58,10 @@ export function FxLayer() {
       cameraPlanStart: -1,
       events: [] as FxEvent[],
       prevLevel: 0,
+      /** 設計画面で見ている設計と、それが変わらなくなった時刻 */
+      pendingDesign: null as DesignDoc | null,
+      pendingSince: 0,
+      warmed: false,
     }),
     [],
   );
@@ -104,15 +112,23 @@ export function FxLayer() {
       }
       const m = r.machine.model;
       if ((f.kind !== 'assemble' && f.kind !== 'disassemble') || !m || m.empty) return false;
-      resolveStation('design', ctx, r.designPose);
-      resolveStation(f.kind === 'assemble' ? plan.to : plan.from, ctx, r.trackPose);
-      if (r.cameraPlanStart !== plan.startedAt) {
+      // 行き先の定位置はリグが求めた dest。もう一方は、組み上げなら設計の定位置(毎フレーム)、
+      // 分解なら試走(結果)の定位置(機械は吊り上げ元で止まっているので始めに一度だけ)
+      const first = r.cameraPlanStart !== plan.startedAt;
+      let design = dest;
+      let track = dest;
+      if (f.kind === 'assemble') design = resolveStation('design', ctx, r.designPose);
+      else {
+        if (first) resolveStation(plan.from, ctx, r.trackPose);
+        track = r.trackPose;
+      }
+      if (first) {
         // 始まり:今のカメラと演出の姿勢のずれを覚える(割り込みでなければ、ずれはほぼない)
         r.cameraPlanStart = plan.startedAt;
         copyPose(start, r.startPose);
-        assemblyCamera(f.fromLevel, r.designPose, r.trackPose, r.machine.crane, r.cam, r.fxAtStart);
+        assemblyCamera(f.fromLevel, design, track, r.machine.crane, r.cam, r.fxAtStart);
       }
-      assemblyCamera(f.level, r.designPose, r.trackPose, r.machine.crane, r.cam, r.fxPose);
+      assemblyCamera(f.level, design, track, r.machine.crane, r.cam, r.fxPose);
       decayOffset(r.fxPose, r.startPose, r.fxAtStart, f.t / 0.3, out);
       return true;
     });
@@ -121,8 +137,10 @@ export function FxLayer() {
 
   useFrame(() => {
     const app = useApp.getState();
-    const f = fxDirector.update(app, performance.now(), rigSignals.skip);
+    const now = performance.now();
+    const f = fxDirector.update(app, now, rigSignals.skip);
     const moving = f.kind === 'assemble' || f.kind === 'disassemble';
+    if (!moving && app.screen === 'design' && !app.transition) prebuild(now);
     if (f.started && moving) {
       // 演出の機械:組み上げはエディタの設計、分解はコースの機械の設計
       const design =
@@ -160,8 +178,7 @@ export function FxLayer() {
       const n = eventsBetween(model.plan.events, r.prevLevel, f.level, r.events);
       const back = f.level < r.prevLevel;
       for (let i = 0; i < n; i++) {
-        const e = r.events[i]!;
-        const v = back ? (e.reverse === undefined ? e : e.reverse) : e;
+        const v = soundFor(r.events[i]!, back);
         if (v) playSfx(v.sfx, { volume: v.volume, rate: v.rate });
       }
     }
@@ -178,6 +195,28 @@ export function FxLayer() {
     }
     if (f.handover) emitHandover();
   }, -2);
+
+  /**
+   * 設計画面で設計が落ち着いたら、演出の機械を先に作り、シェーダーも先にコンパイルしておく
+   * (試走ボタンを押した最初のフレームで止まらない)。
+   */
+  function prebuild(now: number) {
+    const d = useEditor.getState().design;
+    if (d !== r.pendingDesign) {
+      r.pendingDesign = d;
+      r.pendingSince = now;
+      return;
+    }
+    if (d === r.machine.model?.design || now - r.pendingSince < PREBUILD_AFTER_MS) return;
+    r.machine.setDesign(d);
+    r.machine.setShadows(!useApp.getState().settings.lowPerf);
+    if (r.warmed) return;
+    r.warmed = true;
+    const { gl, camera, scene } = get();
+    for (const root of [r.machine.root, r.crane.root]) {
+      void gl.compileAsync(root, camera, scene).catch(() => {});
+    }
+  }
 
   return (
     <>

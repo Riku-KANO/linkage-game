@@ -119,7 +119,8 @@ export class CraneRenderer {
       visible && !!model && !model.empty && level > P.hookIn.start && level < P.hookOut.end;
     this.root.visible = on;
     if (!on || !model) return;
-    const s = pose.scale;
+    // フックの大きさは機械の大きさに合わせる(小さな機械に大きなフックを掛けない)
+    const s = pose.scale * Math.min(1.2, Math.max(0.3, model.frame.radius / 1.2));
     let dy = 0;
     if (level < P.hookIn.end) {
       dy = HOOK.dropIn * s * (1 - easeOutCubic(spanProgress(level, P.hookIn)));

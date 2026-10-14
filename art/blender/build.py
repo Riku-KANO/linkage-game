@@ -5,6 +5,12 @@
       --out public/models [--only room,logo] [--preview DIR]
 
 素材ごとに空のシーンから組み立てて書き出す。--preview を付けると確認用の PNG も描く。
+
+決定論:乱数はシード付き(geometry.ts と同じ mulberry32)、座標は 0.01mm・色は 1e-4 に丸め、
+出力の順序は素材名の順。同じ Blender の版・同じ OS/CPU ならバイト単位で同じ GLB になる
+(`pnpm models --check` で確かめる)。別の環境では三角関数の最下位ビットの違いで丸めの境目の値が
+変わることがあり、その場合も差は 0.01mm 以下(見た目は同じ)。書き出し器の版が変わると
+asset.generator の文字列も変わるので、Blender を上げたら作り直してコミットする。
 """
 
 from __future__ import annotations

@@ -4,6 +4,9 @@
 Rust → WASM に移植し、同じ API の裏で今の TypeScript 版(`src/core/kinematics/solve.ts`、main の 76e92e5 時点)と比べた。
 接触ループの移植とブラウザでの計測はこのストリームでは行っていない(下の「未計測」を参照)。
 
+> **試作のコード(`crates/kinematics-wasm`、`src/core/kinematics-wasm`、`pnpm wasm:build` / `wasm:bench`)は main に入れず、
+> ブランチ `feat/wasm` に残している。** 再評価するときはそのブランチを main に合わせて計測し直す。
+
 ## 結論:採用しない(JS のまま)
 
 BACKLOG の判定基準は「100 ジョイントで JS の 2 倍以上速く、小さな機構で遅くならなければ同じ API の裏で採用」。

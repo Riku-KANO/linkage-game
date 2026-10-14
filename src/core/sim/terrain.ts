@@ -1,4 +1,4 @@
-import RAPIER from '@dimforge/rapier3d-compat';
+import type { Ball, Collider } from '@dimforge/rapier3d-compat';
 import type { TerrainCollider, TerrainContact, TerrainShape, TerrainSpec, Vec3 } from './types';
 import { DEFAULT_FRICTION } from './constants';
 
@@ -34,10 +34,18 @@ export function createFlatTerrain(y = 0, friction = DEFAULT_FRICTION): TerrainCo
   };
 }
 
+type RapierModule = (typeof import('@dimforge/rapier3d-compat'))['default'];
+let RAPIER: RapierModule | null = null;
 let ready: Promise<void> | null = null;
-/** Rapier(WASM)の初期化。何度呼んでも 1 回だけ */
+/**
+ * Rapier(WASM)の読み込みと初期化。何度呼んでも 1 回だけ。
+ * Rapier は約 1.7MB(gzip)あるので、静的に import せず試走の直前に読む(初回ロードを軽く保つ)。
+ */
 export function initRapier(): Promise<void> {
-  ready ??= RAPIER.init();
+  ready ??= import('@dimforge/rapier3d-compat').then(async (m) => {
+    await m.default.init();
+    RAPIER = m.default;
+  });
   return ready;
 }
 
@@ -60,7 +68,7 @@ interface Prism {
 }
 
 type Entry =
-  | { kind: 'rapier'; collider: RAPIER.Collider; min: number[]; max: number[] }
+  | { kind: 'rapier'; collider: Collider; min: number[]; max: number[] }
   | { kind: 'prism'; prism: Prism; min: number[]; max: number[] };
 
 /** 坂の仕様から角柱を作る。幅や高さが 0 なら null */
@@ -197,12 +205,13 @@ function prismTopMax(pr: Prism, xa: number, xb: number): number {
 
 export async function createRapierTerrain(spec: TerrainSpec): Promise<TerrainCollider> {
   await initRapier();
-  const world = new RAPIER.World({ x: 0, y: 0, z: 0 });
+  const R = RAPIER!;
+  const world = new R.World({ x: 0, y: 0, z: 0 });
   const entries: Entry[] = [];
 
   if (spec.ground) {
     const gy = spec.ground.y;
-    const desc = new RAPIER.ColliderDesc(new RAPIER.HalfSpace({ x: 0, y: 1, z: 0 }));
+    const desc = new R.ColliderDesc(new R.HalfSpace({ x: 0, y: 1, z: 0 }));
     desc.setTranslation(0, gy, 0);
     entries.push({
       kind: 'rapier',
@@ -215,7 +224,7 @@ export async function createRapierTerrain(spec: TerrainSpec): Promise<TerrainCol
     if (s.kind === 'box') {
       const [x0, y0, z0] = s.min;
       const [x1, y1, z1] = s.max;
-      const desc = RAPIER.ColliderDesc.cuboid(
+      const desc = R.ColliderDesc.cuboid(
         Math.abs(x1 - x0) / 2,
         Math.abs(y1 - y0) / 2,
         Math.abs(z1 - z0) / 2,
@@ -238,11 +247,11 @@ export async function createRapierTerrain(spec: TerrainSpec): Promise<TerrainCol
     }
   }
 
-  const balls = new Map<number, RAPIER.Ball>();
+  const balls = new Map<number, Ball>();
   const ball = (r: number) => {
     let b = balls.get(r);
     if (!b) {
-      b = new RAPIER.Ball(r);
+      b = new R.Ball(r);
       balls.set(r, b);
     }
     return b;
@@ -250,7 +259,7 @@ export async function createRapierTerrain(spec: TerrainSpec): Promise<TerrainCol
   const ROT = { x: 0, y: 0, z: 0, w: 1 };
   const pos = { x: 0, y: 0, z: 0 };
   const nrm: Vec3 = { x: 0, y: 0, z: 0 };
-  const hit = new RAPIER.ShapeContact(
+  const hit = new R.ShapeContact(
     0,
     { x: 0, y: 0, z: 0 },
     { x: 0, y: 0, z: 0 },
@@ -326,7 +335,7 @@ export async function createRapierTerrain(spec: TerrainSpec): Promise<TerrainCol
       if (top === -Infinity) return best;
       // Rapier のコライダー:AABB の上端の少し上から真下へ光線を飛ばす(float32 の精度を保つため近くから)
       const oy = top + 1;
-      const ray = new RAPIER.Ray({ x, y: oy, z }, { x: 0, y: -1, z: 0 });
+      const ray = new R.Ray({ x, y: oy, z }, { x: 0, y: -1, z: 0 });
       for (const e of entries) {
         if (e.kind !== 'rapier') continue;
         if (x < e.min[0]! || x > e.max[0]! || z < e.min[2]! || z > e.max[2]!) continue;

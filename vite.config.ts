@@ -15,7 +15,8 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
-    chunkSizeWarningLimit: 4000,
+    // Rapier(物理の WASM を埋め込んだ約 4.3MB、gzip 1.7MB)は試走の直前に動的 import する別チャンク
+    chunkSizeWarningLimit: 4500,
   },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],

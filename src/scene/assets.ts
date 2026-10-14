@@ -1,11 +1,13 @@
 /**
  * 3D 素材の一覧(Blender → GLB)。素材は public/models/<file> に置く。
+ * 素材は art/blender/ の Python スクリプトから `pnpm models` で作り直す(決定論的。models.test.ts が予算と外形を検査)。
  *
  * 置いた素材は present: true にする(assets.test.ts が実在を確かめる)。present: false の間は
  * 手続き生成のジオメトリを使い、ネットワークには取りに行かない(実行時に 404 を出さない)。
  * GLB は Draco 圧縮なしで書き出す(デコーダーを外部から読まないため)。
  * 置き換わるのは動かない部分だけ(env/ModelSlot.tsx)。原点と向きは各コンポーネントのローカル座標
  * (Room・Wasteland はワールド、他は layout.ts の位置を原点に、単位 m、+y 上)に合わせる。
+ * Workbench の ModelSlot は親の変換がないのでワールド座標(GLB の節点を BENCH.center へ平行移動している)。
  */
 
 export interface ModelEntry {
@@ -46,7 +48,7 @@ export const MODEL_MANIFEST = {
   wasteland: { file: 'wasteland.glb', present: false, note: '窓の外の地面と台地(Wasteland)' },
   logo: {
     file: 'logo.glb',
-    present: false,
+    present: true,
     note: 'タイトルの看板の板(BootLogo)。ロゴの棒は手続き生成',
   },
 } as const satisfies Record<string, ModelEntry>;

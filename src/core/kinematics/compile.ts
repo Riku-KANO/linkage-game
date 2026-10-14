@@ -80,6 +80,11 @@ export interface CompiledMechanism {
   solvedBy: Int32Array;
   issues: CompileIssue[];
   footIndex: number;
+  /**
+   * 解いた後に確かめる距離(リンクごとに剛体を決める 2n-3 本)。
+   * 解法プランが使わない余分な拘束(三角形で固めた部分など)が守られているかをここで検査する。
+   */
+  checks?: DistanceConstraint[];
 }
 
 const EPS = 1e-9;
@@ -310,6 +315,7 @@ export function compileMechanism(design: DesignDoc): CompiledMechanism {
   return finish([]);
 
   function finish(floating: number[]): CompiledMechanism {
+    const checks = rigidityChecks(links, designPos);
     return {
       design,
       jointIds,
@@ -323,8 +329,45 @@ export function compileMechanism(design: DesignDoc): CompiledMechanism {
       solvedBy,
       issues,
       footIndex: design.foot ? (jointIndex.get(design.foot) ?? -1) : -1,
+      checks,
     };
   }
+}
+
+/**
+ * リンクごとに、剛体であることを確かめる距離の組を作る。
+ * 最も離れた 2 点 a, b を基準に、a-b と、残りの各点から a・b への距離(2n-3 本)。
+ */
+function rigidityChecks(links: number[][], designPos: Float64Array): DistanceConstraint[] {
+  const out: DistanceConstraint[] = [];
+  const d = (i: number, j: number) =>
+    Math.hypot(
+      designPos[i * 2]! - designPos[j * 2]!,
+      designPos[i * 2 + 1]! - designPos[j * 2 + 1]!,
+    );
+  links.forEach((ls, li) => {
+    if (ls.length < 2) return;
+    let a = ls[0]!;
+    let b = ls[1]!;
+    let best = -1;
+    for (let p = 0; p < ls.length; p++) {
+      for (let q = p + 1; q < ls.length; q++) {
+        const v = d(ls[p]!, ls[q]!);
+        if (v > best) {
+          best = v;
+          a = ls[p]!;
+          b = ls[q]!;
+        }
+      }
+    }
+    out.push({ i: a, j: b, d: best, link: li });
+    for (const t of ls) {
+      if (t === a || t === b) continue;
+      out.push({ i: a, j: t, d: d(a, t), link: li });
+      out.push({ i: b, j: t, d: d(b, t), link: li });
+    }
+  });
+  return out;
 }
 
 /** circleIntersection を再輸出(テストや解析で使う) */

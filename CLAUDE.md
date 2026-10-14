@@ -25,16 +25,25 @@
 | ディレクトリ | 内容 | 要件 |
 | --- | --- | --- |
 | `src/core/math` | ベクトル等の数学 | |
-| `src/core/model` | 設計データ(DesignDoc)、プリセット、コスト、保存・共有・移行 | E-07, U-01〜U-03 |
-| `src/core/kinematics` | 運動学ソルバー、自由度・グラスホフ・死点の解析、脚列の複製 | S-01, S-02, E-04〜E-06 |
-| `src/core/sim` | 歩行の動力学(剛体+自前接触モデル)、Rapier の地形判定、モーター | S-03〜S-05 |
+| `src/core/model` | 設計データ(DesignDoc)、プリセット、コスト、検証・移行、共有リンク、ゴースト、JSON 入出力 | E-07, U-02, U-03 |
+| `src/core/storage` | localStorage の自動保存(壊れたデータ・容量超過に強い) | U-01 |
+| `src/core/kinematics` | 運動学ソルバー、自由度・グラスホフ・死点の解析、変位点、脚列の複製 | S-01, S-02, E-04〜E-06 |
+| `src/core/sim` | 歩行の動力学(剛体+自前接触モデル)、Rapier の地形判定(遅延読み込み)、モーター | S-03〜S-05 |
 | `src/editor` | 2D 設計ビュー(SVG)と編集操作 | E-02〜E-08 |
-| `src/scene` | 3D の工房、カメラリグ、画面遷移、ホーム | UI・演出、T-00〜T-08 |
-| `src/game` | ステージ定義、評価・メダル、進行、チュートリアル、ヒント | 章 1・2、U-05 |
-| `src/app` | 画面状態(zustand)と全体の組み立て | |
-| `src/ui` | デザイントークン(イージング・遷移時間)、共通 UI 部品 | |
+| `src/game` | ステージ定義(実測で校正)、評価・メダル、進行、チュートリアル、ヒント、失敗診断 | 章 1・2、U-05 |
+| `src/app/flow` | セッション(進行・自動保存・試走のライフサイクル・共有起動・チュートリアル状態) | |
+| `src/app/screens` | 画面の組み立て(ホーム・ステージ選択・設計・試走・結果)、`boot.ts`・`actions.ts` | 統合 INT-* |
+| `src/scene` | 3D の工房、カメラリグ、画面遷移、ホーム、`fx`(T-03〜T-05)、`world`(ジオラマ・育つ工房) | UI・演出、T-00〜T-08 |
+| `src/testrun` | 試走の 3D 描画、追従カメラ、時間操作、可視化、ゴースト | S-06, S-07, U-04 |
+| `src/result` | 結果画面(歯車メーター・刻印・共有・対戦比較) | |
+| `src/hud` | 画面に重ねる表示部品(props だけ) | |
+| `src/guide` | 遊び方の本、用語解説、操作一覧、状況に応じた一言 | U-05 |
+| `src/ui` | デザイントークン(イージング・遷移時間)、機構で動く UI 部品(`ui/mech`) | |
+| `src/audio` | 合成の機械音 | |
 | `src/i18n/ja/<module>.ts` | 文言。**モジュールごとに自分のファイルだけ編集する** | U-07 |
-| `src/dev` | 開発用プレイグラウンド | |
+| `src/dev` | 開発用プレイグラウンド(`?dev=<name>`) | |
+| `art/blender` | Blender のスクリプト(`pnpm models` で `public/models/*.glb` を再生成) | 素材 |
+| `e2e` | Playwright の E2E(本番ビルド+本番ヘッダー) | |
 
 **契約(型)ファイル**:`src/core/model/types.ts`, `src/core/sim/types.ts`, `src/game/types.ts`,
 `src/ui/tokens.ts`, `src/app/store.ts`, `src/editor/store.ts`。

@@ -1,0 +1,28 @@
+:root {
+  --bg: #1b130e;
+  --paper: #efe6d2;
+  --ink: #2b2118;
+  --accent: #f2a65a;
+  --danger: #e0533d;
+  --ok: #6fbf73;
+  --text: #f6eadb;
+  --muted: #b9a68f;
+  --font: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  overscroll-behavior: none;
+}
+button {
+  font: inherit;
+}

@@ -1,8 +1,11 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { useApp } from '@/app/store';
 import { analyzeMechanism, type MechanismAnalysis } from '@/core/kinematics/analyze';
-import { pickDesignFile as browserPickDesignFile } from '@/core/model/fileBrowser';
-import { downloadDesign as browserDownloadDesign } from '@/core/model/fileBrowser';
+import {
+  downloadDesign as browserDownloadDesign,
+  pickDesignFile as browserPickDesignFile,
+  readDesignFile,
+} from '@/core/model/fileBrowser';
 import type { Ghost } from '@/core/model/ghost';
 import type { DesignReadResult } from '@/core/model/migrate';
 import type { ShareDecodeResult, SharePayload, ShareRun } from '@/core/model/share';
@@ -211,8 +214,11 @@ export interface SessionState {
   shareCurrent(): Promise<{ url: string; copied: boolean } | null>;
   clearOpponent(): void;
   exportDesign(): void;
-  /** JSON ファイルを選んで読み込む。読み込めたら true */
-  importDesign(): Promise<boolean>;
+  /**
+   * JSON ファイルを選んで読み込む。読み込めたら true。
+   * (int-home で追加)file を渡すとダイアログを開かずにそれを読む(設定パネルのファイル選択から)
+   */
+  importDesign(file?: Blob): Promise<boolean>;
 
   pushNotice(notice: NoticeInput): void;
   dismissNotice(id: number): void;
@@ -680,10 +686,10 @@ export function createSessionStore(): UseBoundStore<StoreApi<SessionState>> {
         deps.downloadDesign(editor().design);
       },
 
-      async importDesign() {
+      async importDesign(file) {
         let r: DesignReadResult | null;
         try {
-          r = await deps.pickDesignFile();
+          r = file ? await readDesignFile(file) : await deps.pickDesignFile();
         } catch {
           r = { ok: false, reason: 'corrupt', errors: [] };
         }

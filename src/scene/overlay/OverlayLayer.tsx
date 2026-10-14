@@ -26,7 +26,8 @@ export function OverlayLayer({
   return (
     <div className="ak-overlay">
       {screen === 'boot' && <p className="ak-hint ak-hint--boot">{t('scene.boot.skipHint')}</p>}
-      {screen === 'home' && visible && <HomeTextMenu />}
+      {/* ホームのオーバーレイを渡されたら(アプリの HUD のメニュー)、仮のテキストメニューは出さない */}
+      {screen === 'home' && visible && !overlays.home && <HomeTextMenu />}
       {Overlay && visible && <Overlay key={screen} screen={screen} />}
       {visible && canGoBack && <p className="ak-hint ak-hint--back">{t('scene.backHint')}</p>}
       {children}

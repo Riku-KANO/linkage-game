@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useApp } from '@/app/store';
 import { findTransition } from '@/ui/tokens';
 import { hasKey } from '@/i18n';
-import { MENU_ITEMS, activateMenu } from './menu';
+import { MENU_ITEMS, activateMenu, setMenuHandler } from './menu';
 
 beforeEach(() => {
   useApp.setState({ screen: 'home', transition: null, history: [], seenTransitions: new Set() });
@@ -38,6 +38,24 @@ describe('ホームのメニュー', () => {
     expect(useApp.getState().transition?.id).toBe('T-01');
     activateMenu('zukan');
     expect(useApp.getState().screen).toBe('stageSelect');
+  });
+
+  it('差し替えた処理があれば(アプリ)、遷移せずにそれを呼ぶ。ホーム以外では呼ばない', () => {
+    const got: string[] = [];
+    setMenuHandler((id) => got.push(id));
+    try {
+      activateMenu('continue');
+      expect(got).toEqual(['continue']);
+      expect(useApp.getState().screen).toBe('home');
+      useApp.setState({ screen: 'design' });
+      activateMenu('settings');
+      expect(got).toEqual(['continue']);
+    } finally {
+      setMenuHandler(null);
+    }
+    useApp.setState({ screen: 'home' });
+    activateMenu('settings');
+    expect(useApp.getState().screen).toBe('settings');
   });
 
   it('文言キーがある', () => {

@@ -176,7 +176,10 @@ function TermPopover({
       </p>
     </div>
   );
-  return createPortal(node, document.body);
+  // 本などのモーダルの中なら、そのダイアログの中に出す(読み上げでモーダルの外として隠されないように)
+  const host =
+    anchor.current?.closest<HTMLElement>('[role="dialog"][aria-modal="true"]') ?? document.body;
+  return createPortal(node, host);
 }
 
 export interface RichTextProps {

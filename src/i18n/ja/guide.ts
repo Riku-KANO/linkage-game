@@ -154,7 +154,6 @@ export const guide: Record<string, string> = {
     '画面の「自由度」が 1 になるまで、棒を足したり外したりしよう。固まったら外す、ぐらつくなら足す。',
 
   'guide.term.grubler.name': 'グリューブラーの式',
-  'guide.term.grubler.reading': 'グリューブラーのしき',
   'guide.term.grubler.short': '棒とピンの数から自由度を計算する式。',
   'guide.term.grubler.body':
     '自由度 = 3 ×(棒の数 − 1)− 2 × ピンの数。地面(フレーム)も棒 1 本と数えます。平面の棒は 1 本で「左右・上下・回転」の 3 つの動きを持ち、ピン 1 か所でそのうち 2 つが止まる、という考え方です。',

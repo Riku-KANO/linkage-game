@@ -62,12 +62,11 @@ export function HowToPlay({
   useEffect(() => {
     changed.current = onPageChange;
   });
-  const first = useRef(true);
+  // ページが変わったときだけ知らせる(開いたときは知らせない。StrictMode の二重実行でも同じ)
+  const shown = useRef(index);
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    if (shown.current === index) return;
+    shown.current = index;
     changed.current?.(index, HOW_TO_PLAY_PAGES[index]!.id);
   }, [index]);
 

@@ -40,7 +40,7 @@ const advance = (ms: number) =>
   });
 
 const dialog = () => screen.getByRole('dialog', { name: t('guide.book.title') });
-const pageTitle = () => within(dialog()).getByRole('heading', { level: 3 }).textContent ?? '';
+const pageTitle = () => dialog().querySelector('.gd-book__page-title')?.textContent ?? '';
 const figureMarkup = () => dialog().querySelector('figure svg')?.innerHTML ?? '';
 
 describe('遊び方の本(GUIDE-1)', () => {

@@ -37,7 +37,6 @@ export interface GlossaryEntry {
 
 const WITH_READING: ReadonlySet<GlossaryId> = new Set([
   'dof',
-  'grubler',
   'deadPoint',
   'legPhase',
   'notAssemblable',

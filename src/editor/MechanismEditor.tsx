@@ -328,6 +328,7 @@ export function MechanismEditor({
         selection={selection}
         locked={locked}
         pinAllowed={pinAllowed}
+        linkAllowed={parts.has('link')}
         readOnly={readOnly}
         ghost={ghost}
         view={view}

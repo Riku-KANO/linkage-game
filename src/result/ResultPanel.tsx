@@ -16,6 +16,8 @@ export interface ResultPanelProps {
   stage: StageDef;
   /** 失敗理由の文言キー(game が判定したもの)。なければ result.reason から */
   reasonKey?: string;
+  /** 失敗したときの次の一手(game の diagnoseFailure の adviceKey)。理由の下に出す */
+  adviceKey?: string;
   /** 共有リンクに入れる設計 */
   design: DesignDoc;
   /** 共有リンクに入れるゴースト(この試走の記録) */
@@ -47,6 +49,7 @@ export function ResultPanel({
   result,
   stage,
   reasonKey,
+  adviceKey,
   design,
   ghost,
   opponent,
@@ -186,6 +189,7 @@ export function ResultPanel({
             <span className="rs-reason__tag">{t('result.reasonLabel')}</span>
             <span className="rs-reason__body">
               <span className="rs-reason__text">{t(reasonKeyFor(reasonKey, result.reason))}</span>
+              {adviceKey && <span className="rs-reason__advice">{t(adviceKey)}</span>}
               <span className="rs-reason__dist">
                 {t('result.distance', {
                   distance: Math.max(0, result.distance).toFixed(2),

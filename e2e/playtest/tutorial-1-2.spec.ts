@@ -47,15 +47,18 @@ test('1-2 よくある失敗:少ししか縮めないと進まない。吹き出
 });
 
 /**
- * 既知の問題(editor・kinematics、報告済み):クランクの先を軸の上まで下げると、長さ 0 のクランクが
- * 「一回転できる」と判定され、チュートリアルが「一回転できるようになりました!」へ進んでしまう
- * (機械は動かず、試走は時間切れ)。直ったら fixme を外す。
+ * 回帰テスト:クランクの先を軸の上まで下げると、2cm 未満の短すぎるクランクになる。以前は試走が始まり、
+ * 0m のまま時間切れになった。今は「短すぎるリンク」として試走前チェックで止まる。
+ * (ドラッグの途中で半分の長さを通るので、その瞬間にチュートリアルが進むのは正しい動き)
  */
-test.fixme('1-2 クランクの先を軸に重ねても「一回転できる」にはならない', async ({ page }) => {
+test('1-2 クランクを軸の上まで縮めると、試走前に「短すぎるリンク」で止まる', async ({ page }) => {
+  const w = watchErrors(page);
   await openStage(page);
   await h.clickNext(page);
   await h.clickNext(page);
   await shortenCrank(page, 'A', 'O2', 0);
-  await h.expectStep(page, 3, TOTAL);
-  await expect(page.getByText('一回転できます', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '試走', exact: true }).click();
+  await expect(page.getByText(/短すぎるリンク/).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '結果へ' })).toHaveCount(0);
+  w.expectClean();
 });

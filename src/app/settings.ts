@@ -103,13 +103,10 @@ export function installSettingsSync(opts: SettingsSyncOptions = {}): () => void 
 
   const stop = useApp.subscribe((s, prev) => {
     if (s.settings === prev.settings) return;
-    const fix = enforceUserChoices(s.settings, r.prefs, r.os());
-    if (fix) {
-      s.setSettings(fix);
-      return;
-    }
     const muted = s.settings.muted ?? false;
     if (muted !== (prev.settings.muted ?? false)) r.setMuted(muted);
+    const fix = enforceUserChoices(s.settings, r.prefs, r.os());
+    if (fix) s.setSettings(fix);
   });
   unsub = () => {
     stop();

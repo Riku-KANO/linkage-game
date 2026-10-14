@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { watchErrors } from './helpers';
+import { skipBootLogo, watchErrors } from './helpers';
 
 /**
  * ホーム側の画面(INT-4 ステージ選択、INT-5 ホーム・設定・通知)。
@@ -9,14 +9,9 @@ import { watchErrors } from './helpers';
 const html = (page: Page) => page.locator('html');
 const menuItem = (page: Page, name: RegExp) => page.getByRole('menuitem', { name });
 
-/**
- * 起動してロゴを飛ばし、ホームのメニューが出るまで待つ。工房が描かれて入力を受け付けてから
- * クリックする(早すぎるクリックは届かず、並行実行で遅い描画だとロゴの演出を最後まで待つことになる)
- */
+/** 起動してロゴを飛ばし、ホームのメニューが出るまで待つ */
 async function bootToHome(page: Page) {
-  await expect(page.getByText('クリックでスキップ')).toBeVisible();
-  await page.waitForTimeout(150);
-  await page.mouse.click(640, 360);
+  await skipBootLogo(page);
   await expect(menuItem(page, /ステージ選択/)).toBeVisible();
   await expect(html(page)).toHaveAttribute('data-screen', 'home');
 }

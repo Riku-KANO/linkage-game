@@ -183,8 +183,8 @@
 | INT-1 | 設計画面:製図用紙の上に MechanismEditor を位置合わせ(usePaperViewport)、3D の用紙にも今の設計を描いて遷移中も途切れない、パネル分の余白、戻る・試走ボタン | scene, editor | todo |
 | INT-2 | 試走画面:屋外の試走コースに TestRunScene、flow の試走ライフサイクル、追従カメラ(setStationOverride)、RunHud、ゴースト | testrun, flow, hud | doing(stream `int-run`) |
 | INT-3 | 結果画面:ResultPanel、T-04、やり直し・設計へ・次へ | result, flow | doing(stream `int-run`) |
-| INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | doing(stream `int-home`) |
-| INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | doing(stream `int-home`) |
+| INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | done(`src/app/screens/StageSelectScreen.tsx`:進行から解放・最高メダル・「次」にフォーカス、右下に寄せてジオラマと右上の通知を空ける。選ぶと startStage + go('design')(T-02)、Esc・閉じるでホーム。設計・試走・結果からホーム・ステージ選択へ出たら leaveStage。ジオラマへの流し込み `src/app/worldBridge.ts`(useWorld があるときだけ働く:進行・enterStage・noteRun・目印のクリック・選択の同期)。E2E `e2e/home.spec.ts`。残り:world 合流後にジオラマのカメラをパネルの左に収める) |
+| INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | done(`bootApp()`(冪等、init・見た遷移の保存・共有リンクは T-00 の後に設計へ)、ホームは HUD の TextMenu を工房のホバーと共有、続きから=最後のスロット→最初の未クリア、設定は SettingsPanel+利用者の選択だけを `ashikumi/v1/prefs` に保存(自動判定は保存しない、AppSettings に muted・sources を追加)、JSON 入出力・2 段階リセット、図鑑は「準備中」の札、サンドボックスは設計画面へ、全画面共通の NoticeStack。作業台の見本機を自分の機械にするのは WORLD-2(machineDesign の保存は worldBridge の TODO)) |
 | INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | doing(stream `int-fx`) |
 | WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | doing(stream `world`) |
 | WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | doing(stream `world`) |

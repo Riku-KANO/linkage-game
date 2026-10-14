@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { watchErrors } from './helpers';
+import { skipBootLogo, watchErrors } from './helpers';
 
 test('boots into the workshop, flies to the drafting table and back', async ({ page }) => {
   const w = watchErrors(page);
   await page.goto('/');
   // T-00 のロゴはクリックで飛ばせる
-  await page.mouse.click(640, 360);
+  await skipBootLogo(page);
   // 3D の物体に浮かぶラベルと区別して、テキストメニューの項目を使う
   const cont = page.getByRole('menuitem', { name: /続きから/ });
   await expect(cont).toBeVisible();

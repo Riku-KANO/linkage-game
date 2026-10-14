@@ -19,3 +19,13 @@ export function watchErrors(page: Page) {
     },
   };
 }
+
+/**
+ * 起動のロゴ(T-00)をクリックで飛ばす。工房が描かれて入力を受け付けてから(「クリックでスキップ」が
+ * 出てから)クリックする。早すぎるクリックは届かず、並行実行で描画が遅いとロゴの演出を最後まで待つことになる。
+ */
+export async function skipBootLogo(page: Page) {
+  await expect(page.getByText('クリックでスキップ')).toBeVisible();
+  await page.waitForTimeout(150);
+  await page.mouse.click(640, 360);
+}

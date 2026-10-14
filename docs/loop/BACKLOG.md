@@ -38,11 +38,11 @@
 
 | ID | 要件 | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- | --- |
-| MOD-1 | 非機能 | `validateDesign(unknown)`:型検査・正規化(範囲外の rpm など)。外部ライブラリなし | 壊れた JSON・型違い・存在しない参照を拒否し、理由を返す | todo |
-| MOD-2 | 非機能 | バージョン番号つき封筒と移行 `migrate()`。古い版を読めること | 合成した v0 データを v1 に移行するテスト | todo |
-| MOD-3 | U-02 | 共有リンク:設計(+任意でスコアとゴースト)を JSON → lz-string → URL フラグメント | 往復で一致。ヤンセン見本機の URL が 2000 文字未満。ゴースト(10Hz、量子化)込みでも 6000 文字未満 | todo |
-| MOD-4 | U-03 | JSON ファイルの書き出し・読み込み | 往復一致。読み込みは validate を通る | todo |
-| MOD-5 | U-01 | localStorage 自動保存(設計・進行・設定)。容量超過や破損に強い。debounce | 破損データでも落ちずに既定値。キーにバージョン | todo |
+| MOD-1 | 非機能 | `validateDesign(unknown)`:型検査・正規化(範囲外の rpm など)。外部ライブラリなし | 壊れた JSON・型違い・存在しない参照を拒否し、理由を返す | done |
+| MOD-2 | 非機能 | バージョン番号つき封筒と移行 `migrate()`。古い版を読めること | 合成した v0 データを v1 に移行するテスト | done |
+| MOD-3 | U-02 | 共有リンク:設計(+任意でスコアとゴースト)を JSON → lz-string → URL フラグメント | 往復で一致。ヤンセン見本機の URL が 2000 文字未満。ゴースト(10Hz、量子化)込みでも 6000 文字未満 | done |
+| MOD-4 | U-03 | JSON ファイルの書き出し・読み込み | 往復一致。読み込みは validate を通る | done |
+| MOD-5 | U-01 | localStorage 自動保存(設計・進行・設定)。容量超過や破損に強い。debounce | 破損データでも落ちずに既定値。キーにバージョン | done |
 
 ### stream `editor` — `src/editor`, `src/dev/EditorPlayground.tsx`, `src/i18n/ja/editor.ts`
 

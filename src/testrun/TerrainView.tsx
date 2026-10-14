@@ -35,8 +35,9 @@ export interface TerrainViewProps {
   shadows?: boolean;
 }
 
-const COURSE_COLOR = '#c7a47a';
-const GROUND_COLOR = '#6a5442';
+// 機体(明るい木)と見分けやすい、塗装した板の灰緑
+const COURSE_COLOR = '#8e968f';
+const GROUND_COLOR = '#4d3c30';
 const MAX_TICKS = 120;
 
 function checkerTexture(): CanvasTexture | null {

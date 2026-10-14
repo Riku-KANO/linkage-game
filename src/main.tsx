@@ -17,6 +17,7 @@ const routes: Record<string, () => Promise<{ default: ComponentType }>> = {
   audio: () => import('@/dev/AudioPlayground'),
   flow: () => import('@/dev/FlowPlayground'),
   hud: () => import('@/dev/HudPlayground'),
+  guide: () => import('@/dev/GuidePlayground'),
 };
 
 // 効果音:初回のクリック・キー入力で AudioContext を起こす(それまでは何もしない)

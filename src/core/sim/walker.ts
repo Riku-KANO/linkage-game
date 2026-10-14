@@ -1,6 +1,11 @@
-import { compileMechanism, type CompiledMechanism } from '@/core/kinematics/compile';
+import type { CompiledMechanism } from '@/core/kinematics/compile';
 import { solvePose } from '@/core/kinematics/solve';
-import { legInstances, mirrorDesignX } from '@/core/kinematics/legs';
+import {
+  compileLegSet,
+  legMechanism,
+  solveLegInstances,
+  type LegSet,
+} from '@/core/kinematics/legs';
 import { CM, MAX_RPM, type DesignDoc } from '@/core/model/types';
 import {
   DEFAULT_SIM_PARAMS,
@@ -59,6 +64,8 @@ export class Walker implements WalkerSim {
   readonly mass: MassModel;
   private readonly start: { x: number; z: number };
   private readonly mechs: CompiledMechanism[];
+  /** 脚列(初期姿勢を設計姿勢から組立モードをたどって求めるのに使う) */
+  private readonly legSet: LegSet;
   private readonly nJ: number;
   private readonly mu: number;
   /** 接触点:組 index(胴体の角は -1)とジョイント(角)番号 */
@@ -127,12 +134,9 @@ export class Walker implements WalkerSim {
     this.terrain = input.terrain;
     this.start = { ...input.start };
     this.mu = input.terrain.friction ?? DEFAULT_FRICTION;
-    this.instances = legInstances(this.design);
-    const normal = compileMechanism(this.design);
-    const mirrored = this.instances.some((i) => i.mirrored)
-      ? compileMechanism(mirrorDesignX(this.design))
-      : normal;
-    this.mechs = this.instances.map((i) => (i.mirrored ? mirrored : normal));
+    this.legSet = compileLegSet(this.design);
+    this.instances = this.legSet.instances;
+    this.mechs = this.instances.map((_, k) => legMechanism(this.legSet, k));
     this.nJ = this.design.joints.length;
     this.mass = computeMassModel(this.design, this.instances, this.mechs, this.params.chassisMass);
 
@@ -221,23 +225,10 @@ export class Walker implements WalkerSim {
     this.cActive.fill(0);
     this.nA = 0;
 
-    // 各組を θ = 0 から位相まで少しずつ回して、組立モードを連続に保ったまま初期姿勢にする
-    this.instances.forEach((inst, k) => {
-      const mech = this.mechs[k]!;
-      const pose = this.poses[k]!;
-      let res = solvePose(mech, 0, { out: pose });
-      if (!res.ok) this.jammed = true;
-      const steps = Math.ceil(Math.abs(inst.phase) / 0.05);
-      for (let s = 1; s <= steps && res.ok; s++) {
-        const th = (inst.phase * s) / steps;
-        res = solvePose(mech, th, { prev: pose, out: this.next[k]! });
-        if (!res.ok) {
-          this.jammed = true;
-          break;
-        }
-        pose.set(res.positions);
-      }
-    });
+    // 各組を設計姿勢からモーター角 0(+ 組の位相)まで少しずつ回し、組立モードを連続に保って初期姿勢にする
+    this.legSet.theta = null;
+    if (!solveLegInstances(this.legSet, 0)) this.jammed = true;
+    this.instances.forEach((_, k) => this.poses[k]!.set(this.legSet.positions[k]!));
     this.updateRates();
 
     // 初期配置:直立、x・z はスタート位置、最も低い接触点が地形にちょうど触れる高さ(+1mm)
@@ -735,14 +726,12 @@ export class Walker implements WalkerSim {
   }
 
   snapshot(): SimSnapshot {
-    const R = this.R;
     const q = this.quat;
-    quatToMat(q[0]!, q[1]!, q[2]!, q[3]!, R);
-    const c = this.mass.com;
-    // 原点(設計座標の原点)= 重心 − R c
-    const ox = -(R[0]! * c[0] + R[1]! * c[1] + R[2]! * c[2]);
-    const oy = -(R[3]! * c[0] + R[4]! * c[1] + R[5]! * c[2]);
-    const oz = -(R[6]! * c[0] + R[7]! * c[1] + R[8]! * c[2]);
+    const o = this.origin({ x: 0, y: 0, z: 0 });
+    // 重心から原点へのベクトル
+    const ox = o.x - this.com[0]!;
+    const oy = o.y - this.com[1]!;
+    const oz = o.z - this.com[2]!;
     const w = this.omega;
     const contacts: FootState[] = [];
     for (let ci = 0; ci < this.nC; ci++) {
@@ -762,7 +751,7 @@ export class Walker implements WalkerSim {
     return {
       time: this.time,
       body: {
-        position: { x: this.com[0]! + ox, y: this.com[1]! + oy, z: this.com[2]! + oz },
+        position: o,
         quaternion: { x: q[0]!, y: q[1]!, z: q[2]!, w: q[3]! },
         // 原点の速度 = v + ω × (原点 − 重心)
         velocity: {

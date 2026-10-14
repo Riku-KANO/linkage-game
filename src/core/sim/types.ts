@@ -133,14 +133,20 @@ export interface FootState {
 
 export interface SimSnapshot {
   time: number;
-  /** 機体(フレーム)の姿勢。原点は設計座標の原点 */
+  /**
+   * 機体(フレーム)の姿勢。原点は設計座標の原点。
+   * velocity はその原点の速度(m/s)、angularVelocity はワールド座標の角速度(rad/s)
+   */
   body: { position: Vec3; quaternion: Quat; velocity: Vec3; angularVelocity: Vec3 };
   /** 重心(ワールド) */
   com: Vec3;
   /** モーター角 θ(rad)・角速度(rad/s) */
   motorAngle: number;
   motorSpeed: number;
-  /** クランクにかかる負荷トルク(N·m)(S-07 の可視化用) */
+  /**
+   * クランクにかかる負荷トルク(N·m)(S-07 の可視化用)。仮想仕事 −Σ F·∂p/∂θ を平滑化したもの。
+   * 正は指令の回転方向を妨げる向き(モーターが仕事をしている)。motor.stallTorque に達すると停動
+   */
   motorTorque: number;
   /** トルク上限で止まっているか */
   stalled: boolean;

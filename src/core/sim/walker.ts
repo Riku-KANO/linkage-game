@@ -49,6 +49,11 @@ const CORNERS = 8;
 export class Walker implements WalkerSim {
   readonly params: SimParams;
   readonly design: DesignDoc;
+  /**
+   * 指令回転数(rpm)。初期値は design.motor.rpm。プレイグラウンドなどで走行中に変えてよい
+   * (reset() では戻さない)。停動トルクは params.motor.stallTorque を書き換える
+   */
+  rpm: number;
   readonly terrain: TerrainCollider;
   readonly instances: LegInstance[];
   readonly mass: MassModel;
@@ -118,6 +123,7 @@ export class Walker implements WalkerSim {
       motor: { ...DEFAULT_SIM_PARAMS.motor, ...ip.motor },
     };
     this.design = input.design;
+    this.rpm = input.design.motor.rpm;
     this.terrain = input.terrain;
     this.start = { ...input.start };
     this.mu = input.terrain.friction ?? DEFAULT_FRICTION;
@@ -183,7 +189,7 @@ export class Walker implements WalkerSim {
   /** 指令回転数(rad/s)。|rpm| は MAX_RPM まで。クランクのない設計ではモーターもない(0) */
   get commandSpeed(): number {
     if (this.design.cranks.length === 0) return 0;
-    const rpm = Math.max(-MAX_RPM, Math.min(MAX_RPM, this.design.motor.rpm || 0));
+    const rpm = Math.max(-MAX_RPM, Math.min(MAX_RPM, this.rpm || 0));
     return (rpm * 2 * Math.PI) / 60;
   }
 

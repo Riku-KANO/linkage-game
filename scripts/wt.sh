@@ -8,7 +8,7 @@
 #   scripts/wt.sh rm <name>          ワークツリーとブランチを片付ける(マージ済みのみ)
 set -euo pipefail
 # main チェックアウトの場所(ワークツリーの中から呼んでも main を指す)
-ROOT="$(cd "$(git -C "$(dirname "$0")" rev-parse --git-common-dir)/.." && pwd)"
+ROOT="$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")"
 cd "$ROOT"
 cmd="${1:-}"; name="${2:-}"
 dir="$ROOT/.worktrees/$name"; branch="feat/$name"

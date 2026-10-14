@@ -52,6 +52,11 @@ export function bootApp(opts: BootOptions = {}): BootResult {
   return result;
 }
 
+/** 起動の結果(まだ起動していなければ null)。ホームの初回の案内は共有リンクで開いたときは出さない */
+export function bootResult(): BootResult | null {
+  return booted?.result ?? null;
+}
+
 /** 購読を外す(テスト・HMR 用)。もう一度 bootApp() できる。セッションの dispose は呼び出し側で */
 export function disposeApp(): void {
   booted?.stop();

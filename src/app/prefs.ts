@@ -28,6 +28,11 @@ export interface AppPrefs {
   lowPerf?: boolean;
   /** 最後に開いた設計のスロット(ステージ id かサンドボックス)。「続きから」に使う */
   lastSlot?: DesignSlot;
+  /**
+   * (int-polish で追加)初回の「はじめての方へ」でどれかを選んだ(チュートリアル・遊び方・あとで)。
+   * 一度選べば、もうホームに出さない
+   */
+  welcomed?: boolean;
 }
 
 export const PREFS_VERSION = 1;
@@ -46,6 +51,7 @@ export function parsePrefs(raw: unknown): AppPrefs {
   if (isBoolean(raw.muted)) out.muted = raw.muted;
   if (isBoolean(raw.reducedMotion)) out.reducedMotion = raw.reducedMotion;
   if (isBoolean(raw.lowPerf)) out.lowPerf = raw.lowPerf;
+  if (raw.welcomed === true) out.welcomed = true;
   const slot = raw.lastSlot;
   if (typeof slot === 'string' && slot.length > 0 && slot.length <= MAX_SLOT_LENGTH) {
     out.lastSlot = slot;

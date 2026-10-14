@@ -159,17 +159,24 @@ const c1s3 = (): StageDef => {
     hints: [
       text(id, 1),
       ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'rocker'] })),
+      // 脚先の位置が分かるよう、クランクと脚先まで伸びた連結棒を見せる(残りは 1-1 で覚えた「つなぐ」だけ)
+      ghost(id, 3, subDesign(ref, { links: ['crank', 'coupler'] })),
     ],
+    // 組み方(PLAY-1):クランクの先から脚先まで長い棒を引き、その途中に足した点と右の固定点をつなぐ。
+    // クランクの道具はリンクがないと使えないので、先に短い棒を引いてからクランクにする。
+    // 吹き出しの寸法(固定点は 40cm 右・20cm 上、クランク 10cm、脚先は右下)で組めば、
+    // 既定の回転数(+30rpm)のまま前へ歩いてクリアできる(e2e/playtest で確かめる)
     tutorial: [
       { key: tut(id, 1), until: { kind: 'click' } },
       { key: tut(id, 2), give: ['fixed'], until: { kind: 'place', part: 'fixed', count: 2 } },
-      { key: tut(id, 3), give: ['crank'], until: { kind: 'place', part: 'crank', count: 1 } },
-      { key: tut(id, 4), give: ['link', 'pin'], until: { kind: 'place', part: 'link', count: 2 } },
-      { key: tut(id, 5), until: { kind: 'dof', value: 1 } },
-      { key: tut(id, 6), until: { kind: 'fullRotation' } },
-      { key: tut(id, 7), until: { kind: 'click' } },
-      { key: tut(id, 8), until: { kind: 'testRun' } },
+      { key: tut(id, 3), give: ['link', 'pin'], until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 4), give: ['crank'], until: { kind: 'place', part: 'crank', count: 1 } },
+      { key: tut(id, 5), until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 6), until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 7), until: { kind: 'dof', value: 1 } },
+      { key: tut(id, 8), until: { kind: 'fullRotation' } },
+      { key: tut(id, 9), until: { kind: 'click' } },
+      { key: tut(id, 10), until: { kind: 'testRun' } },
     ],
   };
 };

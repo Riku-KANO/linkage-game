@@ -45,3 +45,4 @@ export { BlendCamera } from './rig/BlendCamera';
 export * as layout from './layout';
 export { MODEL_MANIFEST, modelUrl } from './assets';
 export { KinematicWalker } from './walker/KinematicWalker';
+export * from './world';

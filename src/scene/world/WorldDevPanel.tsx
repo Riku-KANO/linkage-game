@@ -88,9 +88,23 @@ function nextMachine(): void {
   useWorld.getState().setMachineDesign(machine());
 }
 
+/** window.__worldDev(開発用ページだけ。E2E と手元の確認に使う) */
+export interface WorldDevApi {
+  useWorld: typeof useWorld;
+  worldDebug: typeof worldDebug;
+  clearNext: typeof clearNext;
+  clearAndWalk: typeof clearAndWalk;
+  playT06: typeof playT06;
+  clearChapter: typeof clearChapter;
+  clearAll: typeof clearAll;
+  registerZukan: typeof registerZukan;
+  nextMachine: typeof nextMachine;
+  reset: () => void;
+}
+
 declare global {
   interface Window {
-    __worldDev?: Record<string, unknown>;
+    __worldDev?: WorldDevApi;
   }
 }
 

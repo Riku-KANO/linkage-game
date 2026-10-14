@@ -66,6 +66,10 @@ export interface TerrainCollider {
   /** (x, z) の真下の地形の高さ(カメラや初期配置用)。なければ -Infinity */
   heightAt(x: number, z: number): number;
   dispose?(): void;
+  /**
+   * (追加)クーロン摩擦係数。TerrainSpec.friction をここに運ぶ。未指定なら 0.9。
+   */
+  friction?: number;
 }
 
 /** モーターの性能(S-04)。直流モーターの直線的なトルク-回転数特性。 */
@@ -85,7 +89,11 @@ export interface SimParams {
   contactDamping: number;
   /** 機体フレーム(胴体)の質量(kg) */
   chassisMass: number;
-  /** リンクの線密度(kg/m) */
+  /**
+   * リンクの線密度(kg/m)。
+   * 注意:質量はコスト・重量表示と一致させるため `PART_SPECS`(src/core/model/parts.ts)から計算する。
+   * この値は参考値で、シミュレーションでは使わない(互換のため残している)。
+   */
   linkDensity: number;
   motor: MotorSpec;
   /** 転倒とみなす傾き(rad) */
@@ -111,7 +119,10 @@ export interface LegInstance {
 }
 
 export interface FootState {
-  /** どの脚列の組のどのジョイントか */
+  /**
+   * どの脚列の組のどのジョイントか。
+   * 胴体(フレーム)の角の接触点は instance = -1、joint = 角の番号(0..7)。
+   */
   instance: number;
   joint: number;
   position: Vec3;
@@ -143,6 +154,10 @@ export interface SimSnapshot {
   fallen: boolean;
   /** 機構が組立不能になって止まった */
   jammed: boolean;
+  /** (追加)重心の真下の地形上の点(S-07 の重心投影)。真下に地形がなければ null */
+  comGround: Vec3 | null;
+  /** (追加)機体の傾き(rad)。機体の上方向とワールドの +y のなす角。fallTilt を超えると転倒 */
+  tilt: number;
 }
 
 export interface WalkerSim {
@@ -151,6 +166,49 @@ export interface WalkerSim {
   step(): void;
   snapshot(): SimSnapshot;
   reset(): void;
+}
+
+/** (追加)ヘッドレス実行(評価・ゴースト用)の設定 */
+export interface HeadlessOptions {
+  /** 最大のシミュレーション時間(s) */
+  maxTime: number;
+  /** ゴール:重心が x >= goalX に達したら終了(StageDef.goal.x と同じ定義) */
+  goalX?: number;
+  /** 転倒・組立不能で止める(既定 true) */
+  stopOnFail?: boolean;
+  /** 停動がこの秒数続いたら止める(既定 Infinity = 止めない) */
+  stallTimeout?: number;
+}
+
+/** (追加)ゴースト用の姿勢サンプル(10Hz)。脚の姿勢は design と motorAngle から運動学で再現する */
+export interface PoseSample {
+  time: number;
+  position: Vec3;
+  quaternion: Quat;
+  motorAngle: number;
+}
+
+/** (追加)ヘッドレス実行の結果 */
+export interface HeadlessResult {
+  /** 終了時刻(s) */
+  time: number;
+  /** 重心の x 方向の移動量(m、後退なら負) */
+  distance: number;
+  reachedGoal: boolean;
+  /** ゴールに達した時刻(s)。未到達なら null */
+  goalTime: number | null;
+  fallen: boolean;
+  /** 終了時に停動していたか */
+  stalled: boolean;
+  /** 停動していた時間の合計(s) */
+  stallTime: number;
+  jammed: boolean;
+  /** 消費エネルギー(J) */
+  energy: number;
+  /** 最大の傾き(rad) */
+  maxTilt: number;
+  /** 10Hz の姿勢列(t = 0 から) */
+  trace: PoseSample[];
 }
 
 export const DEFAULT_SIM_PARAMS: SimParams = {

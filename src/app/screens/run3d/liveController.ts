@@ -60,6 +60,21 @@ export interface LiveRunController extends TestRunController {
   readonly extraTimeScale: number;
   /** LiveRun を外から進めた(結果へ・finishRun)あと、描画のスナップショットを最新に合わせる */
   sync(): void;
+  /**
+   * 余韻:評価(finishRun)が済んだ後、機体をそのまま少し動かし続ける(見せるだけ)。T-04 のゴールの
+   * スローの間も機械が歩き続けるように。LiveRun の機体を直接進めるので、評価の後でだけ呼ぶこと
+   * (LiveRun の summary・ゴーストはもう使わない)。MAX_COAST 秒で止まる
+   */
+  startCoast(): void;
+  readonly coasting: boolean;
+}
+
+/** 余韻の上限(シミュレーション時間 s) */
+export const MAX_COAST = 2.5;
+
+function finiteSnapshot(s: { com: Vec3; body: { position: Vec3 } }): boolean {
+  const ok = (v: Vec3) => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+  return ok(s.com) && ok(s.body.position);
 }
 
 /** LiveRun の終わった理由 → 操作盤の状態(時間切れは testrun に札がないので running のまま) */
@@ -110,6 +125,9 @@ export function createLiveRunController(
   let lastTiltTime = 0;
   let scale = 1;
   let extra = 1;
+  let coasting = false;
+  let coastAcc = 0;
+  let coastTime = 0;
   const listeners = new Set<FrameListener>();
   const origin: Vec3 = { x: 0, y: 0, z: 0 };
 
@@ -173,6 +191,34 @@ export function createLiveRunController(
     signal.fallen = curr.fallen;
   };
 
+  /** 余韻:機体を直接進める(固定ステップ、1 フレーム 40 まで)。発散したら止める */
+  const coast = (realDt: number) => {
+    const dt = live.dt;
+    const k = clock.paused ? 0 : clock.speed * baseSpeed() * extra;
+    const d = Number.isFinite(realDt) ? Math.min(0.1, Math.max(0, realDt)) : 0;
+    if (coastTime < MAX_COAST) coastAcc += d * k;
+    let n = 0;
+    while (coastAcc >= dt - 1e-9 && coastTime < MAX_COAST && n < 40) {
+      live.sim.step();
+      coastAcc -= dt;
+      coastTime += dt;
+      n++;
+    }
+    if (n > 0) {
+      const s = live.sim.snapshot();
+      if (finiteSnapshot(s)) {
+        if (n === 1) copySnapshot(curr, prev);
+        copySnapshot(s, curr);
+        if (n > 1) copySnapshot(curr, prev);
+        updateSignal();
+      } else coasting = false;
+    }
+    if (coastTime >= MAX_COAST || !coasting) copySnapshot(curr, render);
+    else lerpSnapshot(prev, curr, Math.min(1, Math.max(0, coastAcc / dt)), render);
+    updateStatus();
+    notify();
+  };
+
   const controller: LiveRunController = {
     live,
     sim,
@@ -189,6 +235,10 @@ export function createLiveRunController(
       return extra;
     },
     tick(realDt) {
+      if (live.done && coasting) {
+        coast(realDt);
+        return;
+      }
       if (live.done) {
         // 終わった後は最後の姿勢のまま(外で進めた分もここで追いつく)
         if (curr.time !== live.time) {
@@ -249,7 +299,18 @@ export function createLiveRunController(
     setTimeScale(k) {
       extra = Number.isFinite(k) ? Math.max(0, k) : 1;
     },
+    get coasting() {
+      return coasting;
+    },
+    startCoast() {
+      if (!live.done || coasting) return;
+      snapToLatest();
+      coasting = true;
+      coastAcc = 0;
+      coastTime = 0;
+    },
     sync() {
+      if (coasting) return;
       snapToLatest();
       updateSignal();
       updateStatus();

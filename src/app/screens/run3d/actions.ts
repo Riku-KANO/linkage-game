@@ -117,8 +117,11 @@ export function finishToResult(store: SessionStore = useSession): boolean {
   if (run.phase !== 'running') return false;
   if (view && view.live === run.live) view.handedOver = true;
   const outcome = store.getState().finishRun();
-  // finishRun が LiveRun を最後まで進めたので、描画を最後の姿勢に合わせる
-  if (view && view.live === run.live) view.controller.sync();
+  // finishRun が LiveRun を最後まで進めたので、描画を最後の姿勢に合わせ、評価が済んだので余韻を始める
+  if (view && view.live === run.live) {
+    view.controller.sync();
+    view.controller.startCoast();
+  }
   if (!outcome) return false;
   go('result');
   return true;

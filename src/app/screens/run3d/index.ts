@@ -40,7 +40,7 @@ export {
   trimRunHistory,
 } from './actions';
 export { installRunBridge, RESULT_PANEL_PX } from './bridge';
-export { runViewStore, run3dSignals, getRunView, type RunView, type RunViewState } from './runView';
+export { runViewStore, getRunView, type RunView, type RunViewState } from './runView';
 export { createLiveRunController, type LiveRunController } from './liveController';
 export { trackPlacement, toWorld, TRACK_SURFACE_Y, type TrackPlacement } from './placement';
-export { END_PAUSE } from './frame';
+export { FOLLOW_DISTANCE } from './frame';

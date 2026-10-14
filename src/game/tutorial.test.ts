@@ -87,36 +87,40 @@ describe('tutorial engine (GAME-5)', () => {
     const stage = getStage('c1-s3')!;
     const steps = stage.tutorial!;
     const allowed = (st: TutorialState) => tutorialAllowedParts(stage, st);
+    const key = (st: TutorialState) => tutorialTextKey(steps, st);
+    const design = (parts: Partial<PartCounts>, dof = 0, rot = false) =>
+      ({ type: 'design', snapshot: snap(parts, dof, rot) }) as const;
     let s = startTutorial(steps, snap({}));
     s = advanceTutorial(steps, s, { type: 'click' });
     expect(allowed(s)).toEqual(['fixed']);
-    s = advanceTutorial(steps, s, { type: 'design', snapshot: snap({ fixed: 1 }) });
+    s = advanceTutorial(steps, s, design({ fixed: 1 }));
     expect(currentStep(steps, s)?.give).toEqual(['fixed']);
-    s = advanceTutorial(steps, s, { type: 'design', snapshot: snap({ fixed: 2 }) });
-    expect(allowed(s)).toEqual(['fixed', 'crank']);
-    // クランク(リンク 1 本とピン 1 本を含む)を付ける
-    s = advanceTutorial(steps, s, {
-      type: 'design',
-      snapshot: snap({ fixed: 2, crank: 1, link: 1, pin: 1 }),
-    });
+    s = advanceTutorial(steps, s, design({ fixed: 2 }));
+    // クランクの道具はリンクがないと使えないので、先にリンク(短い棒)を渡す
+    expect(key(s)).toBe('game.stage.c1-s3.tut.3');
+    expect(allowed(s)).toEqual(['link', 'pin', 'fixed']);
+    s = advanceTutorial(steps, s, design({ fixed: 2, link: 1, pin: 1 }, 1));
+    expect(key(s)).toBe('game.stage.c1-s3.tut.4');
     expect(allowed(s)).toEqual(['link', 'pin', 'fixed', 'crank']);
-    // クランクのリンクは数えず、ここから 2 本
-    s = advanceTutorial(steps, s, {
-      type: 'design',
-      snapshot: snap({ fixed: 2, crank: 1, link: 2, pin: 2 }, 2),
-    });
-    expect(tutorialTextKey(steps, s)).toBe('game.stage.c1-s3.tut.4');
-    s = advanceTutorial(steps, s, {
-      type: 'design',
-      snapshot: snap({ fixed: 2, crank: 1, link: 3, pin: 4 }, 1, false),
-    });
-    expect(tutorialTextKey(steps, s)).toBe('game.stage.c1-s3.tut.6');
-    s = advanceTutorial(steps, s, {
-      type: 'design',
-      snapshot: snap({ fixed: 2, crank: 1, link: 3, pin: 4 }, 1, true),
-    });
-    expect(tutorialTextKey(steps, s)).toBe('game.stage.c1-s3.tut.7');
+    s = advanceTutorial(steps, s, design({ fixed: 2, link: 1, pin: 1, crank: 1 }, 1, true));
+    expect(key(s)).toBe('game.stage.c1-s3.tut.5');
+    // 長い棒(連結棒)でぐらつく
+    s = advanceTutorial(steps, s, design({ fixed: 2, link: 2, pin: 2, crank: 1 }, 2));
+    expect(key(s)).toBe('game.stage.c1-s3.tut.6');
+    // 右の固定点とつないだつもりが、棒の先が点にはまっていない
+    const loose = advanceTutorial(steps, s, design({ fixed: 2, link: 3, pin: 3, crank: 1 }, 3));
+    expect(key(loose)).toBe('game.stage.c1-s3.tut.7');
+    // 自由度 1 でも一回転できない
+    const stuck = advanceTutorial(steps, loose, design({ fixed: 2, link: 3, pin: 4, crank: 1 }, 1));
+    expect(key(stuck)).toBe('game.stage.c1-s3.tut.8');
+    // うまくつながれば、自由度と一回転のステップは飛ばして脚先の説明へ
+    s = advanceTutorial(steps, s, design({ fixed: 2, link: 3, pin: 4, crank: 1 }, 1, true));
+    expect(key(s)).toBe('game.stage.c1-s3.tut.9');
+    expect(
+      advanceTutorial(steps, stuck, design({ fixed: 2, link: 3, pin: 4, crank: 1 }, 1, true)),
+    ).toEqual(s);
     s = advanceTutorial(steps, s, { type: 'click' });
+    expect(key(s)).toBe('game.stage.c1-s3.tut.10');
     s = advanceTutorial(steps, s, { type: 'testRun' });
     expect(isTutorialDone(steps, s)).toBe(true);
     expect(allowed(s)).toEqual(stage.parts);

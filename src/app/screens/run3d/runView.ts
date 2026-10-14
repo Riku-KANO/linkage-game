@@ -32,8 +32,6 @@ export interface RunView {
   placement: TrackPlacement;
   /** 機械の大きさ(m、追従カメラの距離の目安) */
   machineScale: number;
-  /** 終わってから結果へ移るまでの待ちを始めた時刻(performance.now()、ms) */
-  endedAt: number | null;
   /** 結果へ移した(二重に finishRun しない) */
   handedOver: boolean;
 }
@@ -45,17 +43,6 @@ export interface RunViewState {
 }
 
 export const runViewStore = createStore<RunViewState>(() => ({ view: null, preflightOpen: false }));
-
-/**
- * 演出(int-fx)との受け渡し。React を通さない合図(毎フレーム読む)。
- *  - hold:true の間は試走を進めない(T-03 の組み上げで、機体がコースに降りるまで待つ)
- *  - hideMachine:true の間はコースの機体(と脚先の軌跡・接地・重心)を描かない
- *    (T-03 の組み上げ・T-05 の分解を演出側が自分の機体で描くあいだ)
- */
-export const run3dSignals = {
-  hold: false,
-  hideMachine: false,
-};
 
 /** 試走の追従カメラ(1 つだけ。新しい試走で合わせ直す) */
 export const followRig = createFollowRig();
@@ -91,7 +78,6 @@ export function createRunView(input: RunViewInput): RunView {
     opponentDesign: input.opponentDesign ?? null,
     placement: trackPlacement(live.stage),
     machineScale: Math.max(0.4, machineRadius(buildMachineLayout(live.design))),
-    endedAt: null,
     handedOver: false,
   };
 }

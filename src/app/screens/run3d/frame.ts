@@ -9,15 +9,14 @@ import type { RunView } from './runView';
  * 試走の 1 フレーム(INT-2)。3D の描画ループ(RunWorld の useFrame、カメラリグより先)から呼ぶ。
  * React・three に依存しないのでテストできる。
  *
- *  - 試走画面に着いて(パネルが出る頃)から進める。演出が hold している間・結果画面では止めたまま
+ *  - 時間は演出(scene/fx)の倍率を掛けて進める(getFxTimeScale:T-03 の組み上げ・T-05 の分解の間は 0、
+ *    T-04 のゴールで 1 → 0.2 → 0)。試走画面に着いて(パネルが出る頃)から進める
+ *  - 終わったら(ゴール・転倒など)すぐに結果へ(finish: true)。評価の後は余韻として機体を
+ *    演出の倍率で少し動かし続ける(T-04 のスローの間も歩く。controller.startCoast)
  *  - 機械の重心を工房の座標でカメラリグに渡す(liveAnchors.testMachine:試走・結果の定位置の中心)
  *  - 追従カメラの姿勢を進める(setStationOverride('testRun') がそれを返す)
  *  - モーターのうなり(回転数と負荷)
- *  - 終わったら END_PAUSE 秒だけ最後の姿勢を見せてから結果へ(finish: true を返す)
  */
-
-/** 試走が終わってから結果へ移るまでの間(s、最後の姿勢を見せる) */
-export const END_PAUSE = 0.8;
 
 /**
  * 追従カメラの距離の倍率(機械の大きさに掛ける)。testrun の既定より引いて、上の帯・トルク計・
@@ -29,10 +28,8 @@ export interface FrameEnv {
   screen: Screen;
   /** パネルを出してよい画面(useSceneUi.revealed) */
   revealed: Screen | null;
-  /** 演出が試走を止めている(run3dSignals.hold) */
-  hold: boolean;
-  /** performance.now()(ms) */
-  nowMs: number;
+  /** 演出の時間の倍率(scene/fx の getFxTimeScale()) */
+  timeScale: number;
 }
 
 export interface FrameHooks {
@@ -44,23 +41,28 @@ export interface FrameHooks {
 }
 
 export interface FrameResult {
-  /** 試走を進めたか(試走画面で、止められていない) */
+  /** 試走を進めてよい(試走画面に着いている) */
   active: boolean;
   /** 結果へ移す時が来た */
   finish: boolean;
 }
 
-/** 試走を進めてよいか */
-export function isRunActive(env: Pick<FrameEnv, 'screen' | 'revealed' | 'hold'>): boolean {
-  return env.screen === 'testRun' && env.revealed === 'testRun' && !env.hold;
+/** 試走を進めてよいか(試走画面に着いた。止めるのは演出の倍率) */
+export function isRunActive(env: Pick<FrameEnv, 'screen' | 'revealed'>): boolean {
+  return env.screen === 'testRun' && env.revealed === 'testRun';
 }
+
+const OUTDOOR: ReadonlySet<Screen> = new Set<Screen>(['testRun', 'result']);
 
 const focus: Vec3 = { x: 0, y: 0, z: 0 };
 
 export function runFrame(view: RunView, dt: number, env: FrameEnv, hooks: FrameHooks): FrameResult {
   const { controller, live, placement } = view;
   const active = isRunActive(env);
-  controller.tick(active ? dt : 0);
+  // 評価の後の余韻は、試走 → 結果(T-04)と結果画面の間も演出の倍率で動く
+  const coast = view.handedOver && controller.coasting && OUTDOOR.has(env.screen);
+  const scale = Number.isFinite(env.timeScale) ? Math.max(0, env.timeScale) : 1;
+  controller.tick(active || coast ? dt * scale : 0);
   const snap = controller.getSnapshot();
   const [ox, oy, oz] = placement.offset;
 
@@ -86,17 +88,13 @@ export function runFrame(view: RunView, dt: number, env: FrameEnv, hooks: FrameH
 
   // モーターのうなり
   if (hooks.hum) {
-    const running = active && !live.done && controller.timeScale > 0;
+    const running = active && !live.done && scale > 0 && controller.timeScale > 0;
     const stall = Math.max(1e-9, live.sim.params.motor.stallTorque);
     const rpm = running ? Math.abs((snap.motorSpeed * 60) / (2 * Math.PI)) : 0;
     hooks.hum(rpm, running ? Math.min(1, Math.max(0, snap.motorTorque / stall)) : 0);
   }
 
-  // 終わった:最後の姿勢を少し見せてから結果へ
-  let finish = false;
-  if (live.done && active && !view.handedOver) {
-    view.endedAt ??= env.nowMs;
-    finish = env.nowMs - view.endedAt >= END_PAUSE * 1000;
-  }
+  // 終わった:すぐに結果へ(ゴールの瞬間のスローは T-04 の演出が受け持つ)
+  const finish = live.done && active && !view.handedOver;
   return { active, finish };
 }

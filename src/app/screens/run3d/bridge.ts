@@ -1,18 +1,10 @@
 import { useSession, type RunPhase } from '@/app/flow';
 import { useApp } from '@/app/store';
 import { setStationOverride, type StationOverride } from '@/scene/rig/stations';
-import { useSceneUi } from '@/scene/store';
 import type { Screen } from '@/ui/tokens';
 import { backToDesign, restartRun, startRunHere, type SessionStore } from './actions';
 import { dockPoseLeft, followPose } from './camera';
-import {
-  createRunView,
-  followRig,
-  getRunView,
-  runViewStore,
-  setPreflightOpen,
-  setRunView,
-} from './runView';
+import { createRunView, followRig, getRunView, setPreflightOpen, setRunView } from './runView';
 
 /**
  * 画面(useApp)・セッション(flow)・試走コースの表示(runView)をつなぐ(INT-2 / INT-3)。
@@ -21,7 +13,7 @@ import {
  * (ホーム・ステージ選択へ出たら leaveStage)は app の boot / actions が受け持つ。
  *
  *  - 試走が始まったら(run: running の新しい LiveRun)コースに出す。結果画面でもそのまま残す
- *  - 屋外の画面(試走・結果)を離れてカメラが着いたら片付ける(工房の見本機が戻る)
+ *  - 屋外の画面(試走・結果)を離れてカメラが着いたら片付ける(演出 scene/fx の ownsTrack と同じ間)
  *  - 試走画面に直接来たら試走を始める(チェックに通らなければ設計画面へ戻す)
  *  - 試走画面・結果画面を離れたら、走行中の試走はやめる・結果は閉じる
  *  - 試走・結果の画面での Esc・右クリックは「設計に戻る」(履歴をたどって試走へ戻らない)
@@ -98,11 +90,6 @@ export function installRunBridge(store: SessionStore = useSession): () => void {
       }
     }),
   );
-
-  // 工房の仮置きの見本機:本物の試走をコースに出している間は消す
-  const syncTrack = () => useSceneUi.getState().setTrackBusy(getRunView() !== null);
-  syncTrack();
-  unsubs.push(runViewStore.subscribe(syncTrack));
 
   // Esc・右クリック:試走・結果の画面では「設計に戻る」(scene の「戻る」より先に受ける)
   if (typeof window !== 'undefined') {

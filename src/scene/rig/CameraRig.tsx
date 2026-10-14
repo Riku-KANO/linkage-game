@@ -7,6 +7,7 @@ import { HOME_CAMERA, SPRINGS, type Screen } from '@/ui/tokens';
 import { PAPER_DESIGN } from '../layout';
 import { rigDebug, rigSignals, useSceneUi } from '../store';
 import { BlendCamera, viewProjection } from './BlendCamera';
+import { fxCamera } from '../fx/cameraHook';
 import { crossFade } from './CrossFade';
 import { paperScreenRect } from './paper';
 import { copyPose, createPose, type CameraPath, type V3 } from './pose';
@@ -128,7 +129,10 @@ export function CameraRig() {
     if (sample && plan) {
       if (plan.mode === 'fly' && r.path) {
         r.path.setEnd(r.dest);
-        r.path.evaluate(sample.eased, r.cur);
+        // 演出(scene/fx:T-03 組み上げ・T-05 分解・T-04 半周)がこの遷移のカメラを受け持つならその姿勢
+        if (!fxCamera(plan, r.path.points[0]!, r.dest, ctx, r.cur)) {
+          r.path.evaluate(sample.eased, r.cur);
+        }
       } else {
         copyPose(r.dest, r.cur);
       }

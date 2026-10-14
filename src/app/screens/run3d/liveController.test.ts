@@ -3,7 +3,7 @@ import { LiveRun, runStageHeadless } from '@/app/flow';
 import { createFlatTerrain } from '@/core/sim';
 import { jansenOneSided } from '@/core/sim/fixtures';
 import { getStage, type StageDef } from '@/game';
-import { createLiveRunController, statusOfEnd } from './liveController';
+import { createLiveRunController, MAX_COAST, statusOfEnd } from './liveController';
 
 const c1s1 = getStage('c1-s1')!;
 const flat = createFlatTerrain(0);
@@ -143,5 +143,28 @@ describe('createLiveRunController (INT-2: one clock over LiveRun)', () => {
     expect(c.previousGhost()).toBe(prev);
     c.tick(0.3);
     expect(c.currentGhost()?.frames.length).toBeGreaterThan(0);
+  });
+  it('coasts after the evaluation (display only) and stops after MAX_COAST', () => {
+    const live = new LiveRun(c1s1, design, flat);
+    const c = createLiveRunController(live, { autoSlowMo: false });
+    c.startCoast();
+    expect(c.coasting).toBe(false); // 走行中は余韻にしない
+    const summary = live.runToEnd();
+    const ghost = live.ghost();
+    c.sync();
+    c.startCoast();
+    expect(c.coasting).toBe(true);
+    const end = c.getSnapshot().time;
+    c.tick(0.1);
+    expect(c.getSnapshot().time).toBeGreaterThan(end);
+    for (let k = 0; k < 400; k++) c.tick(1 / 30);
+    const last = c.getSnapshot().time;
+    expect(last).toBeLessThanOrEqual(end + MAX_COAST + 1e-9);
+    c.tick(0.1);
+    expect(c.getSnapshot().time).toBe(last);
+    // 評価に使ったものは変わらない(ゴーストは記録しない)
+    expect(live.ghost()).toEqual(ghost);
+    expect(summary.reachedGoal).toBe(true);
+    expect(c.store.getState().status).toBe('goal');
   });
 });

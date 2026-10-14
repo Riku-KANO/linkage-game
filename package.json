@@ -21,7 +21,8 @@
     "deps:update": "node scripts/deps.mjs update",
     "serve:dist": "node scripts/serve-dist.mjs",
     "e2e": "vite build --logLevel warn && playwright test",
-    "calibrate": "vitest run src/game/calibrate.test.ts --silent=false"
+    "calibrate": "vitest run src/game/calibrate.test.ts --silent=false",
+    "models": "node scripts/models.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",

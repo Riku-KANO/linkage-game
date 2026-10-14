@@ -19,8 +19,8 @@ import {
 } from './actions';
 import { installRunBridge } from './bridge';
 import { createFollowRig } from './camera';
-import { END_PAUSE, runFrame } from './frame';
-import { followRig, getRunView, run3dSignals, runViewStore, setRunView } from './runView';
+import { runFrame } from './frame';
+import { followRig, getRunView, runViewStore, setRunView } from './runView';
 
 const c1s1 = getStage('c1-s1')!;
 const flat = createFlatTerrain(0);
@@ -64,8 +64,7 @@ function playToEnd() {
       {
         screen: useApp.getState().screen,
         revealed: useSceneUi.getState().revealed,
-        hold: false,
-        nowMs: now,
+        timeScale: 1,
       },
       { follow: followRig, anchor: [0, 0, 0] },
     );
@@ -82,8 +81,6 @@ beforeEach(() => {
 afterEach(() => {
   uninstall();
   store.getState().dispose();
-  run3dSignals.hold = false;
-  run3dSignals.hideMachine = false;
 });
 
 describe('beginTestRun (the design screen’s test-run button)', () => {
@@ -101,7 +98,7 @@ describe('beginTestRun (the design screen’s test-run button)', () => {
     expect(runViewStore.getState().preflightOpen).toBe(false);
   });
 
-  it('flies to the test run, puts the live machine on the track and hides the placeholder', async () => {
+  it('flies to the test run and puts the live machine on the track', async () => {
     boot();
     store.getState().startStage('c1-s1');
     useEditor.getState().replaceDesign(c1s1.reference!);
@@ -112,7 +109,6 @@ describe('beginTestRun (the design screen’s test-run button)', () => {
     const view = getRunView()!;
     const run = store.getState().run;
     expect(run.phase === 'running' && run.live === view.live).toBe(true);
-    expect(useSceneUi.getState().trackBusy).toBe(true);
     expect(runViewStore.getState().preflightOpen).toBe(false);
   });
 
@@ -137,7 +133,7 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     runFrame(
       view,
       1 / 60,
-      { screen: 'testRun', revealed: null, hold: false, nowMs: 0 },
+      { screen: 'testRun', revealed: null, timeScale: 1 },
       { follow: createFollowRig(), anchor: [0, 0, 0] },
     );
     expect(view.live.time).toBe(0);
@@ -186,7 +182,6 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     expect(getRunView()).not.toBeNull();
     arrive();
     expect(getRunView()).toBeNull();
-    expect(useSceneUi.getState().trackBusy).toBe(false);
   });
 
   it('leaving the test run (Esc) aborts it and goes to the design screen', async () => {
@@ -297,7 +292,7 @@ describe('camera stations', () => {
     runFrame(
       view,
       1 / 60,
-      { screen: 'testRun', revealed: 'testRun', hold: false, nowMs: 0 },
+      { screen: 'testRun', revealed: 'testRun', timeScale: 1 },
       { follow: followRig, anchor },
     );
     const ctx = { width: 1280, height: 720, insets: { top: 0, right: 0, bottom: 0, left: 0 } };
@@ -322,27 +317,44 @@ describe('camera stations', () => {
     await beginTestRun(store);
     const view = getRunView()!;
     const hum = vi.fn();
-    const env = { screen: 'testRun' as const, revealed: 'testRun' as const, hold: false, nowMs: 0 };
+    const env = { screen: 'testRun' as const, revealed: 'testRun' as const, timeScale: 1 };
     for (let k = 0; k < 30; k++) runFrame(view, 1 / 60, env, { follow: followRig, hum });
     expect(hum.mock.calls.at(-1)![0]).toBeGreaterThan(1);
-    runFrame(view, 1 / 60, { ...env, hold: true }, { follow: followRig, hum });
+    runFrame(view, 1 / 60, { ...env, timeScale: 0 }, { follow: followRig, hum });
     expect(hum.mock.calls.at(-1)).toEqual([0, 0]);
   });
 
-  it('waits END_PAUSE after the end before handing over', async () => {
+  it('hands over as soon as the run ends, then coasts at the effect time scale (T-04)', async () => {
     boot();
     store.getState().startStage('c1-s1');
     useEditor.getState().replaceDesign(c1s1.reference!);
     await beginTestRun(store);
+    arrive();
     const view = getRunView()!;
+    const env = { screen: 'testRun' as const, revealed: 'testRun' as const, timeScale: 1 };
+    // 演出の倍率が 0 の間(組み上げ中)は進まない
+    runFrame(view, 1 / 60, { ...env, timeScale: 0 }, { follow: followRig });
+    expect(view.live.time).toBe(0);
     view.live.runToEnd();
-    const env = { screen: 'testRun' as const, revealed: 'testRun' as const, hold: false, nowMs: 0 };
-    expect(runFrame(view, 1 / 60, env, { follow: followRig }).finish).toBe(false);
-    expect(
-      runFrame(view, 1 / 60, { ...env, nowMs: END_PAUSE * 1000 - 1 }, { follow: followRig }).finish,
-    ).toBe(false);
-    expect(
-      runFrame(view, 1 / 60, { ...env, nowMs: END_PAUSE * 1000 }, { follow: followRig }).finish,
-    ).toBe(true);
+    expect(runFrame(view, 1 / 60, env, { follow: followRig }).finish).toBe(true);
+    expect(finishToResult(store)).toBe(true);
+    const run = store.getState().run;
+    if (run.phase !== 'finished') throw new Error('not finished');
+    const summary = structuredClone(run.outcome.summary);
+    // 余韻:評価の後も機体は演出の倍率で動き続ける(評価は変わらない)
+    expect(view.controller.coasting).toBe(true);
+    const t0 = view.controller.getSnapshot().time;
+    for (let k = 0; k < 30; k++)
+      runFrame(view, 1 / 60, { ...env, screen: 'result', timeScale: 0.2 }, { follow: followRig });
+    const t1 = view.controller.getSnapshot().time;
+    expect(t1).toBeGreaterThan(t0);
+    expect(t1 - t0).toBeLessThan(0.15);
+    // 結果画面では演出の倍率が 0 になって止まる
+    const stop = { ...env, screen: 'result' as const, timeScale: 0 };
+    runFrame(view, 1 / 60, stop, { follow: followRig });
+    const t2 = view.controller.getSnapshot().time;
+    runFrame(view, 1 / 60, stop, { follow: followRig });
+    expect(view.controller.getSnapshot().time).toBe(t2);
+    expect(run.outcome.summary).toEqual(summary);
   });
 });

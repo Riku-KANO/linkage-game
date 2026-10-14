@@ -28,13 +28,10 @@ interface SceneUiState {
   paper: PaperViewport;
   /** 設計画面で紙の周りに空ける余白(編集ビュー側が道具パネルに合わせて変えてよい) */
   paperInsets: Insets;
-  /** 窓の外の試走コースを本物の試走が使っている(仮置きの見本機を出さない) */
-  trackBusy: boolean;
   setHovered(id: MenuItemId | null): void;
   setRevealed(s: Screen | null): void;
   setPaper(p: PaperViewport): void;
   setPaperInsets(i: Insets): void;
-  setTrackBusy(busy: boolean): void;
 }
 
 const EMPTY_RECT: ScreenRect = { left: 0, top: 0, width: 0, height: 0 };
@@ -44,7 +41,6 @@ export const useSceneUi = create<SceneUiState>((set, get) => ({
   revealed: null,
   paper: { ready: false, screen: EMPTY_RECT, design: { ...PAPER_DESIGN }, pxPerCm: 0 },
   paperInsets: DEFAULT_PAPER_INSETS,
-  trackBusy: false,
   setHovered(id) {
     if (get().hovered !== id) set({ hovered: id });
   },
@@ -63,9 +59,6 @@ export const useSceneUi = create<SceneUiState>((set, get) => ({
   },
   setPaperInsets(i) {
     set({ paperInsets: i });
-  },
-  setTrackBusy(busy) {
-    if (get().trackBusy !== busy) set({ trackBusy: busy });
   },
 }));
 

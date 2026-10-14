@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import { useSession } from '@/app/flow';
 import { useApp } from '@/app/store';
 import { setMotorHum } from '@/audio/sfx';
+import { fxDirector, getFxTimeScale, registerTrackMachine } from '@/scene/fx';
 import { useSceneUi } from '@/scene/store';
 import { ComMarker, ContactMarkers, FootTrails } from '@/testrun/Visualizations';
 import { GhostMachine } from '@/testrun/GhostMachine';
@@ -13,7 +14,7 @@ import { TerrainView } from '@/testrun/TerrainView';
 import { finishToResult } from './actions';
 import { runFrame } from './frame';
 import { courseViewTerrain } from './placement';
-import { followRig, run3dSignals, runViewStore, type RunView } from './runView';
+import { followRig, runViewStore, type RunView } from './runView';
 
 /** 共有相手のゴーストの色(前回の試走は testrun の既定の水色) */
 const OPPONENT_COLOR = '#ffb36b';
@@ -51,7 +52,19 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
   const fillTarget = useMemo(() => new Object3D(), []);
   const machine = useRef<Group>(null);
 
-  // 描画部品・カメラリグ(優先度 −1)より先に進める
+  // 演出(scene/fx)に試走の機体を知らせる:T-03 の組み上げはここ(最初の姿勢)に着地し、
+  // T-05 の分解はここ(今の姿勢)から吊り上げる。登録している間、演出の代わりの機体は出ない
+  useEffect(
+    () =>
+      registerTrackMachine({
+        design: live.design,
+        getSnapshot: controller.getSnapshot,
+        origin: view.placement.offset,
+      }),
+    [live, controller, view.placement.offset],
+  );
+
+  // 演出の進行役(優先度 −2)・カメラリグ(−1)より先に進める。時間は演出の倍率をかける
   useFrame((_, dt) => {
     const r = runFrame(
       view,
@@ -59,18 +72,20 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
       {
         screen: useApp.getState().screen,
         revealed: useSceneUi.getState().revealed,
-        hold: run3dSignals.hold,
-        nowMs: performance.now(),
+        timeScale: getFxTimeScale(),
       },
       { follow: followRig, hum: setMotorHum },
     );
-    if (machine.current) machine.current.visible = !run3dSignals.hideMachine;
     if (r.finish) {
       const run = useSession.getState().run;
       if (run.phase === 'running' && run.live === live) finishToResult();
       else view.handedOver = true;
     }
   }, -10);
+  // 進行役のあと:演出が機械を描いている間(組み上げ・分解)は自分の機体を隠す
+  useFrame(() => {
+    if (machine.current) machine.current.visible = !fxDirector.frame.machineInFx;
+  }, -1.5);
   useEffect(() => () => setMotorHum(0, 0), []);
 
   return (
@@ -89,6 +104,7 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
         gateHeight={Math.max(1.2, view.machineScale * 1.2)}
         shadows={shadows}
       />
+      {/* 機体まわり(演出が機械を描いている間は隠す) */}
       <group ref={machine}>
         <MachineModel design={live.design} getSnapshot={getSnapshot} shadows={shadows} />
         {show.trails && <FootTrails design={live.design} getSnapshot={getSnapshot} seconds={3} />}
@@ -96,22 +112,22 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
         {show.com && (
           <ComMarker getSnapshot={getSnapshot} terrain={stage.terrain} footRadius={footRadius} />
         )}
+        {show.ghost && view.previousGhost && (
+          <GhostMachine
+            design={view.previousDesign ?? live.design}
+            ghost={view.previousGhost}
+            getTime={getTime}
+          />
+        )}
+        {show.ghost && view.opponentGhost && (
+          <GhostMachine
+            design={view.opponentDesign ?? live.design}
+            ghost={view.opponentGhost}
+            getTime={getTime}
+            color={OPPONENT_COLOR}
+          />
+        )}
       </group>
-      {show.ghost && view.previousGhost && (
-        <GhostMachine
-          design={view.previousDesign ?? live.design}
-          ghost={view.previousGhost}
-          getTime={getTime}
-        />
-      )}
-      {show.ghost && view.opponentGhost && (
-        <GhostMachine
-          design={view.opponentDesign ?? live.design}
-          ghost={view.opponentGhost}
-          getTime={getTime}
-          color={OPPONENT_COLOR}
-        />
-      )}
     </group>
   );
 }

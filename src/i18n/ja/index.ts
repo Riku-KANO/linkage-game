@@ -11,6 +11,7 @@ import { flow } from './flow';
 import { hud } from './hud';
 import { guide } from './guide';
 import { home } from './home';
+import { fx } from './fx';
 
 export const ja: Record<string, string> = {
   ...common,
@@ -26,4 +27,5 @@ export const ja: Record<string, string> = {
   ...hud,
   ...guide,
   ...home,
+  ...fx,
 };

@@ -4,20 +4,22 @@ import { computeBill } from '@/core/model/parts';
 import type { DesignDoc } from '@/core/model/types';
 import { CM } from '@/core/model/types';
 import { DEFAULT_SIM_PARAMS } from '@/core/sim/types';
+import { terrainHeightAt } from './courses';
 import { failReason } from './evaluate';
 import { footStance } from './gait';
 import type { FailCause, FailureDiagnosis, PreflightResult, RunSummary, StageDef } from './types';
 
 /**
  * 失敗理由の判定(GAME-6)。結果画面に一言(トルク不足、重心が高い など)と、次に試すことを出す。
- * 優先順:設計の問題 > 予算オーバー > 機構が詰まった > 転倒(重心が高い / 転倒) > トルク不足
- *        > 逆向き > 時間切れ
+ * 優先順:設計の問題 > 予算オーバー > 機構が詰まった > 転倒(重心が高い / 転倒)
+ *        > 停動(段差につまずいた / トルク不足) > 逆向き > 時間切れ
  */
 
 export const FAIL_CAUSES: readonly FailCause[] = [
   'invalid',
   'overBudget',
   'jammed',
+  'stumbled',
   'stalled',
   'topHeavy',
   'fallen',
@@ -37,6 +39,12 @@ export const TOP_HEAVY_ANGLE = (15 * Math.PI) / 180;
 
 /** 後ろへこれ以上(m)進んだら「逆向きに歩いた」 */
 const WRONG_WAY_DISTANCE = 0.05;
+
+/**
+ * 停動したとき、機体の足元(脚先が届く前後の範囲)にこれ以上(m)の上り段差があれば
+ * 「段差につまずいた」とみなす。脚先の接触球(半径 2cm)より十分に高い段差だけを数える
+ */
+export const STUMBLE_STEP = 0.03;
 
 export interface DiagnoseOptions {
   analysis?: MechanismAnalysis;
@@ -105,8 +113,11 @@ export function diagnoseFailure(
     case 'invalid':
     case 'overBudget':
     case 'jammed':
-    case 'stalled':
       return diagnosisFor(reason);
+    case 'stalled': {
+      const analysis = options.analysis ?? analyzeMechanism(design);
+      return diagnosisFor(stepUnderfoot(stage, design, summary, analysis) ? 'stumbled' : 'stalled');
+    }
     case 'fallen': {
       const analysis = options.analysis ?? analyzeMechanism(design);
       const h = summary.comHeight ?? estimateComHeight(design, analysis);
@@ -115,6 +126,48 @@ export function diagnoseFailure(
     case 'timeout':
       return diagnosisFor(summary.distance < -WRONG_WAY_DISTANCE ? 'wrongWay' : 'timeout');
   }
+}
+
+/**
+ * 止まった位置で、脚先が届く前後の範囲に上り段差(STUMBLE_STEP 以上)があるか。
+ * 機体の位置はクランク軸がスタートから summary.distance だけ進んだ所とみなす(重心とほぼ同じ)。
+ */
+export function stepUnderfoot(
+  stage: StageDef,
+  design: DesignDoc,
+  summary: RunSummary,
+  analysis: MechanismAnalysis = analyzeMechanism(design),
+): boolean {
+  const reach = footReach(design, analysis);
+  if (reach === null) return false;
+  const x = stage.start.x + summary.distance;
+  const z = stage.start.z;
+  const dx = 0.01;
+  let prev = terrainHeightAt(stage.terrain, x - reach, z);
+  for (let px = x - reach + dx; px <= x + reach + 1e-9; px += dx) {
+    const h = terrainHeightAt(stage.terrain, px, z);
+    if (Number.isFinite(h) && Number.isFinite(prev) && h - prev >= STUMBLE_STEP) return true;
+    prev = h;
+  }
+  return false;
+}
+
+/**
+ * 脚先がクランク軸から前後に届く距離(m)+ 接触球の半径。前後反転した脚もあるので前後で同じとみなす。
+ * 脚先がない・一回転できないときは null
+ */
+function footReach(design: DesignDoc, analysis: MechanismAnalysis): number | null {
+  const f = analysis.compiled.footIndex;
+  const { cycle } = analysis;
+  if (f < 0 || !cycle.fullRotation) return null;
+  const px = pivotOf(design).x;
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const p of cycle.positions) {
+    lo = Math.min(lo, p[f * 2]! - px);
+    hi = Math.max(hi, p[f * 2]! - px);
+  }
+  return Math.max(hi, -lo, 0) * CM + DEFAULT_SIM_PARAMS.footRadius;
 }
 
 /** 最初のクランクの軸(なければ原点)。脚列の反転もこの x を中心にする(mirrorDesignX と同じ) */

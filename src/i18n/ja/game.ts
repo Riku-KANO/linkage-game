@@ -89,6 +89,9 @@ export const game: Record<string, string> = {
   'game.fail.overBudget.advice': '脚の数を減らすか、リンクを短くしてコストを下げよう',
   'game.fail.jammed': '機構が詰まった',
   'game.fail.jammed.advice': 'リンクが伸びきる所で引っかかっている。長さを見直そう',
+  'game.fail.stumbled': '段差につまずいた',
+  'game.fail.stumbled.advice':
+    '脚先が段差の側面に引っかかって止まった。足を段差より高く上げ、上から下ろす軌道にしよう',
   'game.fail.stalled': 'トルク不足',
   'game.fail.stalled.advice': 'モーターの力が足りない。回転数を下げるか、クランクを短くしよう',
   'game.fail.topHeavy': '重心が高い',

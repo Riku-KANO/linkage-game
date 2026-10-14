@@ -190,9 +190,20 @@ export interface PreflightResult {
   problems: PreflightProblem[];
 }
 
-/** 結果画面に出す失敗理由(FailReason を細かくしたもの) */
+/**
+ * 結果画面に出す失敗理由(FailReason を細かくしたもの)。
+ * (TUNE-2 で追加)stumbled:段差の側面に脚先が引っかかって止まった(停動のうち、足元に上り段差があるもの)
+ */
 export type FailCause =
-  'invalid' | 'overBudget' | 'jammed' | 'stalled' | 'topHeavy' | 'fallen' | 'wrongWay' | 'timeout';
+  | 'invalid'
+  | 'overBudget'
+  | 'jammed'
+  | 'stumbled'
+  | 'stalled'
+  | 'topHeavy'
+  | 'fallen'
+  | 'wrongWay'
+  | 'timeout';
 
 export interface FailureDiagnosis {
   cause: FailCause;

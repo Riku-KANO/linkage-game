@@ -7,6 +7,7 @@ import {
   estimateComHeight,
   FAIL_CAUSES,
   isTopHeavy,
+  stepUnderfoot,
   supportMargin,
 } from './diagnose';
 import { preflight } from './preflight';
@@ -46,6 +47,22 @@ describe('failure diagnosis (GAME-6)', () => {
 
   it('reports torque shortage when the motor stalled', () => {
     expect(diagnoseFailure(stage, walker, run({ stalled: true }))?.cause).toBe('stalled');
+  });
+
+  it('tells stumbling at a step from torque shortage by the terrain under the feet', () => {
+    const s = getStage('c2-s1')!;
+    const shuffler = s.initialDesign!;
+    const stalled = (distance: number) => run({ stalled: true, distance });
+    // 段差(x = 1.2m)に脚先が届く所で止まった
+    expect(diagnoseFailure(s, shuffler, stalled(0.7))?.cause).toBe('stumbled');
+    expect(diagnoseFailure(s, shuffler, stalled(1.5))?.cause).toBe('stumbled');
+    expect(stepUnderfoot(s, shuffler, stalled(0.7))).toBe(true);
+    // 段差から離れた平らな所で止まったならトルク不足(段差の上を含む。下り段差は数えない)
+    expect(diagnoseFailure(s, shuffler, stalled(-0.5))?.cause).toBe('stalled');
+    expect(diagnoseFailure(s, shuffler, stalled(2.5))?.cause).toBe('stalled');
+    expect(stepUnderfoot(s, shuffler, stalled(2.5))).toBe(false);
+    // 平らなステージでは段差につまずかない
+    expect(diagnoseFailure(stage, walker, stalled(1))?.cause).toBe('stalled');
   });
 
   it('reports a jammed mechanism', () => {

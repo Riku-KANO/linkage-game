@@ -29,6 +29,7 @@ import { Wasteland } from './env/Wasteland';
 import { WindowHotspot } from './env/WindowHotspot';
 import { Workbench } from './env/Workbench';
 import { MenuObject } from './home/MenuObject';
+import { useSceneUi } from './store';
 import { PerfProbe } from './perf/PerfProbe';
 import { KinematicWalker } from './walker/KinematicWalker';
 
@@ -75,6 +76,8 @@ export function WorkshopCanvas({
   measurePerf: boolean;
 }) {
   const lowPerf = useApp((s) => s.settings.lowPerf);
+  // 本物の試走がコースを使っている間は、仮置きの見本機を出さない(app の試走画面が立てる)
+  const trackBusy = useSceneUi((s) => s.trackBusy);
   const camera = useMemo(() => new BlendCamera(42, 16 / 9, 0.05, 900), []);
   return (
     <Canvas
@@ -136,7 +139,7 @@ export function WorkshopCanvas({
           <Toolbox />
         </MenuObject>
         <BootLogo />
-        <TestTrackMachine />
+        {!trackBusy && <TestTrackMachine />}
         {children}
         <CameraRig />
         <CrossFade />

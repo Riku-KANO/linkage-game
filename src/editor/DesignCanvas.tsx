@@ -115,6 +115,8 @@ export interface DesignCanvasProps {
 
 type Gesture =
   | { kind: 'pan'; id: number; sx: number; sy: number; cam0: Camera }
+  /** 動かせない点をつかんだ:動かそうとしたら一度だけ知らせる */
+  | { kind: 'blocked'; id: number; sx: number; sy: number; told: boolean }
   | {
       kind: 'drag';
       id: number;
@@ -406,7 +408,8 @@ export function DesignCanvas(props: DesignCanvasProps) {
           else next = isJ ? { joints: [hit.id], links: [] } : { joints: [], links: [hit.id] };
           s.setSelection(next);
           if (isJ && locked.has(hit.id)) {
-            onNotice('editor.notice.locked', 'error');
+            gesture.current = { kind: 'blocked', id: e.pointerId, sx, sy, told: false };
+            svgRef.current?.setPointerCapture?.(e.pointerId);
             return;
           }
           const stillSelected = isJ ? next.joints.includes(hit.id) : next.links.includes(hit.id);
@@ -572,6 +575,13 @@ export function DesignCanvas(props: DesignCanvasProps) {
       if (g.id !== e.pointerId) return;
     }
     switch (g.kind) {
+      case 'blocked':
+        if (!g.told && Math.hypot(sx - g.sx, sy - g.sy) >= CLICK_TOL_PX) {
+          g.told = true;
+          onNotice('editor.notice.locked', 'error');
+          playSfx('error');
+        }
+        return;
       case 'pan':
         setCam(panBy(g.cam0, sx - g.sx, sy - g.sy));
         return;
@@ -624,6 +634,9 @@ export function DesignCanvas(props: DesignCanvasProps) {
       case 'pan':
         gesture.current = null;
         setPanning(false);
+        return;
+      case 'blocked':
+        gesture.current = null;
         return;
       case 'drag': {
         gesture.current = null;

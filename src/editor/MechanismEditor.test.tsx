@@ -111,4 +111,27 @@ describe('MechanismEditor (smoke)', () => {
     act(() => S().undo());
     expect(S().design).toBe(before);
   });
+
+  it('writes the leg layout into the design and previews every leg', () => {
+    const { container } = render(<MechanismEditor />);
+    const count = screen.getByLabelText(t('editor.legs.count')) as HTMLInputElement;
+    fireEvent.change(count, { target: { value: '3' } });
+    expect(S().design.legs.count).toBe(3);
+    const mirror = screen.getByLabelText(t('editor.legs.mirror')) as HTMLInputElement;
+    fireEvent.click(mirror);
+    expect(S().design.legs.mirrorX).toBe(true);
+    expect(container.querySelectorAll('.ed-legs-preview circle').length).toBe(6);
+  });
+
+  it('sets a bar length from the numeric input', () => {
+    act(() => S().setSelection({ joints: [], links: ['crank'] }));
+    render(<MechanismEditor />);
+    const input = screen.getByLabelText(t('editor.sel.length')) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '12' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    const d = S().design;
+    const o = d.joints.find((j) => j.id === 'O')!;
+    const a = d.joints.find((j) => j.id === 'A')!;
+    expect(Math.hypot(a.x - o.x, a.y - o.y)).toBeCloseTo(12, 6);
+  });
 });

@@ -137,3 +137,17 @@ describe('interpolateCycle', () => {
     expect(p0.x).toBeCloseTo(cycle.positions[0]![mech.footIndex * 2]!, 9);
   });
 });
+
+describe('frame cost', () => {
+  it('solves a Jansen frame well under a millisecond on average', () => {
+    const { e } = engineFor(jansenLeg(), -40);
+    let t = 0;
+    for (let i = 0; i < 50; i++) e.tick((t += 17));
+    const t0 = performance.now();
+    const frames = 600;
+    for (let i = 0; i < frames; i++) e.tick((t += 17));
+    const ms = (performance.now() - t0) / frames;
+    // generous bound so CI stays stable; typical is a few microseconds
+    expect(ms).toBeLessThan(1);
+  });
+});

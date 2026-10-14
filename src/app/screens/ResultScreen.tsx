@@ -38,6 +38,7 @@ export function ResultScreen(_props: ScreenOverlayProps) {
         result={outcome.result}
         stage={outcome.stage}
         reasonKey={outcome.diagnosis?.key}
+        adviceKey={outcome.diagnosis?.adviceKey}
         design={outcome.design}
         ghost={outcome.ghost}
         opponent={opponent ?? undefined}

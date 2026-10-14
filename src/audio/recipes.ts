@@ -145,22 +145,22 @@ function snap(rnd: Rand): Layer[] {
   const g = vary(rnd, 1, 0.08);
   const t2 = vary(rnd, 0.014, 0.12);
   return [
-    click(rnd, 0, 'bandpass', 2300 * p, 1.2, 0.012, 0.8 * g),
+    click(rnd, 0, 'bandpass', 2300 * p, 1.2, 0.012, 1.1 * g),
     {
       kind: 'modal',
       at: 0,
       material: 'wood',
       base: 420 * p,
-      partials: wood([0.16, 0.06], [0.03, 0.018]),
+      partials: wood([0.24, 0.09], [0.03, 0.018]),
       attack: 0.0008,
     },
-    click(rnd, t2, 'highpass', 4200 * p, 0.7, 0.008, 0.28 * g),
+    click(rnd, t2, 'highpass', 4200 * p, 0.7, 0.008, 0.4 * g),
     {
       kind: 'modal',
       at: t2,
       material: 'metal',
       base: 2900 * vary(rnd, p, 0.02),
-      partials: bar([0.07, 0.035, 0.014], [0.09, 0.05, 0.03]),
+      partials: bar([0.1, 0.05, 0.02], [0.09, 0.05, 0.03]),
       attack: 0.0005,
     },
   ];
@@ -210,13 +210,13 @@ function release(rnd: Rand): Layer[] {
   const p = vary(rnd, 1, 0.03);
   const g = vary(rnd, 1, 0.06);
   return [
-    click(rnd, 0, 'bandpass', 2800 * p, 2, 0.006, 0.3 * g),
+    click(rnd, 0, 'bandpass', 2800 * p, 2, 0.006, 0.42 * g),
     {
       kind: 'modal',
       at: 0.006,
       material: 'wood',
       base: 270 * p,
-      partials: wood([0.2 * g, 0.08 * g, 0.035 * g], [0.05, 0.03, 0.018]),
+      partials: wood([0.28 * g, 0.11 * g, 0.05 * g], [0.05, 0.03, 0.018]),
       attack: 0.0015,
       drop: 1.12,
       dropTime: 0.012,
@@ -230,7 +230,7 @@ function release(rnd: Rand): Layer[] {
       q: 0.7,
       attack: 0.001,
       decay: 0.018,
-      gain: 0.2 * g,
+      gain: 0.28 * g,
       offset: rnd(),
     },
   ];
@@ -325,14 +325,23 @@ function gear(rnd: Rand): Layer[] {
     const k = 1 - i * 0.08;
     // 爪と歯が交互に当たるので音程が 1 つおきに少し違う
     const alt = i % 2 === 1 ? 1.06 : 1;
-    layers.push(click(rnd, t, 'bandpass', 3300 * alt * p, 2.5, 0.005, 0.5 * k));
+    layers.push(click(rnd, t, 'bandpass', 3300 * alt * p, 2.5, 0.005, 0.9 * k));
     layers.push({
       kind: 'modal',
       at: t,
       material: 'metal',
       base: 1850 * alt * vary(rnd, p, 0.01),
-      partials: bar([0.05 * k, 0.02 * k], [0.028, 0.015]),
+      partials: bar([0.1 * k, 0.04 * k], [0.028, 0.015]),
       attack: 0.0004,
+    });
+    // 歯車を受ける木の軸受けの小さな胴鳴り
+    layers.push({
+      kind: 'modal',
+      at: t,
+      material: 'wood',
+      base: 470 * p,
+      partials: wood([0.09 * k], [0.02]),
+      attack: 0.0008,
     });
     t += interval * vary(rnd, 1, 0.05);
     interval *= 1.04;

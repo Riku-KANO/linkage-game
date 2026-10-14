@@ -37,6 +37,7 @@ export const editor: Record<string, string> = {
   'editor.notice.crankNoFixed': 'クランクにするリンクには固定点が 1 つ必要です',
   'editor.notice.crankMultiFixed': '固定点が 2 つあるリンクは回せません',
   'editor.notice.locked': 'この点は動かせません',
+  'editor.notice.limit': '部品が多すぎます(点は {joints} 個、棒は {links} 本まで)',
   'editor.notice.noPin': 'このステージでは既存の点に棒をつなげません',
   'editor.notice.copied': '{n} 点をコピーしました',
 

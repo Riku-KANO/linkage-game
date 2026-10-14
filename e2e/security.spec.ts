@@ -158,6 +158,7 @@ test.describe('production headers (SEC-1, SEC-4)', () => {
     );
     expect(csp['default-src']).toBe("'self'");
     expect(csp['script-src']).toBe("'self' 'wasm-unsafe-eval'");
+    expect(csp['style-src']).toBe("'self'");
     expect(csp['object-src']).toBe("'none'");
     expect(csp['base-uri']).toBe("'none'");
     expect(csp['frame-ancestors']).toBe("'none'");

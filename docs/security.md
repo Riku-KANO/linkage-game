@@ -97,7 +97,7 @@ localStorage ─ createPersistence ─ 値の長さ上限 → safeJsonParse → 
 | CSP `default-src` | `'self'` | 外部の読み込み・通信を一切しない |
 | `script-src` | `'self' 'wasm-unsafe-eval'` | Rapier・meshopt の WASM だけ許可。`eval`・`new Function`・文字列のタイマーは止まる |
 | `require-trusted-types-for` / `trusted-types` | `'script'` / `'none'` | `innerHTML`・`script.src`・`new Worker(文字列)` などに文字列を渡すと例外。ポリシーも作らせない。全画面(`?dev=` 含む)で違反ゼロを E2E で確認 |
-| `style-src` | `'self' 'unsafe-inline'` | `?dev=result` のプレイグラウンドだけが `<style>` 要素を使う。それを外部 CSS にすれば `'self'` にできる(他の全画面は `'self'` で違反なしを確認済み) |
+| `style-src` | `'self'` | `<style>` 要素を使っていたプレイグラウンド(result・hud・guide)の CSS をファイルに移して `'unsafe-inline'` を外した。React の style 属性は CSSOM 経由なので影響しない |
 | `img-src` | `'self' data: blob:` | GLB に埋め込まれたテクスチャを GLTFLoader が Blob URL で読む |
 | `connect-src` / `font-src` / `media-src` / `worker-src` | `'self'` | |
 | `frame-src` / `object-src` / `base-uri` / `form-action` / `frame-ancestors` | `'none'` | 埋め込み・プラグイン・`<base>`・フォーム送信を使わない。他サイトへの埋め込み禁止 |
@@ -179,7 +179,7 @@ E2E と `pnpm serve:dist` が使う。本番(Cloudflare)ではない。
 | 低 | `src/core/kinematics/solve.ts`(`runNewton`)・`compile.ts` | 密行列のニュートン法は未知点の数の 3 乗。上限いっぱいで 1 ステップ 17ms(16 組) | ニュートン法のブロックの大きさに上限(例:24 点)を置き、超えたら compile の issue にして試走前チェックで止める |
 | 低 | `src/testrun/clock.ts` | 1 フレームの上限はステップ数(40)だけ。重い設計だと 1 フレーム 0.7 秒 | 実時間の予算(例:12ms)を超えたら残りを捨てる |
 | 低 | `src/game/run.ts`(`runStage`)| ヘッドレス試走は同期で最大 7200 ステップ。最悪 2 分メインスレッドを止める | 分割実行か Worker、実時間の打ち切り |
-| 低 | `src/dev/ResultPlayground.tsx:62` | `<style>{CSS}</style>` が CSP の `style-src 'unsafe-inline'` を必要にしている唯一の箇所 | CSS ファイルに移し、`_headers` を `style-src 'self'` にする |
+| 低 | `src/dev/ResultPlayground.tsx:62` | `<style>{CSS}</style>` が CSP の `style-src 'unsafe-inline'` を必要にしている唯一の箇所 | 対応済み:CSS ファイルに移し `style-src 'self'` に |
 | 情報 | `scripts/wt.sh gate` | `--frozen-lockfile` が失敗すると通常の install に落ちて、合流中に解決済みの版が変わりうる | 失敗させる(ロックファイルを直してから合流) |
 | 情報 | `src/i18n/index.ts` | `dictionaries[current][key]` と `hasKey`(`in`)はプロトタイプのキーも引く。キーはコード内の定数なので今は無害 | `Object.hasOwn` を使う |
 | 情報 | FLOW-3・FLOW-5(未実装) | 共有リンク・ファイルの読み込みの配線 | 必ず `decodeShare` / `readDesignFile` を通す。`loadSettings` の guard は既知のフィールドだけで新しいオブジェクトを作る |

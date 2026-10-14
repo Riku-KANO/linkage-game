@@ -77,6 +77,25 @@ export const MAX_LEG_SPACING_CM = 200;
 export type ValidateResult =
   { ok: true; design: DesignDoc; warnings: string[] } | { ok: false; errors: string[] };
 
+/**
+ * 設計が読み込める大きさの上限を超えているか(エディタが編集を止めるのに使う)。
+ * 超えた設計は自動保存されても読み込めなくなるため、作る段階で防ぐ。
+ */
+export function exceedsDesignLimits(d: {
+  joints: readonly unknown[];
+  links: readonly { joints: readonly unknown[] }[];
+  cranks: readonly unknown[];
+}): boolean {
+  if (d.joints.length > MAX_JOINTS || d.links.length > MAX_LINKS || d.cranks.length > MAX_CRANKS)
+    return true;
+  let memberships = 0;
+  for (const l of d.links) {
+    if (l.joints.length > MAX_LINK_JOINTS) return true;
+    memberships += l.joints.length;
+  }
+  return memberships > MAX_LINK_MEMBERSHIPS;
+}
+
 export function validateDesign(input: unknown): ValidateResult {
   try {
     return validateInner(input);

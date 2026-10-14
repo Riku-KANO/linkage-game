@@ -21,6 +21,7 @@ import { FIGURE_DESIGNS } from '@/guide/figures/designs';
 import { analyzeFigure, boundsOf, fitMap, jointPath, poseAt } from '@/guide/figures/motion';
 import { t } from '@/i18n';
 import { LinkButton, useReducedMotion } from '@/ui/mech';
+import './GuidePlayground.css';
 
 /**
  * 開発用プレイグラウンド(?dev=guide)。遊び方の本・用語集・操作一覧・はじめての方へを開き、
@@ -84,7 +85,6 @@ export default function GuidePlayground() {
 
   return (
     <div className="gddev">
-      <style>{CSS}</style>
       <aside className="gddev-controls">
         <h1>{t('guide.dev.title')}</h1>
         <label>
@@ -286,26 +286,3 @@ function DesignPreview({
     </FigureSvg>
   );
 }
-
-const CSS = `
-.gddev { position: fixed; inset: 0; display: grid; grid-template-columns: 260px 1fr; background:
-  radial-gradient(120% 90% at 60% 30%, #3a271a 0%, #1b130e 70%); color: var(--text); overflow: auto; }
-.gddev-controls { display: flex; flex-direction: column; gap: 10px; padding: 18px 16px;
-  background: rgba(0,0,0,0.25); border-right: 1px solid rgba(201,154,91,0.2); font-size: 13px; }
-.gddev-controls h1 { font-size: 15px; margin: 0 0 4px; }
-.gddev-controls label { display: flex; flex-direction: column; gap: 4px; }
-.gddev-controls label:has(input[type=checkbox]) { flex-direction: row; align-items: center; }
-.gddev select { font: inherit; padding: 4px; background: #2a1c13; color: var(--text);
-  border: 1px solid rgba(201,154,91,0.35); border-radius: 4px; }
-.gddev-log { margin-top: 8px; font: 11px var(--mech-mono, monospace); color: var(--muted); display: grid; gap: 2px; }
-.gddev-main { padding: 22px 28px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.gddev-tips h2 { margin: 0 0 8px; font-size: 16px; }
-.gddev-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
-.gddev-row label { display: flex; flex-direction: column; gap: 4px; }
-.gddev-stage { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; margin-top: 12px; }
-.gddev-paper { width: 320px; min-height: 230px; padding: 8px; border-radius: 8px; background: #f2e8d2; }
-.gddev-bubble { flex: 1; min-width: 280px; padding-top: 8px; }
-.gddev-muted { color: var(--muted); font-size: 12px; }
-.gddev-terms { font-size: 14px; line-height: 1.8; max-width: 760px; }
-.gddev-welcome { position: fixed; right: 32px; bottom: 32px; }
-`;

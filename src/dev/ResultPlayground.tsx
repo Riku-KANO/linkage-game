@@ -18,6 +18,7 @@ import {
 } from '@/result/samples';
 import type { ShareRun } from '@/core/model';
 import { GearMeter, LinkButton, LinkagePanel, PressStamp } from '@/ui/mech';
+import './ResultPlayground.css';
 
 /**
  * 開発用プレイグラウンド(?dev=result)。結果画面の見本(クリア・失敗・対戦)を切り替え、
@@ -59,7 +60,6 @@ export default function ResultPlayground() {
 
   return (
     <div className="rsdev">
-      <style>{CSS}</style>
       <Backdrop />
       <aside className="rsdev-controls">
         <h1>{t('result.dev.title')}</h1>
@@ -313,35 +313,3 @@ function Backdrop() {
     </div>
   );
 }
-
-const CSS = `
-.rsdev { position: fixed; inset: 0; overflow: hidden; font-size: 13px;
-  background:
-    radial-gradient(60% 55% at 28% 38%, rgba(255, 168, 88, 0.22), transparent 70%),
-    radial-gradient(40% 30% at 80% 10%, rgba(120, 140, 200, 0.10), transparent 70%),
-    linear-gradient(180deg, #2c1d14 0%, #1b130e 62%, #120c08 100%); }
-.rsdev-backdrop { position: absolute; left: 0; top: 0; bottom: 0; width: calc(100% - 600px); display: grid; place-items: center; }
-.rsdev-backdrop svg { width: min(90%, 640px); height: auto; filter: drop-shadow(0 10px 14px rgba(0,0,0,0.45)); }
-.rsdev-controls { position: absolute; left: 16px; top: 16px; width: 250px; display: flex; flex-direction: column; gap: 8px;
-  padding: 12px 14px; border-radius: 8px; background: rgba(18, 12, 8, 0.82); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); z-index: 2; }
-.rsdev-controls h1 { margin: 0 0 2px; font-size: 14px; }
-.rsdev-controls fieldset { margin: 0; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; display: flex; flex-direction: column; gap: 3px; }
-.rsdev-controls label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
-.rsdev-tabs { display: flex; gap: 4px; }
-.rsdev-tabs button { flex: 1; padding: 4px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.14); background: transparent; color: var(--muted); cursor: pointer; }
-.rsdev-tabs button.is-on { background: rgba(242,166,90,0.2); color: var(--text); border-color: rgba(242,166,90,0.5); }
-.rsdev-log { font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; }
-.rsdev-muted { color: var(--muted); }
-.rsdev-dock { position: absolute; top: 0; bottom: 0; right: 24px; display: flex; align-items: center; z-index: 1; }
-.rsdev-kit { position: absolute; left: 290px; right: 24px; top: 16px; bottom: 16px; overflow: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; z-index: 1; }
-.rsdev-kit section { padding: 14px; border-radius: 10px; background: rgba(18, 12, 8, 0.7); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); display: flex; flex-direction: column; gap: 12px; }
-.rsdev-kit h2 { margin: 0; font-size: 13px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
-.rsdev-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.rsdev-col { display: flex; flex-direction: column; gap: 8px; }
-.rsdev-col label { display: flex; flex-direction: column; gap: 4px; }
-.rsdev-press { width: 74px; height: 138px; }
-.rsdev-press--small { width: 44px; height: 82px; }
-.rsdev-panelslot { height: 170px; padding-top: 4px; }
-.rsdev-panel { width: 340px; }
-.rsdev-panel p { margin: 0 0 8px; line-height: 1.6; }
-`;

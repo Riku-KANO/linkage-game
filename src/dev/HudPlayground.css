@@ -1,0 +1,215 @@
+.hudev {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+  font-size: 12.5px;
+  background:
+    radial-gradient(60% 55% at 30% 40%, rgba(255, 168, 88, 0.2), transparent 70%),
+    radial-gradient(40% 30% at 80% 10%, rgba(120, 140, 200, 0.1), transparent 70%),
+    linear-gradient(180deg, #2c1d14 0%, #1b130e 62%, #120c08 100%);
+}
+.hudev-bar,
+.hudev-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 6px 12px;
+  background: rgba(12, 8, 5, 0.88);
+  border-bottom: 1px solid #3e2f23;
+  z-index: 5;
+}
+.hudev-controls {
+  padding: 5px 12px;
+  background: rgba(18, 12, 8, 0.82);
+}
+.hudev-title {
+  font-size: 13px;
+  margin-right: 4px;
+}
+.hudev-tabs {
+  display: flex;
+  gap: 4px;
+}
+.hudev-tabs button,
+.hudev-controls button,
+.hudev-chip {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.hudev-tabs button.is-on {
+  background: rgba(242, 166, 90, 0.2);
+  color: var(--text);
+  border-color: rgba(242, 166, 90, 0.5);
+}
+.hudev-chip[data-kind='error'] {
+  border-color: rgba(224, 83, 61, 0.5);
+}
+.hudev-chip[data-kind='warn'] {
+  border-color: rgba(224, 167, 58, 0.5);
+}
+.hudev-chip[data-kind='chapter'],
+.hudev-chip[data-kind='part'] {
+  border-color: rgba(232, 194, 135, 0.6);
+  color: #e8c287;
+}
+.hudev-controls label,
+.hudev-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hudev-controls select,
+.hudev-controls input[type='number'] {
+  background: #120c08;
+  color: var(--text);
+  border: 1px solid #3e2f23;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.hudev-controls input[type='number'] {
+  width: 46px;
+}
+.hudev-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.hudev-muted {
+  color: var(--muted);
+}
+.hudev-last {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 32ch;
+}
+.hudev-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+.hudev-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hudev-window {
+  position: absolute;
+  right: 12%;
+  top: 8%;
+  width: 26%;
+  height: 36%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255, 170, 100, 0.2), rgba(120, 80, 140, 0.12));
+  box-shadow:
+    inset 0 0 0 6px rgba(42, 28, 19, 0.9),
+    0 0 60px rgba(255, 168, 88, 0.12);
+  opacity: 0.6;
+}
+.hudev-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26%;
+  background: linear-gradient(180deg, rgba(70, 50, 31, 0.9), rgba(29, 20, 13, 1));
+  box-shadow: 0 -1px 0 rgba(201, 154, 91, 0.3);
+}
+.hudev-paper {
+  position: absolute;
+  top: 16px;
+  left: 372px;
+  right: 16px;
+  bottom: 176px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(201, 154, 91, 0.25);
+}
+.hudev-paper--fake {
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(rgba(58, 104, 126, 0.12) 1px, transparent 1px) 0 0 / 100% 20px,
+    linear-gradient(90deg, rgba(58, 104, 126, 0.12) 1px, transparent 1px) 0 0 / 20px 100%,
+    #f2e8d2;
+}
+.hudev-paper--fake .hudev-machine {
+  width: min(70%, 520px);
+  height: auto;
+}
+.hudev-paper--fake polygon {
+  stroke: #2b2118;
+}
+.hudev-paper--fake circle {
+  fill: #e0761c;
+}
+.hudev-walker {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  width: min(38vw, 460px);
+  margin-left: calc(min(38vw, 460px) / -2);
+  will-change: transform;
+  pointer-events: none;
+}
+.hudev-machine {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 90%;
+  transition: transform 0.6s;
+}
+.hudev-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: auto;
+}
+.hudev-side {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.hudev-logo {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  color: #e8c287;
+  text-shadow: 0 0 30px rgba(242, 166, 90, 0.35);
+}
+.hudev-logo span {
+  font-size: 54px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+}
+.hudev-logo small {
+  font-size: 14px;
+  letter-spacing: 0.6em;
+  color: var(--muted);
+}

@@ -3,9 +3,10 @@ import type { DesignDoc } from './types';
 import { isBoolean, isFiniteNumber, isInteger, isRecord, isString, safeJsonParse } from './guards';
 import type { Ghost } from './ghost';
 import { decodeGhostCompact, encodeGhostCompact, validateGhost } from './ghost';
-import { validateDesign } from './validate';
+import { MAX_CRANKS, MAX_JOINTS, MAX_LINK_JOINTS, MAX_LINKS, validateDesign } from './validate';
 import { readDesign } from './migrate';
 import type { LoadFailure } from './migrate';
+import { decompressFromEncodedURIComponentBounded } from './lz';
 
 /**
  * 共有リンク(MOD-3、U-02)。サーバーなしで、設計(+任意でスコアとゴースト)を URL に埋め込む。
@@ -15,6 +16,9 @@ import type { LoadFailure } from './migrate';
  * 必ず URL のフラグメント(# の後ろ)に置く。クエリに置くとサーバーのログやリファラに残るため。
  * 読み込みは短縮形式の版ごとの読み取り → migrate → validateDesign を通す。
  * 短縮形式の版(SHARE_FORMAT)は設計の版(DESIGN_VERSION)と一緒に上げ、古い版の読み取りは残す。
+ *
+ * 共有リンクは誰でも作れる信用できない入力(SEC-3)。読み込みの時間とメモリを有限にするため、
+ * トークンの長さ → 展開後の長さ(上限つきの展開、lz.ts)→ 配列の長さ、の順に、物を作る前に上限を調べる。
  */
 
 /** フラグメントのキー */
@@ -23,6 +27,12 @@ export const SHARE_PARAM = 's';
 export const SHARE_FORMAT = 1;
 /** これより長いトークンは読まない(展開で大量のメモリを使わせないため) */
 export const MAX_SHARE_TOKEN_LENGTH = 24000;
+/**
+ * 展開後の JSON の長さの上限(文字数)。lz-string は 1 文字ずつ長くなる辞書で、24000 文字のトークンが
+ * 6000 万文字に膨らむ(展開爆弾)。正しい共有リンクは、上限いっぱいのゴースト(6000 フレーム)でも
+ * 60 万文字に届かない
+ */
+export const MAX_SHARE_JSON_LENGTH = 1_000_000;
 
 /** 送り主の記録。結果画面で並べて比べる */
 export interface ShareRun {
@@ -136,6 +146,10 @@ export function decodeShare(hashOrUrl: string): ShareDecodeResult {
 function decodeInner(hashOrUrl: string): ShareDecodeResult {
   let token = extractShareToken(hashOrUrl);
   if (!token) return { ok: false, reason: 'empty', errors: [] };
+  // % でエスケープされていても 1 文字は最大 3 文字。それより長ければ展開する前に捨てる
+  if (token.length > MAX_SHARE_TOKEN_LENGTH * 3) {
+    return { ok: false, reason: 'corrupt', errors: ['共有リンクが長すぎます'] };
+  }
   if (token.includes('%')) {
     try {
       token = decodeURIComponent(token);
@@ -148,7 +162,11 @@ function decodeInner(hashOrUrl: string): ShareDecodeResult {
   if (token.length > MAX_SHARE_TOKEN_LENGTH) {
     return { ok: false, reason: 'corrupt', errors: ['共有リンクが長すぎます'] };
   }
-  const json = LZString.decompressFromEncodedURIComponent(token);
+  const unpacked = decompressFromEncodedURIComponentBounded(token, MAX_SHARE_JSON_LENGTH);
+  if (!unpacked.ok && unpacked.reason === 'too-large') {
+    return { ok: false, reason: 'corrupt', errors: ['共有リンクの中身が大きすぎます'] };
+  }
+  const json = unpacked.ok ? unpacked.text : '';
   if (!json) return { ok: false, reason: 'corrupt', errors: ['共有リンクを展開できません'] };
   const parsed = safeJsonParse(json);
   if (!parsed.ok)
@@ -245,6 +263,17 @@ function decodeDesignV1(
   const [name, ids, coords, fixed, links, cranks, foot, rpm, legs] = v as unknown[];
   const errors: string[] = [];
   if (!Array.isArray(ids)) return { ok: false, errors: ['design.ids: 配列ではありません'] };
+  // 物を作る前に配列の長さを調べる(validateDesign と同じ上限。巨大な配列から大量のオブジェクトを作らない)
+  const tooMany = (arr: unknown, max: number) => Array.isArray(arr) && arr.length > max;
+  if (
+    tooMany(ids, MAX_JOINTS) ||
+    tooMany(fixed, MAX_JOINTS) ||
+    tooMany(links, MAX_LINKS) ||
+    tooMany(cranks, MAX_CRANKS) ||
+    (Array.isArray(links) && links.some((l: unknown) => tooMany(l, MAX_LINK_JOINTS + 1)))
+  ) {
+    return { ok: false, errors: ['design: ジョイント・リンク・クランクが多すぎます'] };
+  }
   if (!Array.isArray(coords) || coords.length !== ids.length * 2) {
     return { ok: false, errors: ['design.coords: 座標の数が合いません'] };
   }

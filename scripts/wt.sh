@@ -40,7 +40,11 @@ case "$cmd" in
     if ! git merge --no-ff --no-commit "$branch"; then
       echo "GATE: merge conflict. Resolve in main checkout, or 'git merge --abort'"; exit 1
     fi
-    pnpm install --frozen-lockfile --prefer-offline --silent || pnpm install --prefer-offline --silent
+    # ロックファイルと食い違えば止める(合流の途中で依存の版が変わらないように)
+    if ! pnpm install --frozen-lockfile --prefer-offline --silent; then
+      git merge --abort
+      echo "GATE: FAIL — lockfile out of date after merge; run pnpm install on the branch and commit the lockfile"; exit 1
+    fi
     echo "== verify merged main (+ E2E in a real browser)"
     if node scripts/verify.mjs --e2e; then
       git commit --no-edit -m "Merge $branch" >/dev/null

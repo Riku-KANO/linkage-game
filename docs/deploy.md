@@ -29,3 +29,10 @@ pnpm deploy                  # deps:check(脆弱性 0・最新)→ verify → cf
 - `cf` と `@cloudflare/vite-plugin` はベータを版固定している。`pnpm deps:update` が同じベータ系列の最新へ上げる
   (`cf init` が入れた古いベータのプラグインは miniflare 経由で undici・sharp の既知の脆弱性 11 件を含んでいたため、最新ベータへ更新して 0 件にした)
 - `cf pages deploy <dir>` で従来の Pages に出すこともできるが、`cf` の標準経路(`cf deploy`)に合わせた
+
+## CI(GitHub Actions)
+
+`.github/workflows/ci.yml`:push・プルリクエストごとに検証ゲート(E2E 込み)と依存の点検を回す。
+手動実行(workflow_dispatch)で「deploy」にチェックすると、合格後に `cf deploy` で配信する
+(リポジトリの Secrets に `CLOUDFLARE_API_TOKEN`、Environments に `production` が必要)。
+アクションはすべてコミット SHA で固定している。

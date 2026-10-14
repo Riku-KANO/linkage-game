@@ -136,46 +136,68 @@
 
 | ID | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- |
-| FLOW-1 | セッション状態(進行・設定の保存と読み込み、ステージごとの設計の自動保存) | 偽の Storage で純関数・ストアのテスト | todo |
-| FLOW-2 | 試走のライフサイクル:試走前チェック → 地形と sim の生成 → 評価・失敗診断 → 記録・解放の通知、前回の試走のゴースト | ヘッドレスで「参照解でクリア → 次が解放」のテスト | todo |
-| FLOW-3 | 共有リンクで起動:設計を読み込み、相手の記録とゴーストを対戦相手にする | テスト | todo |
-| FLOW-4 | チュートリアルとヒントの状態(エディタの変更を見て進める) | テスト | todo |
-| FLOW-5 | JSON の書き出し・読み込みの操作(U-03) | | todo |
-| FLOW-6 | `?dev=flow`:3D なしで遊べる通しのループ(ステージ選択 → 設計 → 2D 側面の試走 → 結果 → 次) | 目視 | todo |
+| FLOW-1 | セッション状態(進行・設定の保存と読み込み、ステージごとの設計の自動保存) | 偽の Storage で純関数・ストアのテスト | done(`useSession`/`createSessionStore`。設定は音量・動きの軽減・低性能モードを項目ごとに検査して保存。保存の失敗は通知 1 件に集約。selector は同じ参照を返す) |
+| FLOW-2 | 試走のライフサイクル:試走前チェック → 地形と sim の生成 → 評価・失敗診断 → 記録・解放の通知、前回の試走のゴースト | ヘッドレスで「参照解でクリア → 次が解放」のテスト | done(`LiveRun`:240Hz 固定ステップ、ゴール・転倒・詰まり・停動 2 秒・制限時間で終了。ライブ(不規則なフレーム・速度変更・一時停止)とヘッドレスがビット単位で一致、sim の runHeadless とも一致。comHeight はスタート時の直立姿勢の重心高さ。転倒の瞬間の再生は決定論で走らせ直す) |
+| FLOW-3 | 共有リンクで起動:設計を読み込み、相手の記録とゴーストを対戦相手にする | テスト | done(記録のステージが解放済みならそのステージ、未解放・記録なしはサンドボックス。壊れたリンクは通知して無視。どちらもフラグメントを消す) |
+| FLOW-4 | チュートリアルとヒントの状態(エディタの変更を見て進める) | テスト | done(試走前チェックはチュートリアルで渡した部品ではなくステージの部品で行う。最初から置いてある固定点・クランクで止めないため) |
+| FLOW-5 | JSON の書き出し・読み込みの操作(U-03) | | done |
+| FLOW-6 | `?dev=flow`:3D なしで遊べる通しのループ(ステージ選択 → 設計 → 2D 側面の試走 → 結果 → 次) | 目視 | done(jsdom の通しスモークテストのみ。ブラウザでの目視は未実施) |
 
 ### stream `hud` — `src/hud`, `src/dev/HudPlayground.tsx`, `src/i18n/ja/hud.ts`
 
 | ID | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- |
-| HUD-1 | 設計画面の枠:ステージ名・課題・制限、試走ボタンと試走前チェックの一覧、ヒント 3 段階、チュートリアルの吹き出し | props だけで動く表示部品。スモークテスト | todo |
-| HUD-2 | ステージ選択の一覧(章・解放状態・最高メダル、キーボード操作) | | todo |
-| HUD-3 | 設定パネル(音量・ミュート・動きを減らす・低性能モード・進行のリセット・JSON 入出力) | | todo |
-| HUD-4 | 通知(章・部品の解放、保存の失敗、共有リンクの読み込み) | | todo |
-| HUD-5 | 試走中の表示(時間・距離・ゴールまでの進み具合、設計に戻る) | | todo |
+| HUD-1 | 設計画面の枠:ステージ名・課題・制限、試走ボタンと試走前チェックの一覧、ヒント 3 段階、チュートリアルの吹き出し | props だけで動く表示部品。スモークテスト | done(StageHeader・BudgetMeter・TestRunButton・HintPanel・TutorialBubble。置き場は HudDock(画面の端、中央は空ける)、見出しとヒントはたためる。エラーがあると試走せず、押すと最初のエラーを onHighlight。ブラウザでの目視は未実施) |
+| HUD-2 | ステージ選択の一覧(章・解放状態・最高メダル、キーボード操作) | | done(StageSelectPanel:章 × ステージの格子を矢印・Home/End・Enter・Esc で操作、読み上げ名、「次」の強調、軸ごとのメダルの粒、下の欄に課題と最高記録。ホームの TextMenu と homeMenuItems) |
+| HUD-3 | 設定パネル(音量・ミュート・動きを減らす・低性能モード・進行のリセット・JSON 入出力) | | done(SettingsPanel。値は HudSettings(AppSettings にミュートを足した形)で受け取り onChange で返す。OS で動きを減らしているときはオンで固定。リセットは 2 段階で 8 秒で戻る) |
+| HUD-4 | 通知(章・部品の解放、保存の失敗、共有リンクの読み込み) | | done(NoticeStack:自動で消え、ホバー・フォーカス中は止まる。エラーは閉じるまで残る(role=alert)。解放は歯車と錠の飾り。列は呼び出し側が pushNotice・dismissNotice で持つ。unlockNotices・loadFailNotice・saveFailNotice・shareLoadedNotice) |
+| HUD-5 | 試走中の表示(時間・距離・ゴールまでの進み具合、設計に戻る) | | done(RunHud:時間/制限(残り 5 秒で注意)、距離とゴールまでの帯(ゴーストの印)、モーター負荷計、停動・転倒・詰まったの札、設計に戻る。毎フレームの更新は transform と SVG の属性だけ) |
 
 ### stream `guide` — `src/guide`, `src/dev/GuidePlayground.tsx`, `src/i18n/ja/guide.ts`(利用者の要望:遊び方とチュートリアルでわかりやすく)
 
 | ID | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- |
-| GUIDE-1 | 遊び方の本:ページごとに本物のソルバーで動く小さな機構の図(棒を引く・固定点とクランク・自由度 1 で動く/固まる/ぐらつく・良い脚先の軌道・脚列と位相・試走とメダル) | 全ページが表示でき、図が動く | todo |
-| GUIDE-2 | 用語の解説(自由度、グリューブラーの式、グラスホフの条件、死点、カップラーカーブ、てこクランク、脚列と位相):用語をクリックすると開く小窓 | 全用語に文言と図 | todo |
-| GUIDE-3 | 操作一覧(? キー):エディタのショートカットと同じ定義から作る | エディタと食い違わないテスト | todo |
-| GUIDE-4 | 状況に応じた一言(白紙、クランクがない、自由度≠1、一回転できない、後ろ向きに歩く、脚先が地面をこする 等)と、初回の「チュートリアルから / 遊び方を見る」 | 判定は純関数でテスト | todo |
+| GUIDE-1 | 遊び方の本:ページごとに本物のソルバーで動く小さな機構の図(棒を引く・固定点とクランク・自由度 1 で動く/固まる/ぐらつく・良い脚先の軌道・脚列と位相・試走とメダル) | 全ページが表示でき、図が動く | done:`HowToPlay`(8 ページ、前へ・次へ・← →・ページのピン・Esc)。図は sampleCycle/solvePose の姿勢(五節のぐらつきは補助機構を solvePose で解く)。動きを減らすと静止画。全ページの表示と「図が動く/止まる」を Vitest と E2E で確認 |
+| GUIDE-2 | 用語の解説(自由度、グリューブラーの式、グラスホフの条件、死点、カップラーカーブ、てこクランク、脚列と位相):用語をクリックすると開く小窓 | 全用語に文言と図 | done:`GLOSSARY` 9 語(+組立不能・特殊な寸法)、`<Term id>` の小窓(Esc・外側クリックで閉じフォーカスを戻す)、`GlossaryPanel`/`GlossaryDialog`、文言中の `[[id\|表示]]` を `RichText` が用語リンクにする。全用語の文言と図をテスト |
+| GUIDE-3 | 操作一覧(? キー):エディタのショートカットと同じ定義から作る | エディタと食い違わないテスト | done:`src/editor/keyboard.ts` に `SHORTCUTS` 表を追加(後方互換)。`ShortcutSheet`+`useShortcutSheetHotkey`。表 → resolveShortcut の一致と、全キー×修飾キーで resolveShortcut が反応するものが表に載ることをテスト |
+| GUIDE-4 | 状況に応じた一言(白紙、クランクがない、自由度≠1、一回転できない、後ろ向きに歩く、脚先が地面をこする 等)と、初回の「チュートリアルから / 遊び方を見る」 | 判定は純関数でテスト | done:純関数 `pickTip`(17 種、グラスホフからクランク長の目安、段差ステージの足上げ、試走の結果、閉じた一言は飛ばす)と `TipBubble`、`WelcomeCard`。規則ごとにプリセット・ステージ・手作りの設計でテスト |
+
+### stream `art` — `art/blender/**`, `public/models/**`, `src/scene/assets.ts`(素材:Blender → glTF)
+
+| ID | 内容 | 受け入れ条件 | 状態 |
+| --- | --- | --- | --- |
+| ART-1 | Blender(5.2 LTS、ヘッドレスの Python)で工房の素材を作るスクリプトと `pnpm models`(再現可能・差分で読める) | スクリプトから GLB が毎回同じに生成される | todo |
+| ART-2 | 部屋・作業台・棚・工具箱・窓の外の荒野・看板の GLB(手続き生成と同じ寸法と原点、Draco なし、1 つ 400KB 以下・合計 3MB 以下) | assets.test と E2E が通り、本番 CSP で外部読み込みなし | todo |
+
+### stream `sec` — `src/core/model`, `src/core/storage`, `scripts/serve-dist.mjs`, `public/_headers`(セキュリティ点検)
+
+| ID | 内容 | 受け入れ条件 | 状態 |
+| --- | --- | --- | --- |
+| SEC-3 | 外から来るデータ(共有リンクのフラグメント、読み込む JSON、localStorage)の点検:展開爆弾、巨大入力、型の混乱、プロトタイプ汚染、XSS の経路 | ファズテスト(乱数で壊した入力)で落ちない・時間が有限 | done — 上限つきの lz 展開(展開後 100 万文字、2.3 万文字のトークンが 6000 万文字に膨らんでいた)、`MAX_JOINTS` 256→64 ほか(鎖 256 点で解析 2 分)、予約 id・制御文字の拒否、`__proto__` のキーを捨てる、進行の記録キーの検査、localStorage の値の上限。`fuzz.test.ts`・`hostile.test.ts`・`security.test.ts`・`tamper.test.ts`・`lz.test.ts`。`docs/security.md` |
+| SEC-4 | 手元配信サーバーのパス走査・不正な URL、CSP の見直し、依存の監査を CI 手順に | テスト | done — serve-dist:不正な % で落ちていた・外を指すシンボリックリンクを配信していた・全インターフェースで待ち受けていたのを修正。CSP に Trusted Types(`'none'`、全画面で違反なし)ほか。`e2e/security.spec.ts`。供給網の設定とデプロイ前の手順は `docs/security.md` |
+
+### stream `playtest` — `e2e/playtest/**`, `src/game/stages.ts`(チュートリアル定義)、`src/i18n/ja/game.ts`(初めての人がつまずかないか)
+
+| ID | 内容 | 受け入れ条件 | 状態 |
+| --- | --- | --- | --- |
+| PLAY-1 | チュートリアル(1-1 修理、1-2 クランクを直す、1-3 白紙から)を初めての人の手順で E2E 化。各ステップの指示が、その時点で使える道具だけで達成できる | 3 ステージとも最後のステップまで進み、クリア | todo |
+| PLAY-2 | 全ステージを参照解(JSON 読み込み)で通しプレイし、クリア・メダルを確認する回帰テスト | 10 ステージ | todo |
+| PLAY-3 | わかりにくい文言・行き止まり・効かないヒントを直す(チュートリアルとヒントの文言、ステップ定義) | 修正点を LOG に | todo |
 
 ## ウェーブ 3(統合)
 
 | ID | 内容 | 依存 | 状態 |
 | --- | --- | --- | --- |
 | INT-1 | 設計画面:製図用紙の上に MechanismEditor を位置合わせ(usePaperViewport)、3D の用紙にも今の設計を描いて遷移中も途切れない、パネル分の余白、戻る・試走ボタン | scene, editor | todo |
-| INT-2 | 試走画面:屋外の試走コースに TestRunScene、flow の試走ライフサイクル、追従カメラ(setStationOverride)、RunHud、ゴースト | testrun, flow, hud | todo |
-| INT-3 | 結果画面:ResultPanel、T-04、やり直し・設計へ・次へ | result, flow | todo |
-| INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | todo |
-| INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | todo |
+| INT-2 | 試走画面:屋外の試走コースに TestRunScene、flow の試走ライフサイクル、追従カメラ(setStationOverride)、RunHud、ゴースト | testrun, flow, hud | doing(stream `int-run`) |
+| INT-3 | 結果画面:ResultPanel、T-04、やり直し・設計へ・次へ | result, flow | doing(stream `int-run`) |
+| INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | done(`src/app/screens/StageSelectScreen.tsx`:進行から解放・最高メダル・「次」にフォーカス、右下に寄せてジオラマと右上の通知を空ける。選ぶと startStage + go('design')(T-02)、Esc・閉じるでホーム。設計・試走・結果からホーム・ステージ選択へ出たら leaveStage。ジオラマへの流し込み `src/app/worldBridge.ts`(useWorld があるときだけ働く:進行・enterStage・noteRun・目印のクリック・選択の同期)。E2E `e2e/home.spec.ts`。残り:world 合流後にジオラマのカメラをパネルの左に収める) |
+| INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | done(`bootApp()`(冪等、init・見た遷移の保存・共有リンクは T-00 の後に設計へ)、ホームは HUD の TextMenu を工房のホバーと共有、続きから=最後のスロット→最初の未クリア、設定は SettingsPanel+利用者の選択だけを `ashikumi/v1/prefs` に保存(自動判定は保存しない、AppSettings に muted・sources を追加)、JSON 入出力・2 段階リセット、図鑑は「準備中」の札、サンドボックスは設計画面へ、全画面共通の NoticeStack。作業台の見本機を自分の機械にするのは WORLD-2(machineDesign の保存は worldBridge の TODO)) |
 | INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | doing(stream `int-fx`) |
 | WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | done(stream `world`)— `src/scene/world`:台地+S 字の小道+橋、章 2 は地形から段と溝、目印はインスタンス描画(南京錠/光る/旗+軸ごとのメダル)、ホバーで輪郭とステージ名、クリックは `activateStage`(`setStageSelectHandler` で差し替え)。T-06 は模型が見え始める遷移の 80% から歩き出し、カメラが着いた後に次の目印へ(遷移の 0.75 倍、クリック・キーでスキップ、寄るカメラは `setStationOverride` を一時的に使う)。統合は `useWorld` に進行と機械を流し込む(`noteRun`・`enterStage`・`setWorld`)。E2E `e2e/world.spec.ts` |
 | WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | done(stream `world`)— 棚の空いた段に章ごとの台座(クリアした機械 `useWorld.chapterMachines`、未クリアは影絵、図鑑の画面で足踏み)、奥の壁に「?」の札の額 3×2(`progress.zukan` の数だけ紙に)、作業台は `BenchWalker` が `useWorld.machineDesign`(なければヤンセン型)を歩かせる。保存は flow の担当(chapterMachines・machineDesign) |
 | INT-7 | チュートリアルの吹き出し・ヒントの影・通知・遊び方と用語解説・状況の一言を設計画面とホームに | flow, hud, guide | todo |
-| INT-8 | E2E 通しプレイ:章 1-1 の修理 → 試走 → クリア → 次が解放 | 全部 | todo |
+| INT-8 | E2E 通しプレイ:章 1-1 の修理 → 試走 → クリア → 次が解放 | 全部 | 3D なしの版は done(`e2e/flow.spec.ts`)。3D の工房での版は統合後 |
 
 ## ウェーブ 2(予定:統合と性能)
 
@@ -185,9 +207,9 @@
 
 | ID | 内容 | 判定基準 | 状態 |
 | --- | --- | --- | --- |
-| PERF-1 | ブラウザで計測:編集 1 回あたりの解析時間、試走 1 フレームあたりの sim 時間、描画 fps(内蔵 GPU 相当)。LOG.md に記録 | 予算:解析 < 8ms、sim < 4ms/フレーム、60fps | todo |
+| PERF-1 | ブラウザで計測:編集 1 回あたりの解析時間、試走 1 フレームあたりの sim 時間、描画 fps。LOG.md に記録 | 予算:解析 < 8ms、sim < 4ms/フレーム、60fps | done:解析 0.1ms、sim 0.05ms/フレーム、Apple M5 Pro(通常モード)でホーム 59fps・試走 60fps(p95 17.7ms)。初回ロード約 410KB(gzip)、全体 2.2MB。内蔵 GPU の実機計測は未(低性能モードの自動選択で対応) |
 | PERF-2 | stream `wasm`:Rust → WASM(wasm-pack、Rust 1.97 + wasm32 導入済み)で毎フレームの解法プラン実行(crank/rigid/dyad/newton)と接触ループを試作し、JS と同じテストを通したうえで Node とブラウザでベンチマーク | 100 ジョイントで JS の 2 倍以上速く、小さな機構で遅くならなければ同じ API の裏で採用。満たさなければ結果を記録して JS のまま | done — 不採用(JS のまま)。100 点のフレームで同じ API 1.5×・一括 1.9×、小さな機構 1.5×(Node)。`docs/perf/wasm-vs-js.md`。ブラウザ計測と接触ループは未実施 |
-| PERF-3 | 試走のシミュレーションを Web Worker に移す(決定論を保つ) | メインスレッドの sim 負荷 0、結果が同一 | todo |
+| PERF-3 | 試走のシミュレーションを Web Worker に移す(決定論を保つ) | メインスレッドの sim 負荷 0、結果が同一 | 見送り:sim は 1 フレーム 0.05ms で予算の 1/80。必要になったら再検討 |
 
 ## ウェーブ 3(予定:仕上げと公開)
 

@@ -13,6 +13,7 @@
 | `pnpm verify --fix` | prettier で整形してから検証 |
 | `pnpm test -- <path>` | 一部のテストだけ実行 |
 | `scripts/wt.sh new/sync/gate/rm <name>` | ワークツリーの作成・同期・合流(`docs/loop/README.md`) |
+| `pnpm deploy:dry` / `pnpm deploy` | Cloudflare への配信(`cf` CLI、`docs/deploy.md`) |
 
 パッケージマネージャは pnpm。`claude` コマンドは使わない。
 

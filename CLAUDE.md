@@ -7,12 +7,14 @@
 
 | コマンド | 内容 |
 | --- | --- |
-| `pnpm dev` | 開発サーバー。`?dev=editor` `?dev=sim` `?dev=scene` で各プレイグラウンド |
+| `pnpm dev` | 開発サーバー。`?dev=editor|sim|scene|testrun|result|audio` で各プレイグラウンド |
 | `pnpm verify` | **検証ゲート**:format → typecheck → test → build。合否はこれだけで決める |
 | `pnpm verify --quick` | build を省く(内側ループ用) |
 | `pnpm verify --fix` | prettier で整形してから検証 |
 | `pnpm test -- <path>` | 一部のテストだけ実行 |
 | `scripts/wt.sh new/sync/gate/rm <name>` | ワークツリーの作成・同期・合流(`docs/loop/README.md`) |
+| `pnpm deps:check` / `pnpm deps:update` | 依存の脆弱性と鮮度のゲート / 最新へ更新(セキュリティ方針:できるだけ最新) |
+| `pnpm deploy:dry` / `pnpm deploy` | Cloudflare への配信(`cf` CLI、`docs/deploy.md`)。`deploy` は deps:check と verify に合格したときだけ実行 |
 
 パッケージマネージャは pnpm。`claude` コマンドは使わない。
 
@@ -43,7 +45,7 @@
 - 座標:設計ビューは cm、+x 前進、+y 上。3D は m、+x 前進、+y 上、z 奥行き(`CM = 0.01`)
 - シミュレーションは決定論的に:固定タイムステップ、`Math.random` 禁止(必要ならシード付き乱数)、反復順序を固定
 - 純粋なロジック(core, game)は React・three に依存しない。テストは Vitest(`*.test.ts` を対象ファイルの隣に置く)
-- 依存パッケージは追加しない(必要なものは導入済み)。どうしても必要なら理由を報告する
+- 依存パッケージは追加しない(必要なものは導入済み)。どうしても必要なら理由を報告する。追加・更新するときは常に最新版(セキュリティ方針)
 - 性能目標:複製後 100 ジョイントで運動学ソルバー 4ms/フレーム以内、内蔵 GPU で 60fps
 
 ## 内側ループ(各エージェントの作業手順)

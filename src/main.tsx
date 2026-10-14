@@ -1,6 +1,7 @@
 import { StrictMode, Suspense, lazy, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { installAudio } from '@/audio';
 
 /**
  * 開発用の入口切り替え。?dev=<name> で各モジュールのプレイグラウンドを開く。
@@ -11,7 +12,13 @@ const routes: Record<string, () => Promise<{ default: ComponentType }>> = {
   editor: () => import('@/dev/EditorPlayground'),
   sim: () => import('@/dev/SimPlayground'),
   scene: () => import('@/dev/ScenePlayground'),
+  testrun: () => import('@/dev/TestrunPlayground'),
+  result: () => import('@/dev/ResultPlayground'),
+  audio: () => import('@/dev/AudioPlayground'),
 };
+
+// 効果音:初回のクリック・キー入力で AudioContext を起こす(それまでは何もしない)
+installAudio();
 
 const name = new URLSearchParams(location.search).get('dev') ?? 'app';
 const Page = lazy(routes[name] ?? routes.app!);

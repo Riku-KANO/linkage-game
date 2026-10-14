@@ -172,8 +172,8 @@
 | INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | todo |
 | INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | todo |
 | INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | doing(stream `int-fx`) |
-| WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | doing(stream `world`) |
-| WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | doing(stream `world`) |
+| WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | done(stream `world`)— `src/scene/world`:台地+S 字の小道+橋、章 2 は地形から段と溝、目印はインスタンス描画(南京錠/光る/旗+軸ごとのメダル)、ホバーで輪郭とステージ名、クリックは `activateStage`(`setStageSelectHandler` で差し替え)。T-06 は模型が見え始める遷移の 80% から歩き出し、カメラが着いた後に次の目印へ(遷移の 0.75 倍、クリック・キーでスキップ、寄るカメラは `setStationOverride` を一時的に使う)。統合は `useWorld` に進行と機械を流し込む(`noteRun`・`enterStage`・`setWorld`)。E2E `e2e/world.spec.ts` |
+| WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | done(stream `world`)— 棚の空いた段に章ごとの台座(クリアした機械 `useWorld.chapterMachines`、未クリアは影絵、図鑑の画面で足踏み)、奥の壁に「?」の札の額 3×2(`progress.zukan` の数だけ紙に)、作業台は `BenchWalker` が `useWorld.machineDesign`(なければヤンセン型)を歩かせる。保存は flow の担当(chapterMachines・machineDesign) |
 | INT-7 | チュートリアルの吹き出し・ヒントの影・通知・遊び方と用語解説・状況の一言を設計画面とホームに | flow, hud, guide | todo |
 | INT-8 | E2E 通しプレイ:章 1-1 の修理 → 試走 → クリア → 次が解放 | 全部 | todo |
 

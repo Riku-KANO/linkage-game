@@ -27,7 +27,7 @@ const CAM = {
   watchAzimuth: 0.62,
   watchDrift: 0.38,
   watchElevation: 0.5,
-  watchDistance: 3.0,
+  watchDistance: 3.5,
   watchMinDistance: 0.85,
   watchMaxDistance: 2.4,
   watchFov: 40,
@@ -156,7 +156,35 @@ export function assemblyCamera(
     blendPose(out, sc.follow, wf, out);
   }
   const wt = smoothstep(CAM.toTrack[0], CAM.toTrack[1], u);
-  if (wt > 0) blendPose(out, track, wt, out);
+  // 定位置へは機械の周りを回って移る(結果の定位置は機械の向こう側にあり、まっすぐ動くと機械を突き抜ける)
+  if (wt > 0) orbitBlend(out, track, wt, sc.center, out);
+  return out;
+}
+
+/**
+ * a → b を点 c の周りの円柱座標(方位・水平距離・高さ)で補間する。方位は近い向きに回る。
+ * 注視点・上方向・画角・平行投影は線形。t = 1 で b に一致する。
+ */
+export function orbitBlend(
+  a: CameraPose,
+  b: CameraPose,
+  t: number,
+  c: V3,
+  out: CameraPose,
+): CameraPose {
+  const ax = a.position[0] - c[0];
+  const az = a.position[2] - c[2];
+  const bx = b.position[0] - c[0];
+  const bz = b.position[2] - c[2];
+  const angA = Math.atan2(ax, az);
+  const ang = angA + wrapAngle(Math.atan2(bx, bz) - angA) * t;
+  const rA = Math.hypot(ax, az);
+  const r = rA + (Math.hypot(bx, bz) - rA) * t;
+  const y = a.position[1] + (b.position[1] - a.position[1]) * t;
+  blendPose(a, b, t, out);
+  out.position[0] = c[0] + Math.sin(ang) * r;
+  out.position[1] = y;
+  out.position[2] = c[2] + Math.cos(ang) * r;
   return out;
 }
 

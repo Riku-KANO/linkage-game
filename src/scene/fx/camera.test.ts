@@ -2,10 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { jansenLeg, jansenWalker } from '@/core/model/presets';
 import { buildMachineLayout } from '@/testrun/layout';
 import { ROOM, WINDOW } from '../layout';
-import { createPose, type CameraPose } from '../rig/pose';
+import { createPose, type CameraPose, type V3 } from '../rig/pose';
 import { DEFAULT_STATION_CONTEXT, liveAnchors, resolveStation } from '../rig/stations';
 import { assemblyCamera, createCameraScratch, decayOffset, goalCamera } from './camera';
-import { defaultPaperMapping, machineFrame, TRACK_LANDING, type CraneInput } from './crane';
+import {
+  bodyCenter,
+  bodyPoseAt,
+  createBodyPose,
+  createCraneScratch,
+  defaultPaperMapping,
+  machineFrame,
+  TRACK_LANDING,
+  type CraneInput,
+} from './crane';
 
 function setup(design = jansenWalker()) {
   const layout = buildMachineLayout(design);
@@ -79,6 +88,30 @@ describe('assemblyCamera', () => {
         }
       }
       expect(crossed).toBe(true);
+    }
+  });
+});
+
+describe('assemblyCamera from the result station (T-05)', () => {
+  const sc = createCameraScratch();
+  it('goes round the machine instead of through it', () => {
+    const { crane, design0 } = setup();
+    const result = resolveStation('result', DEFAULT_STATION_CONTEXT);
+    const p = createPose();
+    const centre: V3 = [0, 0, 0];
+    const cs = createCraneScratch();
+    const body = createBodyPose();
+    expectPose(assemblyCamera(1, design0, result, crane, sc, createPose()), result);
+    for (let u = 1; u >= 0.7; u -= 0.002) {
+      assemblyCamera(u, design0, result, crane, sc, p);
+      bodyCenter(bodyPoseAt(u, crane, cs, body), crane.frame, [0, 0, 0], centre);
+      const d = Math.hypot(
+        p.position[0] - centre[0],
+        p.position[1] - centre[1],
+        p.position[2] - centre[2],
+      );
+      // 機械の大きさ(外接箱の対角の半分 × 縮尺)の 2 倍より近づかない
+      expect(d).toBeGreaterThan(2 * crane.frame.radius * body.scale);
     }
   });
 });

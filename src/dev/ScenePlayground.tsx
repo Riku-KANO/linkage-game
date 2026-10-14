@@ -5,6 +5,7 @@ import { TRANSITIONS, type Screen, type TransitionId } from '@/ui/tokens';
 import { GameShell } from '@/scene/GameShell';
 import { rigDebug, rigSignals, useSceneUi } from '@/scene/store';
 import { setLowPerfManually } from '@/scene/perf/PerfProbe';
+import { FxDevControls, fxDev } from '@/scene/fx/FxDevControls';
 
 /**
  * 開発用プレイグラウンド(?dev=scene)。ゲームと同じ工房に、デバッグパネルを重ねる:
@@ -13,7 +14,7 @@ import { setLowPerfManually } from '@/scene/perf/PerfProbe';
 export default function ScenePlayground() {
   // 自動確認・コンソール操作用の入口(開発用のページだけ)
   useEffect(() => {
-    window.__sceneDev = { useApp, useSceneUi, rigDebug, rigSignals, trigger, jump };
+    window.__sceneDev = { useApp, useSceneUi, rigDebug, rigSignals, trigger, jump, fx: fxDev };
     return () => {
       delete window.__sceneDev;
     };
@@ -115,6 +116,7 @@ function DebugPanel() {
           {t('scene.debug.resetSeen')}
         </button>
       </div>
+      <FxDevControls />
       <label>
         <input
           type="checkbox"

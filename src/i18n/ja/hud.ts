@@ -52,7 +52,6 @@ export const hud: Record<string, string> = {
   'hud.hint.allShown': 'ヒントはこれで全部です',
   'hud.hint.nudge': '行き詰まったら、ヒントをどうぞ',
   'hud.hint.ghostOn': '図面に重ねる',
-  'hud.hint.ghostOff': '重ねるのをやめる',
   'hud.hint.ghostAria': '{label}を図面に重ねる',
   'hud.hint.empty': 'まだヒントを開いていません。困ったら 1 つずつ開けます。',
 
@@ -62,12 +61,13 @@ export const hud: Record<string, string> = {
   'hud.tutorial.given': '渡された部品',
   'hud.tutorial.new': '新しい部品',
   'hud.tutorial.doIt': '図面で操作すると進みます',
+  'hud.tutorial.doTestRun': '「試走する」を押すと進みます',
   'hud.tutorial.skip': '飛ばす',
 
   // ---- ステージ選択(HUD-2) ----
   'hud.stage.region': 'ステージ選択',
   'hud.stage.title': 'ステージ選択',
-  'hud.stage.help': '矢印キーで選び、Enter で始める。Esc で戻る',
+  'hud.stage.help': 'クリックか矢印キーで選び、Enter かダブルクリックで始める。Esc で戻る',
   'hud.stage.number': '{chapter}-{order}',
   'hud.stage.chapter': '第 {chapter} 章',
   'hud.stage.chapterCleared': '章クリア',

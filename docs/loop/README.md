@@ -5,7 +5,8 @@
 
 ```
 外側ループ(オーケストレーター:1 イテレーション = 1 ウェーブ)
- ┌─▶ 1. 計画   BACKLOG.md から依存関係のないタスクを選び、ストリームに分ける
+ ┌─▶ 0. 鮮度   pnpm deps:update → pnpm deps:check(脆弱性 0・直接依存がすべて最新)→ pnpm verify
+ │   1. 計画   BACKLOG.md から依存関係のないタスクを選び、ストリームに分ける
  │   2. 分岐   ストリームごとに scripts/wt.sh new <name>(.worktrees/<name>, feat/<name>)
  │   3. 並行   各ワークツリーでエージェントが内側ループを回す ───────────┐
  │   4. 合流   scripts/wt.sh gate <name>(worktree で verify → main にマージ → main で verify) │
@@ -26,6 +27,7 @@
 4. **小さく、独立に**:1 ストリーム = 1 ディレクトリ。共有ファイル(package.json、i18n の共通辞書)は触らない
 5. **状態はファイルに残す**:BACKLOG.md(何をやるか)、LOG.md(何が起きたか)、git 履歴。エージェントの記憶に頼らない
 6. **失敗は次のタスクになる**:合流や実機確認で見つかった問題は BACKLOG に積み、次のウェーブで回す
+7. **依存は常に最新・脆弱性 0**:各ウェーブの最初と配信前に `pnpm deps:check`。pnpm 11 の供給網対策(公開直後の版を待つ minimumReleaseAge、`trustPolicy: no-downgrade`、ビルドスクリプトの許可制)は有効のまま
 
 ## ファイル
 
@@ -33,3 +35,4 @@
 - `LOG.md` — 外側ループの記録(ウェーブごとのマージ結果・検証結果・観測)
 - `../../scripts/verify.mjs` — 検証ゲート
 - `../../scripts/wt.sh` — ワークツリーの作成・同期・合流
+- `../../scripts/deps.mjs` — 依存の鮮度と脆弱性のゲート(`pnpm deps:check` / `pnpm deps:update`)

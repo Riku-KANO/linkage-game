@@ -16,9 +16,10 @@ Cloudflare の新しい統合 CLI `cf`(Wrangler の次期版、テクニカル�
 ```sh
 pnpm exec cf auth login      # 初回のみ(ブラウザで OAuth)。CI では CLOUDFLARE_API_TOKEN を使う
 pnpm deploy:dry              # ビルドと検査だけ(アップロードしない)
-pnpm deploy                  # = cf deploy(ビルドしてアップロード)
+pnpm deploy                  # deps:check(脆弱性 0・最新)→ verify → cf deploy
 ```
 
 - テレメトリを送りたくない場合は `DO_NOT_TRACK=1` を付けるか `pnpm exec cf cli telemetry disable`
-- `cf` はベータのため `1.0.0-beta.17` に固定している。上げるときは `pnpm deploy:dry` で確認する
+- `cf` と `@cloudflare/vite-plugin` はベータを版固定している。`pnpm deps:update` が同じベータ系列の最新へ上げる
+  (`cf init` が入れた古いベータのプラグインは miniflare 経由で undici・sharp の既知の脆弱性 11 件を含んでいたため、最新ベータへ更新して 0 件にした)
 - `cf pages deploy <dir>` で従来の Pages に出すこともできるが、`cf` の標準経路(`cf deploy`)に合わせた

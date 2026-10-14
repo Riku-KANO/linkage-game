@@ -64,6 +64,8 @@ const PREFLIGHT_CASES: ('live' | PreflightCase)[] = [
   'many',
 ];
 const PROGRESS_CASES: ProgressCase[] = ['new', 'mid', 'ch1', 'all'];
+/** 見出しに出す最高記録の見本(章 1 の 1・2 面をクリア済み) */
+const SAMPLE_BEST = sampleProgress('mid');
 
 /** ステージごとのヒントとチュートリアルの進み(画面を切り替えても残す) */
 interface DesignProgress {
@@ -375,6 +377,7 @@ function DesignView({
             <StageHeader
               stage={stage}
               cost={cost}
+              best={SAMPLE_BEST.best[stage.id]}
               onBack={() => {
                 note('onBack');
                 onBack();

@@ -656,7 +656,7 @@
 /* ---------------- ヒント ---------------- */
 
 .hud-hints {
-  width: 300px;
+  width: 340px;
   max-width: calc(100vw - 32px);
   padding: 9px 12px 11px 13px;
 }
@@ -1529,7 +1529,7 @@
 /* ---------------- 通知(HUD-4) ---------------- */
 
 .hud-notices {
-  width: 340px;
+  width: 320px;
   max-width: calc(100vw - 32px);
   font-family: var(--font, sans-serif);
 }
@@ -1687,9 +1687,9 @@
   top: 14px;
   left: 50%;
   display: grid;
-  grid-template-columns: 116px 300px 132px;
+  grid-template-columns: 112px 280px 128px;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   padding: 8px 16px 10px;
   transform: translateX(-50%);
 }

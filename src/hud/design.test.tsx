@@ -4,7 +4,14 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { registerSfx, type SfxName } from '@/audio/sfx';
 import { getStage } from '@/game';
 import type { PreflightResult } from '@/game/types';
-import { BudgetMeter, HintPanel, StageHeader, TestRunButton, TutorialBubble } from './index';
+import {
+  BudgetMeter,
+  HintPanel,
+  HudDock,
+  StageHeader,
+  TestRunButton,
+  TutorialBubble,
+} from './index';
 import { partsGivenUpTo } from './TutorialBubble';
 import { SAMPLE_PREFLIGHT } from './samples';
 
@@ -297,5 +304,27 @@ describe('TutorialBubble', () => {
     expect(partsGivenUpTo(c1s3, 0)).toEqual([]);
     expect(partsGivenUpTo(c1s3, 2)).toEqual(['fixed', 'crank']);
     expect(partsGivenUpTo(c1s3, 7)).toEqual(['link', 'pin', 'fixed', 'crank']);
+  });
+});
+
+describe('HudDock', () => {
+  it('部品を端の置き場に入れ、空の置き場は作らない。余白を変えられる', () => {
+    const { container } = render(
+      <HudDock
+        topLeft={<p>見出し</p>}
+        left={<p>ヒント</p>}
+        topRight={<p>通知</p>}
+        bottomRight={<p>試走</p>}
+        inset={24}
+      />,
+    );
+    const dock = container.querySelector<HTMLElement>('.hud-dock')!;
+    expect(dock.style.getPropertyValue('--hud-inset')).toBe('24px');
+    const left = dock.querySelector('.hud-dock__col--left')!;
+    expect([...left.children].map((c) => c.textContent)).toEqual(['見出し', 'ヒント']);
+    expect(dock.querySelector('.hud-dock__col--right')?.textContent).toBe('通知');
+    expect(dock.querySelector('.hud-dock__slot--br')?.textContent).toBe('試走');
+    expect(dock.querySelector('.hud-dock__slot--bc')).toBeNull();
+    expect(dock.querySelector('.hud-dock__slot--top')).toBeNull();
   });
 });

@@ -34,6 +34,13 @@ describe('parsePrefs / loadPrefs / savePrefs', () => {
 
     s.setItem(PREFS_KEY, '{not json');
     expect(loadPrefs(s)).toEqual(emptyPrefs());
+    // 巨大な値・プロトタイプを汚す鍵は読まない
+    s.setItem(PREFS_KEY, JSON.stringify({ muted: true, pad: 'x'.repeat(1_000_001) }));
+    expect(loadPrefs(s)).toEqual(emptyPrefs());
+    s.setItem(PREFS_KEY, '{"__proto__":{"muted":true},"lowPerf":true}');
+    const hostile = loadPrefs(s);
+    expect(hostile).toEqual({ version: 1, lowPerf: true });
+    expect(({} as { muted?: boolean }).muted).toBeUndefined();
 
     const broken: StorageLike = {
       getItem: () => {

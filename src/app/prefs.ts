@@ -1,6 +1,7 @@
 import { isBoolean, isRecord, safeJsonParse } from '@/core/model/guards';
 import {
   isQuotaError,
+  MAX_STORED_ITEM_LENGTH,
   STORAGE_PREFIX,
   type DesignSlot,
   type SaveResult,
@@ -57,7 +58,8 @@ export function loadPrefs(storage: StorageLike | null): AppPrefs {
   if (!storage) return emptyPrefs();
   try {
     const text = storage.getItem(PREFS_KEY);
-    if (text === null) return emptyPrefs();
+    // 改ざんされた巨大な値は読まない(persistence と同じ上限)
+    if (typeof text !== 'string' || text.length > MAX_STORED_ITEM_LENGTH) return emptyPrefs();
     const parsed = safeJsonParse(text);
     return parsed.ok ? parsePrefs(parsed.value) : emptyPrefs();
   } catch {

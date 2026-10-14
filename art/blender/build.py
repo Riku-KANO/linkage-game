@@ -22,6 +22,7 @@ import kit  # noqa: E402
 
 #: id(src/scene/assets.ts の MODEL_MANIFEST のキー)→ モジュール名
 MODELS = {
+    "toolbox": "toolbox",
     "logo": "logo",
 }
 

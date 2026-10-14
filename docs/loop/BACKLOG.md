@@ -166,8 +166,8 @@
 
 | ID | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- |
-| ART-1 | Blender(5.2 LTS、ヘッドレスの Python)で工房の素材を作るスクリプトと `pnpm models`(再現可能・差分で読める) | スクリプトから GLB が毎回同じに生成される | todo |
-| ART-2 | 部屋・作業台・棚・工具箱・窓の外の荒野・看板の GLB(手続き生成と同じ寸法と原点、Draco なし、1 つ 400KB 以下・合計 3MB 以下) | assets.test と E2E が通り、本番 CSP で外部読み込みなし | todo |
+| ART-1 | Blender(5.2 LTS、ヘッドレスの Python)で工房の素材を作るスクリプトと `pnpm models`(再現可能・差分で読める) | スクリプトから GLB が毎回同じに生成される | done — `art/blender/`(共有の `kit.py`:three.js 座標で組んで素材ごとに 1 メッシュ、頂点色、geometry.ts と同じ mulberry32、面取り・木目・擦れ。素材ごとのスクリプト 6 本)と `scripts/models.mjs`。`pnpm models` で全 GLB を約 3 秒で作り直す。`pnpm models --check` で一時フォルダに作り直してバイト単位で一致を確認(同じ Blender・同じ OS ならバイト一致。座標 0.01mm・色 1e-4 に丸め、PYTHONHASHSEED=0)。`--preview` で Eevee の確認画像 |
+| ART-2 | 部屋・作業台・棚・工具箱・窓の外の荒野・看板の GLB(手続き生成と同じ寸法と原点、Draco なし、1 つ 400KB 以下・合計 3MB 以下) | assets.test と E2E が通り、本番 CSP で外部読み込みなし | done — 6 つで合計 1.21MB(gzip 0.34MB、最大 346KB)。`models.test.ts`(予算・自己完結・属性・layout.ts との外形)と `e2e/models.spec.ts`(本番 CSP で自オリジンから読む)。ModelSlot:透明な素材は影を落とさない(ガラスが窓の光を遮っていた)。Workbench の GLB はワールド座標(節点を BENCH.center へ平行移動)。courseModel は対象外(world ストリームが作り直し中) |
 
 ### stream `sec` — `src/core/model`, `src/core/storage`, `scripts/serve-dist.mjs`, `public/_headers`(セキュリティ点検)
 

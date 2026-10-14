@@ -148,6 +148,7 @@
 | --- | --- | --- |
 | POLISH-1 | 設計ビューの全体表示に脚先軌道(と全ジョイントの軌道)の範囲を含める | done |
 | SEC-1 | 本番ヘッダー:CSP(外部通信・外部スクリプト禁止、WASM は 'wasm-unsafe-eval' のみ)、X-Frame-Options、Permissions-Policy、COOP/CORP、HSTS。`pnpm serve:dist` で手元検証 | done |
+| KIN-7 | 変位点(平行四辺形など)を通るときの組立モード選択:前姿勢に近い方だけでなく、速度の外挿や冗長リンクを満たす側を選ぶ。今は二重平行四辺形が変位点で反平行側へ移り「一回転できない」と判定される(自由度 0 の表示とは整合) | todo(低) |
 | SEC-2 | sim・scene 合流後に本番ビルドを `pnpm serve:dist` で開き、CSP 違反がないこと(Rapier の WASM、drei の外部アセット読み込みがないこと)を確認 | Rapier 済み(段差コースで違反なし)。scene 合流後に残り |
 
 

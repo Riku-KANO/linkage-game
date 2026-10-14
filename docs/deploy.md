@@ -1,5 +1,8 @@
 # デプロイ(Cloudflare、cf CLI)
 
+- 公開 URL:https://ashikumi.rick2200-cf.workers.dev
+- リポジトリ:https://github.com/Riku-KANO/linkage-game
+
 Cloudflare の新しい統合 CLI `cf`(Wrangler の次期版、テクニカルプレビュー)で配信する。
 `cf init .` の自動設定で、Vite のビルド結果を **Workers の静的アセット**(Pages の後継となる静的配信。
 サーバー側の処理は持たない)として配信する構成にした。

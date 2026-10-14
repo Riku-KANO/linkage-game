@@ -141,3 +141,6 @@
 - 性能:M5 Pro でホーム 59fps・試走 60fps、タイトルまで約 0.8MB(gzip)、全体約 2.7MB。依存は最新・脆弱性 0、本番 CSP(Trusted Types つき)
 - 残り:本番配信(利用者の `cf auth login` が必要)、GitHub への push(指示待ち)、人による初見プレイの確認(10 分以内の目標)、
   内蔵 GPU での実測、MVP 外の機能
+- [公開] GitHub(Riku-KANO/linkage-game、public)へ main を push(秘密情報・個人のメールアドレスがないことを事前に確認、作者は noreply)。
+  `pnpm deploy`(deps:check → verify → cf deploy)で Cloudflare に配信:https://ashikumi.rick2200-cf.workers.dev 。
+  本番ヘッダー(CSP・HSTS・X-Frame-Options など)、assets の immutable キャッシュ、GLB の配信、実ブラウザでの起動〜チュートリアル開始を確認(エラー・CSP 違反なし)

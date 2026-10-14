@@ -3,6 +3,8 @@
 棒・ジョイント・モーターだけで脚の機構を発明し、その機械を 3D の障害コースで歩かせる Web パズルゲーム。
 クランクの回転が「歩き」に変わる瞬間を、自分の手で発見する。
 
+**遊ぶ:https://ashikumi.rick2200-cf.workers.dev**
+
 - 要件定義書:[docs/draft.md](docs/draft.md)
 - 開発の進め方(ループエンジニアリング):[docs/loop/README.md](docs/loop/README.md)、タスク:[docs/loop/BACKLOG.md](docs/loop/BACKLOG.md)、記録:[docs/loop/LOG.md](docs/loop/LOG.md)
 - 配信:[docs/deploy.md](docs/deploy.md)

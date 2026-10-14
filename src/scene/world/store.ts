@@ -5,6 +5,8 @@ import type { DesignDoc } from '@/core/model/types';
 import { initialProgress, isChapterCleared } from '@/game/progress';
 import { getStage } from '@/game/stages';
 import type { Progress, StageId } from '@/game/types';
+import type { SaveFailReason, StorageLike } from '@/core/storage/persistence';
+import { loadWorldSave, saveWorldSave } from './save';
 import { markerState, type WalkPlan } from './stageView';
 
 /**
@@ -164,4 +166,43 @@ export function activateStage(id: StageId): boolean {
   w.enterStage(id);
   useApp.getState().go('design', { stageId: id });
   return true;
+}
+
+/**
+ * 機械(作業台の見本機・棚の章の機械)の保存を始める(統合が起動時に 1 回呼ぶ。戻り値で止める)。
+ * 保存してあった機械を戻し(今の値が優先)、変わるたびに少し待ってまとめて保存する。
+ */
+export function installWorldSave(
+  storage: StorageLike | null,
+  opts: { delayMs?: number; onSaveFail?: (reason: SaveFailReason) => void } = {},
+): () => void {
+  const saved = loadWorldSave(storage);
+  const w = useWorld.getState();
+  w.setWorld({
+    machineDesign: w.machineDesign ?? saved.machineDesign,
+    chapterMachines: { ...saved.chapterMachines, ...w.chapterMachines },
+  });
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const flush = () => {
+    timer = null;
+    const s = useWorld.getState();
+    const r = saveWorldSave(storage, {
+      machineDesign: s.machineDesign,
+      chapterMachines: s.chapterMachines,
+    });
+    if (!r.ok && storage) opts.onSaveFail?.(r.reason);
+  };
+  const unsub = useWorld.subscribe((s, prev) => {
+    if (s.machineDesign === prev.machineDesign && s.chapterMachines === prev.chapterMachines)
+      return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(flush, opts.delayMs ?? 400);
+  });
+  return () => {
+    unsub();
+    if (timer) {
+      clearTimeout(timer);
+      flush();
+    }
+  };
 }

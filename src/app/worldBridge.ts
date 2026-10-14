@@ -1,7 +1,9 @@
 import type { StoreApi, UseBoundStore } from 'zustand';
 import type { DesignDoc } from '@/core/model/types';
+import { getBrowserStorage } from '@/core/storage/browser';
+import type { SaveFailReason, StorageLike } from '@/core/storage/persistence';
 import type { Progress, StageId } from '@/game';
-import { isSandboxStage, useSession, type SessionState } from './flow';
+import { isSandboxStage, saveFailNotice, useSession, type SessionState } from './flow';
 
 /**
  * ステージ選択のジオラマ(stream `world`、`src/scene/world/store.ts` の useWorld)への流し込み。
@@ -12,8 +14,7 @@ import { isSandboxStage, useSession, type SessionState } from './flow';
  *  - 進行(setProgress)、ステージを始めた(enterStage)、試走の結果(noteRun:T-06 の歩行と章の機械)
  *  - ジオラマの目印をクリックしたら、セッションでステージを始めて設計画面へ(setStageSelectHandler)
  *  - DOM のステージ一覧のフォーカス ⇄ ジオラマの選択(selectStage / selectedStageId)
- * TODO(world 合流後):machineDesign・chapterMachines の保存と復元(WORLD-2「作業台の見本機を自分の機械に」)。
- *   起動時に setWorld({ machineDesign, chapterMachines }) で戻す。保存先は prefs(src/app/prefs.ts)に足すのが簡単
+ *  - 機械(machineDesign・chapterMachines)の保存と復元:world の installWorldSave(`ashikumi/v1/world`)
  */
 
 /** world の store のうち、ここで使うところ(world の WorldState の部分集合) */
@@ -34,6 +35,10 @@ interface WorldLike {
 interface WorldModule {
   useWorld: UseBoundStore<StoreApi<WorldLike>>;
   setStageSelectHandler?: (fn: ((id: StageId) => void) | null) => void;
+  installWorldSave?: (
+    storage: StorageLike | null,
+    opts?: { onSaveFail?: (reason: SaveFailReason) => void },
+  ) => () => void;
 }
 
 const modules = import.meta.glob<WorldModule>('/src/scene/world/store.ts', { eager: true });
@@ -47,9 +52,17 @@ export const worldAvailable = world !== null;
  * セッション → ジオラマの流し込みを始める。戻り値で止める。world がなければ何もしない。
  * onSelectStage:ジオラマの目印で解放済みのステージを選んだとき(ステージを始めて設計画面へ)
  */
-export function installWorldBridge(onSelectStage: (id: StageId) => void): () => void {
+export function installWorldBridge(
+  onSelectStage: (id: StageId) => void,
+  storage: StorageLike | null = getBrowserStorage(),
+): () => void {
   if (!world) return () => {};
   const w = () => world.useWorld.getState();
+  // 保存してあった機械を先に戻す(作業台の見本機・棚の章の機械)
+  const stopSave =
+    world.installWorldSave?.(storage, {
+      onSaveFail: (reason) => useSession.getState().pushNotice(saveFailNotice(reason)),
+    }) ?? (() => {});
   const sync = (s: SessionState, prev: SessionState | null) => {
     if (!prev || s.progress !== prev.progress) w().setProgress(s.progress);
     if (s.stageId && s.stageId !== prev?.stageId) w().enterStage(s.stageId);
@@ -68,6 +81,7 @@ export function installWorldBridge(onSelectStage: (id: StageId) => void): () => 
   world.setStageSelectHandler?.(onSelectStage);
   return () => {
     unsub();
+    stopSave();
     world.setStageSelectHandler?.(null);
   };
 }

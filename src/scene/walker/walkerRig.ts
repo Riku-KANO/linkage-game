@@ -1,10 +1,15 @@
-import { compileMechanism, solvePose, type CompiledMechanism } from '@/core/kinematics';
-import { legInstances, mirrorDesignX } from '@/core/kinematics/legs';
+import {
+  compileLegSet,
+  legMechanism,
+  solveLegInstances,
+  type CompiledMechanism,
+  type LegSet,
+} from '@/core/kinematics';
 import { CM, type DesignDoc } from '@/core/model/types';
 
 /**
  * 歩く見本機の運動学(描画用、動力学なし)。
- * 脚列(legInstances)ごとに solvePose で姿勢を解き、接地している脚先が後ろへ動いた分だけ
+ * 脚列をまとめて solveLegInstances で解き、接地している脚先が後ろへ動いた分だけ
  * 機体を前へ進める(滑らない仮定)。ホームの作業台や試走コースの仮置きに使う。
  * 単位は設計の cm。描画側で縮尺を掛ける。
  */
@@ -13,12 +18,7 @@ export interface WalkerLeg {
   mech: CompiledMechanism;
   /** 奥行き(cm) */
   z: number;
-  /** クランクの位相(rad) */
-  phase: number;
   mirrored: boolean;
-  pos: Float64Array;
-  prev: Float64Array;
-  hasPrev: boolean;
 }
 
 export interface BarSpec {
@@ -30,6 +30,8 @@ export interface BarSpec {
 }
 
 export interface WalkerModel {
+  /** 脚列の解法。位置は set.positions[k](解くたびにバッファが入れ替わるので毎回読み直す) */
+  set: LegSet;
   legs: WalkerLeg[];
   bars: BarSpec[];
   pins: { leg: number; j: number }[];
@@ -60,23 +62,12 @@ function linkEdges(joints: number[]): [number, number][] {
 }
 
 export function createWalkerModel(design: DesignDoc): WalkerModel {
-  const instances = legInstances(design);
-  const normal = compileMechanism(design);
-  const hasMirror = instances.some((i) => i.mirrored);
-  const mirrored = hasMirror ? compileMechanism(mirrorDesignX(design)) : normal;
-  const legs: WalkerLeg[] = instances.map((inst) => {
-    const mech = inst.mirrored ? mirrored : normal;
-    const n = mech.jointIds.length * 2;
-    return {
-      mech,
-      z: inst.z / CM,
-      phase: inst.phase,
-      mirrored: inst.mirrored,
-      pos: new Float64Array(n),
-      prev: new Float64Array(n),
-      hasPrev: false,
-    };
-  });
+  const set = compileLegSet(design);
+  const legs: WalkerLeg[] = set.instances.map((inst, k) => ({
+    mech: legMechanism(set, k),
+    z: inst.z / CM,
+    mirrored: inst.mirrored,
+  }));
   const bars: BarSpec[] = [];
   const pins: { leg: number; j: number }[] = [];
   legs.forEach((leg, li) => {
@@ -105,16 +96,17 @@ export function createWalkerModel(design: DesignDoc): WalkerModel {
     yMin = -5;
     yMax = 5;
   }
-  const layers = Math.max(1, normal.links.length);
+  const layers = Math.max(1, set.normal.links.length);
   const zs = legs.map((l) => l.z);
   const halfStack = ((layers - 1) / 2) * LAYER_GAP + 2;
   return {
+    set,
     legs,
     bars,
     pins,
     layers,
     layerGap: LAYER_GAP,
-    footIndex: normal.footIndex,
+    footIndex: set.normal.footIndex,
     frame: {
       xMin: xMin - 6,
       xMax: xMax + 6,
@@ -128,17 +120,12 @@ export function createWalkerModel(design: DesignDoc): WalkerModel {
 
 /** モーター角 theta(rad)で全ての脚の姿勢を解く */
 export function poseWalker(model: WalkerModel, theta: number): boolean {
-  let ok = true;
-  for (const leg of model.legs) {
-    const res = solvePose(leg.mech, theta + leg.phase, {
-      prev: leg.hasPrev ? leg.prev : null,
-      out: leg.pos,
-    });
-    ok = ok && res.ok;
-    leg.prev.set(leg.pos);
-    leg.hasPrev = true;
-  }
-  return ok;
+  return solveLegInstances(model.set, theta);
+}
+
+/** k 番目の脚の最新の位置(cm)。解くたびに別のバッファになるので保持しないこと */
+export function legPositions(model: WalkerModel, k: number): Float64Array {
+  return model.set.positions[k]!;
 }
 
 /** 層 layer の棒の奥行きのずれ(cm) */
@@ -170,28 +157,29 @@ export class WalkerGait {
       poseWalker(m, this.theta);
       this.ready = true;
     }
-    m.legs.forEach((leg, i) => (this.footX[i] = leg.pos[m.footIndex * 2]!));
+    for (let i = 0; i < m.legs.length; i++) this.footX[i] = legPositions(m, i)[m.footIndex * 2]!;
     this.theta += dTheta;
     poseWalker(m, this.theta);
     let lowest = 0;
     let minY = Infinity;
-    m.legs.forEach((leg, i) => {
-      const y = leg.pos[m.footIndex * 2 + 1]!;
+    for (let i = 0; i < m.legs.length; i++) {
+      const y = legPositions(m, i)[m.footIndex * 2 + 1]!;
       if (y < minY) {
         minY = y;
         lowest = i;
       }
-    });
-    const advance = -(m.legs[lowest]!.pos[m.footIndex * 2]! - this.footX[lowest]!);
+    }
+    const advance = -(legPositions(m, lowest)[m.footIndex * 2]! - this.footX[lowest]!);
     return { advance, minFootY: minY };
   }
 }
 
 function lowestJointY(m: WalkerModel): number {
   let y = Infinity;
-  for (const leg of m.legs) {
-    for (let j = 0; j < leg.mech.jointIds.length; j++) y = Math.min(y, leg.pos[j * 2 + 1]!);
-  }
+  m.legs.forEach((leg, k) => {
+    const pos = legPositions(m, k);
+    for (let j = 0; j < leg.mech.jointIds.length; j++) y = Math.min(y, pos[j * 2 + 1]!);
+  });
   return Number.isFinite(y) ? y : 0;
 }
 

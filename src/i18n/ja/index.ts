@@ -1,5 +1,6 @@
 import { common } from './common';
 import { analysis } from './analysis';
+import { model } from './model';
 import { editor } from './editor';
 import { game } from './game';
 import { scene } from './scene';
@@ -9,6 +10,7 @@ import { result } from './result';
 export const ja: Record<string, string> = {
   ...common,
   ...analysis,
+  ...model,
   ...editor,
   ...game,
   ...scene,

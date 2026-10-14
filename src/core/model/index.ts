@@ -13,3 +13,4 @@ export * from './share';
 export * from './shareBrowser';
 export * from './file';
 export * from './fileBrowser';
+export * from './messages';

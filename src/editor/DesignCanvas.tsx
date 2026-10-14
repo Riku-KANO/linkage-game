@@ -95,6 +95,8 @@ export interface DesignCanvasProps {
   locked: Locked;
   /** 既存の点に棒をつなげるか(allowedParts に 'pin' があるか) */
   pinAllowed: boolean;
+  /** リンクの道具が使えるか。使えないときは白紙の案内(リンク道具で…)を出さない(チュートリアルと食い違うため) */
+  linkAllowed?: boolean;
   readOnly: boolean;
   ghost: DesignDoc | null;
   view: WorldRect | null;
@@ -168,6 +170,7 @@ export function DesignCanvas(props: DesignCanvasProps) {
     selection,
     locked,
     pinAllowed,
+    linkAllowed = true,
     readOnly,
     ghost,
     view,
@@ -851,8 +854,6 @@ export function DesignCanvas(props: DesignCanvasProps) {
         <line className="ed-axis" x1={0} x2={sz.width} y1={cam.oy} y2={cam.oy} />
         <line className="ed-axis" x1={cam.ox} x2={cam.ox} y1={0} y2={sz.height} />
 
-        {ghost && ghostData && <GhostLayer ghost={ghost} data={ghostData} cam={cam} />}
-
         <g className="ed-trajectories">
           {trajectories.map((tr) => (
             <g key={tr.id}>
@@ -960,6 +961,9 @@ export function DesignCanvas(props: DesignCanvasProps) {
           })}
         </g>
 
+        {/* ヒントの影は機構の上に描く(重なると見えなくなるため) */}
+        {ghost && ghostData && <GhostLayer ghost={ghost} data={ghostData} cam={cam} />}
+
         <LengthLabels design={design} selection={selL} jointScreen={jointScreen} />
 
         {preview?.kind === 'rect' && (
@@ -1004,7 +1008,7 @@ export function DesignCanvas(props: DesignCanvasProps) {
           <span className="ed-chip-fail">{t('editor.status.failNow')}</span>
         )}
       </div>
-      {design.joints.length === 0 && !readOnly && (
+      {design.joints.length === 0 && !readOnly && linkAllowed && (
         <div className="ed-empty">{t('editor.empty')}</div>
       )}
       {overlay}
@@ -1181,7 +1185,7 @@ function GhostLayer({
       })}
       {ghost.joints.map((j) => {
         const p = S(j.x, j.y);
-        return <circle key={j.id} className="ed-ghost-joint" cx={p.x} cy={p.y} r={5} />;
+        return <circle key={j.id} className="ed-ghost-joint" cx={p.x} cy={p.y} r={7} />;
       })}
     </g>
   );

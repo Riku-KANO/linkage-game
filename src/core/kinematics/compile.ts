@@ -54,6 +54,8 @@ export type CompileIssueCode =
   | 'crank-link-missing'
   | 'crank-link-has-other-fixed'
   | 'link-all-fixed'
+  /** MIN_LINK_LENGTH より短いリンク(短すぎるクランクは回っても機械をほとんど動かさない) */
+  | 'link-too-short'
   | 'floating-joint'
   /** ニュートン法でまとめて解く点が多すぎる(計算が重くなる。試走前チェックで止める) */
   | 'newton-too-large';
@@ -96,6 +98,13 @@ const EPS = 1e-9;
  * (sec の計測:上限いっぱいの設計で 1 ステップ 17ms)。これを超える設計は試走前チェックで止める。
  */
 export const MAX_NEWTON_JOINTS = 12;
+
+/**
+ * これより短いリンクは使えない(cm)。点を重ねてしまった状態や、1cm のクランクのように回っても機械が
+ * ほとんど動かないものを止める(playtest:軸の上までクランクを縮めると「一回転できる」と出て、試走は 0m で時間切れ)。
+ * このゲームの機構は 10〜100cm の大きさなので、2cm 未満の棒に意味はない
+ */
+export const MIN_LINK_LENGTH = 2;
 
 export function compileMechanism(design: DesignDoc): CompiledMechanism {
   const issues: CompileIssue[] = [];
@@ -148,6 +157,19 @@ export function compileMechanism(design: DesignDoc): CompiledMechanism {
   links.forEach((ls, li) => {
     if (ls.length >= 2 && ls.every((j) => fixed[j])) {
       issues.push({ code: 'link-all-fixed', linkIds: [linkIds[li]!] });
+    }
+    // 長さ 0 のリンク(点が重なっている)
+    if (ls.length >= 2) {
+      let span = 0;
+      for (let p = 0; p < ls.length; p++)
+        for (let q = p + 1; q < ls.length; q++) span = Math.max(span, ddist(ls[p]!, ls[q]!));
+      if (span < MIN_LINK_LENGTH) {
+        issues.push({
+          code: 'link-too-short',
+          linkIds: [linkIds[li]!],
+          jointIds: ls.map((j) => jointIds[j]!),
+        });
+      }
     }
   });
 

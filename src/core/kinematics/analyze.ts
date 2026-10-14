@@ -158,7 +158,9 @@ export function analyzeMechanism(
   if (design.cranks.length === 0 && design.joints.length > 0) {
     messages.push({ severity: 'warn', key: 'analysis.noCrank' });
   }
-  const specialGeometry = dofStatus === 'locked' && design.cranks.length > 0 && cycle.fullRotation;
+  const degenerate = compiled.issues.some((i) => i.code === 'link-too-short');
+  const specialGeometry =
+    dofStatus === 'locked' && design.cranks.length > 0 && cycle.fullRotation && !degenerate;
   if (specialGeometry) {
     messages.push({ severity: 'warn', key: 'analysis.specialGeometry', params: { dof } });
   }
@@ -234,7 +236,8 @@ export function analyzeMechanism(
     dofStatus,
     specialGeometry,
     assemblable: cycle.ok[0] ?? false,
-    fullRotation: cycle.fullRotation,
+    // 長さ 0 のリンクがあると、回っていても機構として意味がない(長さ 0 のクランクは何も動かさない)
+    fullRotation: cycle.fullRotation && !degenerate,
     failAngles,
     deadPoints,
     grashof,

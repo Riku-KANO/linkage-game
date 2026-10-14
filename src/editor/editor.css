@@ -407,7 +407,7 @@
 /* ヒントのゴースト */
 .ed-ghost {
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.85;
 }
 .ed-ghost-link {
   stroke: #8a7457;
@@ -417,9 +417,9 @@
   fill: none;
 }
 .ed-ghost-joint {
-  fill: none;
+  fill: rgb(138 116 87 / 0.18);
   stroke: #8a7457;
-  stroke-width: 1.5;
+  stroke-width: 2;
   stroke-dasharray: 2 2;
 }
 .ed-ghost-traj {

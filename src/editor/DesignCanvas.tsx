@@ -898,7 +898,7 @@ export function DesignCanvas(props: DesignCanvasProps) {
             if (pts.length === 2) {
               const [a, b] = pts as [Pt, Pt];
               return (
-                <g key={l.id} className={cls}>
+                <g key={l.id} className={cls} data-link={l.id}>
                   <line className="ed-link-halo" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
                   <line className="ed-link-outer" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
                   <line className="ed-link-inner" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
@@ -907,7 +907,7 @@ export function DesignCanvas(props: DesignCanvasProps) {
             }
             const pa = pointsAttr(pts);
             return (
-              <g key={l.id} className={cls}>
+              <g key={l.id} className={cls} data-link={l.id}>
                 <polygon className="ed-link-halo" points={pa} />
                 <polygon className="ed-plate" points={pa} />
                 <polygon className="ed-link-outer" points={pa} />
@@ -942,7 +942,7 @@ export function DesignCanvas(props: DesignCanvasProps) {
               .filter(Boolean)
               .join(' ');
             return (
-              <g key={j.id} className={cls}>
+              <g key={j.id} className={cls} data-joint={j.id}>
                 <circle className="ed-joint-halo" cx={p.x} cy={p.y} r={11} />
                 {j.fixed && <GroundSymbol p={p} />}
                 {design.foot === j.id && (

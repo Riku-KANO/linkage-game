@@ -11,6 +11,7 @@ import {
 } from 'react';
 import {
   compileMechanism,
+  grashofVariant,
   sampleCycle,
   type MechanismAnalysis,
   type CycleSample,
@@ -55,7 +56,17 @@ import {
 import type { MotionEngine } from './motion';
 import { nearestSample } from './motion';
 import { LiveLayer } from './LiveLayer';
-import { fmt1, linkOutlineOrder, pointsAttr, trajectoryExtent, trajectoryPaths } from './render';
+import {
+  fmt1,
+  footGuide,
+  linkOutlineOrder,
+  pointsAttr,
+  polylinePath,
+  sampleRun,
+  trajectoryExtent,
+  trajectoryPaths,
+  type FootGuide,
+} from './render';
 import type { ToolId } from './keyboard';
 import type { Pt } from './geometry';
 
@@ -714,22 +725,47 @@ export function DesignCanvas(props: DesignCanvasProps) {
     return out.sort((a, b) => Number(a.foot) - Number(b.foot));
   }, [analysis, cam, design.cranks.length]);
 
-  const deadMarks = useMemo(() => {
-    const out: Pt[] = [];
+  // 死点:軌道上の × 印と、死点に近い区間の赤い帯(E-05)
+  const dead = useMemo(() => {
+    const marks: Pt[] = [];
+    const ranges: string[] = [];
     const m = analysis.compiled;
     const cyc = analysis.cycle;
     for (const dp of analysis.deadPoints ?? []) {
       const k = nearestSample(cyc, dp.theta);
       const pos = cyc.positions[k];
       if (!pos) continue;
-      const idx = [m.jointIndex.get(dp.joint) ?? -1, m.footIndex].filter((i) => i >= 0);
-      for (const i of idx) {
+      const ji = m.jointIndex.get(dp.joint) ?? -1;
+      for (const i of [ji, m.footIndex]) {
+        if (i < 0) continue;
         const p = toScreen(cam, pos[i * 2]!, pos[i * 2 + 1]!);
-        if (out.every((q) => Math.hypot(q.x - p.x, q.y - p.y) > 8)) out.push(p);
+        if (marks.every((q) => Math.hypot(q.x - p.x, q.y - p.y) > 8)) marks.push(p);
+      }
+      if (ji >= 0 && dp.thetaStart !== undefined && dp.thetaEnd !== undefined) {
+        const run = sampleRun(
+          cyc.steps,
+          nearestSample(cyc, dp.thetaStart),
+          nearestSample(cyc, dp.thetaEnd),
+        );
+        if (run.length > 1) ranges.push(polylinePath(cyc, ji, run, cam));
       }
     }
-    return out;
+    return { marks, ranges };
   }, [analysis, cam]);
+
+  // 脚先の寸法(歩幅・足上げ)と進む向き(E-03)
+  const guide = useMemo(() => footGuide(analysis, design.motor.rpm), [analysis, design.motor.rpm]);
+
+  // グラスホフ判定(クランクで駆動する最初の四節ループ)
+  const grashofChip = useMemo(() => {
+    const g = (analysis.grashof ?? [])[0];
+    if (!g) return null;
+    const variant = grashofVariant(g);
+    return {
+      label: t(`editor.grashof.${variant}`),
+      ok: variant === 'crank-rocker' || variant === 'double-crank',
+    };
+  }, [analysis]);
 
   const ghostData = useMemo(() => {
     if (!ghost) return null;
@@ -806,7 +842,10 @@ export function DesignCanvas(props: DesignCanvasProps) {
               {tr.fail && <path className="ed-traj-fail" d={tr.fail} />}
             </g>
           ))}
-          {deadMarks.map((p, i) => (
+          {dead.ranges.map((d, i) => (
+            <path key={`r${i}`} className="ed-dead-range" d={d} />
+          ))}
+          {dead.marks.map((p, i) => (
             <path
               key={i}
               className="ed-dead"
@@ -814,6 +853,14 @@ export function DesignCanvas(props: DesignCanvasProps) {
             />
           ))}
         </g>
+        {guide && (
+          <FootGuides
+            guide={guide}
+            cycle={analysis.cycle}
+            footIndex={analysis.compiled.footIndex}
+            cam={cam}
+          />
+        )}
 
         <g className="ed-links">
           {design.links.map((l, li) => {
@@ -929,6 +976,11 @@ export function DesignCanvas(props: DesignCanvasProps) {
         >
           {t('editor.dof.badge', { dof: analysis.dof })}・{t(`editor.dof.${analysis.dofStatus}`)}
         </span>
+        {grashofChip && (
+          <span className="ed-chip" data-ok={grashofChip.ok ? 'true' : 'false'}>
+            {grashofChip.label}
+          </span>
+        )}
         {failing && design.cranks.length > 0 && (
           <span className="ed-chip-fail">{t('editor.status.failNow')}</span>
         )}
@@ -1112,6 +1164,93 @@ function GhostLayer({
         const p = S(j.x, j.y);
         return <circle key={j.id} className="ed-ghost-joint" cx={p.x} cy={p.y} r={5} />;
       })}
+    </g>
+  );
+}
+
+/** 脚先の接地区間・地面・歩幅と足上げの寸法線・進む向きの矢印 */
+function FootGuides({
+  guide,
+  cycle,
+  footIndex,
+  cam,
+}: {
+  guide: FootGuide;
+  cycle: CycleSample;
+  footIndex: number;
+  cam: Camera;
+}) {
+  const g = guide;
+  const a = toScreen(cam, g.stride.x0, g.stride.y);
+  const b = toScreen(cam, g.stride.x1, g.stride.y);
+  const lo = toScreen(cam, g.bounds.minX, g.bounds.minY);
+  const hi = toScreen(cam, g.bounds.maxX, g.bounds.maxY);
+  const groundY = a.y;
+  const dimY = groundY + 16;
+  const liftX = hi.x + 18;
+  const l0 = toScreen(cam, g.lift.x, g.lift.y0).y;
+  const l1 = toScreen(cam, g.lift.x, g.lift.y1).y;
+  const cx = (a.x + b.x) / 2;
+  const walkY = dimY + 30;
+  const w = g.walk;
+  const contact = polylinePath(cycle, footIndex, g.contact, cam);
+  return (
+    <g className="ed-guides" aria-hidden="true">
+      {contact && <path className="ed-contact" d={contact} />}
+      <line className="ed-ground-line" x1={lo.x - 24} x2={hi.x + 24} y1={groundY} y2={groundY} />
+      {g.stride.length > 0.5 && (
+        <g>
+          <line className="ed-dim" x1={a.x} x2={a.x} y1={groundY + 3} y2={dimY + 5} />
+          <line className="ed-dim" x1={b.x} x2={b.x} y1={groundY + 3} y2={dimY + 5} />
+          <line className="ed-dim" x1={a.x} x2={b.x} y1={dimY} y2={dimY} />
+          <polygon
+            className="ed-dim-head"
+            points={`${a.x},${dimY} ${a.x + 6},${dimY - 3} ${a.x + 6},${dimY + 3}`}
+          />
+          <polygon
+            className="ed-dim-head"
+            points={`${b.x},${dimY} ${b.x - 6},${dimY - 3} ${b.x - 6},${dimY + 3}`}
+          />
+          <text className="ed-dim-label" x={cx} y={dimY + 13} textAnchor="middle">
+            {t('analysis.metric.stride')} {fmt1(g.stride.length)} cm
+          </text>
+        </g>
+      )}
+      {g.lift.length > 0.5 && (
+        <g>
+          <line className="ed-dim" x1={liftX - 5} x2={liftX + 5} y1={l0} y2={l0} />
+          <line className="ed-dim" x1={liftX - 5} x2={liftX + 5} y1={l1} y2={l1} />
+          <line className="ed-dim" x1={liftX} x2={liftX} y1={l0} y2={l1} />
+          <polygon
+            className="ed-dim-head"
+            points={`${liftX},${l0} ${liftX - 3},${l0 - 6} ${liftX + 3},${l0 - 6}`}
+          />
+          <polygon
+            className="ed-dim-head"
+            points={`${liftX},${l1} ${liftX - 3},${l1 + 6} ${liftX + 3},${l1 + 6}`}
+          />
+          <text className="ed-dim-label" x={liftX + 8} y={(l0 + l1) / 2} dominantBaseline="central">
+            {t('analysis.metric.lift')} {fmt1(g.lift.length)} cm
+          </text>
+        </g>
+      )}
+      {w !== 0 && (
+        <g className="ed-walk">
+          <line x1={cx - 26 * w} x2={cx + 20 * w} y1={walkY} y2={walkY} />
+          <polygon
+            points={`${cx + 30 * w},${walkY} ${cx + 18 * w},${walkY - 7} ${cx + 18 * w},${walkY + 7}`}
+          />
+          <text
+            className="ed-walk-label"
+            x={cx + 38 * w}
+            y={walkY}
+            textAnchor={w > 0 ? 'start' : 'end'}
+            dominantBaseline="central"
+          >
+            {t(w > 0 ? 'analysis.metric.direction.forward' : 'analysis.metric.direction.backward')}
+          </text>
+        </g>
+      )}
     </g>
   );
 }

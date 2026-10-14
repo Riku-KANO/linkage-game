@@ -7,7 +7,13 @@ import {
   useSyncExternalStore,
   type KeyboardEvent,
 } from 'react';
-import { compileMechanism, sampleCycle, type MechanismAnalysis } from '@/core/kinematics';
+import {
+  compileMechanism,
+  grashofVariant,
+  sampleCycle,
+  walkDirection,
+  type MechanismAnalysis,
+} from '@/core/kinematics';
 import { legInstances, mirrorDesignX } from '@/core/kinematics/legs';
 import { computeBill } from '@/core/model/parts';
 import { MAX_RPM, type DesignDoc } from '@/core/model/types';
@@ -95,16 +101,7 @@ const seal = () => useEditor.getState().seal();
 
 // ---------------------------------------------------------------- 状態(ED-4)
 
-/** 死点の角度をかたまりごとに数える(隣り合うサンプルは 1 か所) */
-function countClusters(thetas: number[]): number {
-  if (thetas.length === 0) return 0;
-  const a = thetas.map(wrapAngle).sort((x, y) => x - y);
-  const gap = (6 * Math.PI) / 180;
-  let n = 1;
-  for (let i = 1; i < a.length; i++) if (a[i]! - a[i - 1]! > gap) n++;
-  if (n > 1 && a[0]! + 2 * Math.PI - a[a.length - 1]! <= gap) n--;
-  return n;
-}
+const MEMBERS = ['ground', 'input', 'coupler', 'output'] as const;
 
 export function StatusPanel({
   analysis,
@@ -116,8 +113,11 @@ export function StatusPanel({
   hasCrank: boolean;
 }) {
   const hid = useId();
-  const msgs = analysis.messages.filter((m) => !m.key.startsWith('analysis.dof.'));
-  const dead = countClusters((analysis.deadPoints ?? []).map((d) => d.theta));
+  // 自由度はバッジ、グラスホフは下のカードで出すので、一覧からは除く
+  const msgs = analysis.messages.filter(
+    (m) => !m.key.startsWith('analysis.dof.') && !m.key.startsWith('analysis.grashof.'),
+  );
+  const dead = (analysis.deadPoints ?? []).length;
   const grashof = analysis.grashof ?? [];
   return (
     <section className="ed-panel" aria-labelledby={hid}>
@@ -143,26 +143,80 @@ export function StatusPanel({
           <li data-severity="info">{t('editor.status.allGood')}</li>
         )}
       </ul>
+      {dead > 0 && <p className="ed-muted">{t('editor.deadPoints', { count: dead })}</p>}
       {grashof.length > 0 && (
         <div>
           <h3 style={{ marginTop: 10 }}>{t('editor.grashof.title')}</h3>
-          {grashof.map((g, i) => (
-            <div className="ed-grashof" key={i}>
-              <b>{t(`editor.grashof.${g.type}`)}</b>
-              <span>{t(g.grashof ? 'editor.grashof.ok' : 'editor.grashof.ng')}</span>
-              <div className="ed-muted">
-                {t('editor.grashof.lengths', {
-                  ground: fmt1(g.lengths.ground),
-                  input: fmt1(g.lengths.input),
-                  coupler: fmt1(g.lengths.coupler),
-                  output: fmt1(g.lengths.output),
-                })}
+          {grashof.map((g, i) => {
+            const variant = grashofVariant(g);
+            return (
+              <div className="ed-grashof" key={i} data-variant={variant}>
+                <b>{t(`editor.grashof.${variant}`)}</b>
+                <div>{t(`analysis.grashof.${variant}`)}</div>
+                <div className="ed-muted">
+                  {t(g.grashof ? 'editor.grashof.ok' : 'editor.grashof.ng')}
+                </div>
+                <div className="ed-members">
+                  {MEMBERS.map((k) => (
+                    <span key={k} className={g.shortest === k ? 'is-shortest' : undefined}>
+                      {t(`editor.grashof.member.${k}`)} {fmt1(g.lengths[k])}
+                      {g.shortest === k ? t('editor.grashof.shortest') : ''}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      {dead > 0 && <p className="ed-muted">{t('editor.deadPoints', { count: dead })}</p>}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------- 脚先の軌道(E-03)
+
+export function FootPanel({ analysis, rpm }: { analysis: MechanismAnalysis; rpm: number }) {
+  const hid = useId();
+  const m = analysis.foot;
+  const hasCrank = analysis.compiled.design.cranks.length > 0;
+  const walk = m ? walkDirection(m, rpm) : 0;
+  return (
+    <section className="ed-panel" aria-labelledby={hid}>
+      <h3 id={hid}>{t('editor.foot.title')}</h3>
+      {m && hasCrank ? (
+        <>
+          <div className="ed-stat ed-stat-4">
+            <div>
+              <b>{fmt1(m.stride)}</b>
+              <span>{t('analysis.metric.stride')}(cm)</span>
+            </div>
+            <div>
+              <b>{fmt1(m.lift)}</b>
+              <span>{t('analysis.metric.lift')}(cm)</span>
+            </div>
+            <div>
+              <b>{fmt1(m.flatness)}</b>
+              <span>{t('analysis.metric.flatness')}(cm)</span>
+            </div>
+            <div>
+              <b>{Math.round(m.duty * 100)}%</b>
+              <span>{t('analysis.metric.duty')}</span>
+            </div>
+          </div>
+          <p className="ed-walk-text" data-walk={walk}>
+            {walk > 0 ? '→ ' : walk < 0 ? '← ' : ''}
+            {t(
+              walk > 0
+                ? 'analysis.metric.direction.forward'
+                : walk < 0
+                  ? 'analysis.metric.direction.backward'
+                  : 'analysis.metric.direction.none',
+            )}
+          </p>
+        </>
+      ) : (
+        <p className="ed-muted">{t('editor.foot.none')}</p>
+      )}
     </section>
   );
 }

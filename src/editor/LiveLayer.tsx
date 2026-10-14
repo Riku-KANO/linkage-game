@@ -46,7 +46,8 @@ export const LiveLayer = memo(function LiveLayer({
       const sx = (i: number) => r1(cam.ox + cam.scale * P[i * 2]!);
       const sy = (i: number) => r1(cam.oy - cam.scale * P[i * 2 + 1]!);
       const failedLinks = new Set(pose.failedLinks);
-      const failedJoints = new Set(pose.failedJoints);
+      // 赤くするのは原因の点だけ(引きずられて解けなかった点は除く)
+      const failedJoints = new Set(pose.causeJoints ?? pose.failedJoints);
       for (let li = 0; li < orders.length; li++) {
         const el = linkEls.current[li];
         const ord = orders[li]!;

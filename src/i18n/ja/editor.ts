@@ -57,8 +57,17 @@ export const editor: Record<string, string> = {
   'editor.grashof.triple-rocker': '三重てこ機構',
   'editor.grashof.ok': 's + l ≤ p + q(グラスホフ)',
   'editor.grashof.ng': 's + l > p + q(非グラスホフ)',
-  'editor.grashof.lengths': '地節 {ground}・入力 {input}・中間 {coupler}・出力 {output} cm',
-  'editor.deadPoints': '死点に近い姿勢が {count} か所(軌道の × 印)',
+  'editor.grashof.rocker-crank': 'てこクランク機構(出力側が回る)',
+  'editor.grashof.member.ground': '地節',
+  'editor.grashof.member.input': '入力',
+  'editor.grashof.member.coupler': '中間',
+  'editor.grashof.member.output': '出力',
+  'editor.grashof.shortest': '(最短)',
+  'editor.deadPoints': '軌道の × 印と赤い帯が死点の位置です({count} か所)',
+
+  // 脚先の軌道(E-03)
+  'editor.foot.title': '脚先の軌道',
+  'editor.foot.none': '脚先とクランクを決めると、歩幅や進む向きを表示します',
 
   // 選択(E-02)
   'editor.sel.title': '選択',

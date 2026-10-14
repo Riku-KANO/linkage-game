@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { compileMechanism, sampleCycle } from '@/core/kinematics';
+import { analyzeMechanism, compileMechanism, sampleCycle } from '@/core/kinematics';
 import { fourBar, jansenLeg } from '@/core/model/presets';
-import { fmt1, linkOutlineOrder, trajectoryExtent, trajectoryPaths } from './render';
+import {
+  fmt1,
+  footGuide,
+  linkOutlineOrder,
+  sampleRun,
+  trajectoryExtent,
+  trajectoryPaths,
+} from './render';
 
 const cam = { ox: 300, oy: 300, scale: 4 };
 
@@ -42,5 +49,32 @@ describe('fmt1', () => {
   it('formats without negative zero', () => {
     expect(fmt1(-0.01)).toBe('0.0');
     expect(fmt1(12.345)).toBe('12.3');
+  });
+});
+
+describe('foot guide', () => {
+  it('measures the Jansen stride and lift and walks forward at the preset rpm', () => {
+    const d = jansenLeg();
+    const a = analyzeMechanism(d, { steps: 180 });
+    const g = footGuide(a, d.motor.rpm)!;
+    expect(g).not.toBeNull();
+    expect(g.stride.length).toBeGreaterThan(35);
+    expect(g.stride.x1 - g.stride.x0).toBeCloseTo(g.stride.length, 6);
+    expect(g.lift.length).toBeGreaterThan(20);
+    expect(g.contact.length).toBeGreaterThan(30);
+    // the Jansen preset walks toward +x when turning clockwise (rpm < 0)
+    expect(g.walk).toBe(1);
+    expect(footGuide(a, -d.motor.rpm)!.walk).toBe(-1);
+    expect(footGuide(a, 0)!.walk).toBe(0);
+  });
+
+  it('is null without a foot or crank', () => {
+    const d = { ...jansenLeg(), foot: null };
+    expect(footGuide(analyzeMechanism(d, { steps: 60 }), 30)).toBeNull();
+  });
+
+  it('wraps sample runs around the cycle', () => {
+    expect(sampleRun(10, 8, 1)).toEqual([8, 9, 0, 1]);
+    expect(sampleRun(10, 3, 3)).toEqual([3]);
   });
 });

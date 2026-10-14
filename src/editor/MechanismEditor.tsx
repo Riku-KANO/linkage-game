@@ -17,7 +17,7 @@ import { useEditor } from './store';
 import { MotionEngine } from './motion';
 import { DesignCanvas, type CanvasApi } from './DesignCanvas';
 import { Toolbar } from './Toolbar';
-import { BillPanel, LegsPanel, MotorPanel, SelectionPanel, StatusPanel } from './panels';
+import { BillPanel, FootPanel, LegsPanel, MotorPanel, SelectionPanel, StatusPanel } from './panels';
 import { resolveShortcut, type Command, type ToolId } from './keyboard';
 import {
   copySelection,
@@ -344,6 +344,7 @@ export function MechanismEditor({
       {panels && (
         <aside className="ed-side">
           <StatusPanel analysis={analysis} failing={failing} hasCrank={design.cranks.length > 0} />
+          <FootPanel analysis={analysis} rpm={design.motor.rpm} />
           <SelectionPanel
             design={design}
             selection={selection}

@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createEmptyDesign } from '@/core/model/types';
-import { jansenLeg } from '@/core/model/presets';
+import { fourBar, jansenLeg } from '@/core/model/presets';
 import { t } from '@/i18n';
 import { MechanismEditor, useEditor } from './index';
 
@@ -41,6 +41,27 @@ describe('MechanismEditor (smoke)', () => {
     expect(screen.getByText(t('editor.bill.title'))).toBeTruthy();
     // budget 100 is below the Jansen leg cost → warning
     expect(screen.getByRole('alert').textContent).toMatch(/予算/);
+  });
+
+  it('shows the Grashof type, stride/lift dimensions and the walking direction', () => {
+    const { container } = render(<MechanismEditor />);
+    expect(container.querySelector('.ed-chip')?.textContent).toBe(t('editor.grashof.crank-rocker'));
+    expect(container.querySelector('.ed-contact')).not.toBeNull();
+    const labels = [...container.querySelectorAll('.ed-dim-label')].map((e) => e.textContent);
+    expect(labels.some((l) => l?.startsWith(t('analysis.metric.stride')))).toBe(true);
+    expect(labels.some((l) => l?.startsWith(t('analysis.metric.lift')))).toBe(true);
+    // Jansen preset (rpm < 0) walks toward +x
+    expect(container.querySelector('.ed-walk-label')?.textContent).toBe(
+      t('analysis.metric.direction.forward'),
+    );
+  });
+
+  it('marks problem links red and draws the unreachable part of the curve', () => {
+    act(() => S().replaceDesign(fourBar(28, 35, 30, 40)));
+    const { container } = render(<MechanismEditor />);
+    expect(container.querySelector('.ed-link.is-problem')).not.toBeNull();
+    expect(container.querySelector('.ed-traj-fail')).not.toBeNull();
+    expect(screen.getAllByText(/一回転できません/).length).toBeGreaterThan(0);
   });
 
   it('draws a bar with the link tool and undoes it with Ctrl+Z', () => {

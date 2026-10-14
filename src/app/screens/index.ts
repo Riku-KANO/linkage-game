@@ -27,5 +27,7 @@ export { NoticeLayer } from './NoticeLayer';
 
 // 設計画面(INT-1):製図用紙に重ねるエディタと、3D の紙に描く今の設計
 export { DesignScreen, useDesignPaperInsets, type DesignScreenProps } from './design/DesignScreen';
+// 設計画面の HUD と案内(INT-7a)
+export { DesignHudScreen, useDesignGuide, type DesignHudScreenProps } from './design/DesignHud';
 export { PaperInk } from './design/PaperInk';
 export { designSignals } from './design/signals';

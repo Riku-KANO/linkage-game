@@ -6,10 +6,12 @@ import { designStationPose, designToScreen, paperScreenRect } from '@/scene/rig/
 import { cameraForRect, toScreen } from '@/editor/viewport';
 import {
   DESIGN_UI,
+  MIN_SIDE_PANEL,
   boxesOverlap,
   designLayout,
   paperPxPerCm,
   predictPaperRect,
+  sideDocks,
   toWorldRect,
   type Box,
 } from './layout';
@@ -70,6 +72,47 @@ describe('設計画面の配置(designLayout)', () => {
   it('1280×720 でも紙は 1cm = 3px 以上(1cm スナップがそのまま使える)', () => {
     const lay = designLayout(1280, 720);
     expect(paperPxPerCm(1280, 720, lay.insets)).toBeGreaterThan(3);
+  });
+});
+
+describe('横のパネルの列に積む案内(sideDocks)', () => {
+  it('吹き出しを上、試走ボタンを下に置き、パネルは間に縮む。どれも紙に重ならない', () => {
+    for (const [w, h] of SIZES) {
+      const lay = designLayout(w, h);
+      const paper: Box = predictPaperRect(w, h, lay.insets);
+      const d = sideDocks(lay, 180, 80);
+      for (const [name, box] of Object.entries(d)) {
+        expect(boxesOverlap(box, paper), `${name} @${w}x${h}`).toBe(false);
+        expect(box.top + box.height).toBeLessThanOrEqual(lay.side.top + lay.side.height + 1e-9);
+      }
+      expect(boxesOverlap(d.top, d.side)).toBe(false);
+      expect(boxesOverlap(d.bottom, d.side)).toBe(false);
+      expect(d.top.top).toBe(lay.side.top);
+      expect(d.bottom.top + d.bottom.height).toBeCloseTo(lay.side.top + lay.side.height, 9);
+      expect(d.side.height).toBeGreaterThanOrEqual(
+        Math.min(MIN_SIDE_PANEL, lay.side.height) - 1e-9,
+      );
+    }
+  });
+
+  it('空の差し込み口は場所を取らない(パネルは列いっぱい)', () => {
+    const lay = designLayout(1280, 720);
+    expect(sideDocks(lay, 0, 0).side).toEqual(lay.side);
+    const onlyRun = sideDocks(lay, 0, 70);
+    expect(onlyRun.side.top).toBe(lay.side.top);
+    expect(onlyRun.side.height).toBe(lay.side.height - 70 - DESIGN_UI.gap);
+    const onlyTip = sideDocks(lay, 100, 0);
+    expect(onlyTip.side.top).toBe(lay.side.top + 100 + DESIGN_UI.gap);
+    expect(onlyTip.side.top + onlyTip.side.height).toBe(lay.side.top + lay.side.height);
+  });
+
+  it('入りきらなければ試走ボタンを残し、上の案内を縮める', () => {
+    const lay = designLayout(1280, 720);
+    const d = sideDocks(lay, 2000, 90);
+    expect(d.bottom.height).toBe(90);
+    expect(d.side.height).toBeCloseTo(MIN_SIDE_PANEL, 9);
+    expect(d.top.height).toBeGreaterThan(0);
+    expect(d.top.height).toBeLessThan(2000);
   });
 });
 

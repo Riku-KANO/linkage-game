@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -7,10 +8,12 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import { useStore } from 'zustand';
 import {
   isSandboxStage,
-  selectHintGhost,
+  selectAllowedParts,
   selectLockedJoints,
+  selectRevealedHints,
   selectStage,
   useSession,
 } from '@/app/flow';
@@ -22,7 +25,8 @@ import { t } from '@/i18n';
 import { BackButton, Button } from '@/scene/overlay/Panel';
 import type { ScreenOverlayProps } from '@/scene/overlay/placeholders';
 import { setPaperInsets, usePaperViewport } from '@/scene/store';
-import { DESIGN_UI, designLayout, predictPaperRect, toWorldRect } from './layout';
+import { designGuide, hintGhost } from './guide';
+import { DESIGN_UI, designLayout, predictPaperRect, sideDocks, toWorldRect } from './layout';
 import { designSignals } from './signals';
 import './designScreen.css';
 
@@ -44,36 +48,57 @@ import './designScreen.css';
  * - stageHeader:上の帯の左(戻るの右)の 1 行(高さ 48px)。既定は「1-1 こわれた機械」と課題の文。
  *   HUD の StageHeader(HUD-1)はたたんだ 1 行で置き、開いた中身は帯から下へ紙の上に重なってよい
  * - hints:上の帯の右(試走の左)。ヒント 3 段階のボタン(HintPanel、HUD-1 / INT-7)。開いた中身は同上
- * - tutorial:画面全体に重なる層(中身だけがマウスを受け取る)。チュートリアルの吹き出し・状況の一言
- *   (INT-7)。紙の上の点を指すときは usePaperViewport() と designToScreen() で位置を求める
- * - onTestRun:試走ボタン。既定は useApp.go('testRun')。flow の試走前チェック(FLOW-2)がここに入る
- * - editor:エディタの制約の上書き。既定は flow のセッションの今のステージから:使える部品は
- *   ステージの部品(チュートリアルで絞るのは吹き出しと一緒に INT-7 で渡す)、動かせない点、
- *   開いたヒントの影、予算
+ * - tutorial:画面全体に重なる層(中身だけがマウスを受け取る)。紙の上の点を指すときは
+ *   usePaperViewport() と designToScreen() で位置を求める
+ * - guide:横のパネルの列の上に積む案内(INT-7a:チュートリアルの吹き出し・状況の一言)。
+ *   紙には重ねず、高さの分だけエディタのパネルを縮める(sideDocks)
+ * - testRun:横のパネルの列の下に積む試走ボタン(INT-7a:HUD の TestRunButton と試走前チェックの一覧)。
+ *   渡すと上の帯の試走ボタンは出さない
+ * - onTestRun:上の帯の試走ボタン(testRun を渡さないとき)。既定は useApp.go('testRun')
+ * - editor:エディタの制約の上書き。既定は flow のセッションの今のステージから:使える部品
+ *   (チュートリアルで渡した分だけ、selectAllowedParts)、動かせない点、開いたヒントの影
+ *   (designGuide で「重ねない」にしたものを除く)、予算、脚列を変えられるか(章 2 から)
  * 例:overlays={{ design: () => <DesignScreen screen="design" stageHeader={<StageHeader … collapsed />} /> }}
  */
 export interface DesignScreenProps extends ScreenOverlayProps {
   stageHeader?: ReactNode;
   hints?: ReactNode;
   tutorial?: ReactNode;
+  guide?: ReactNode;
+  testRun?: ReactNode;
   onTestRun?: () => void;
-  editor?: Pick<MechanismEditorProps, 'allowedParts' | 'lockedJoints' | 'ghost' | 'budget'>;
+  editor?: Pick<
+    MechanismEditorProps,
+    'allowedParts' | 'lockedJoints' | 'ghost' | 'budget' | 'legArray'
+  >;
 }
 
 export function DesignScreen({
   stageHeader,
   hints,
   tutorial,
+  guide,
+  testRun,
   onTestRun,
   editor,
 }: DesignScreenProps) {
   const reduced = useApp((s) => s.settings.reducedMotion);
   const stage = useSession(selectStage);
+  const allowedParts = useSession(selectAllowedParts);
   const lockedJoints = useSession(selectLockedJoints);
-  const ghost = useSession(selectHintGhost);
+  const revealed = useSession(selectRevealedHints);
+  const hiddenGhosts = useStore(designGuide, (s) => (stage ? s.hiddenGhosts[stage.id] : undefined));
+  const ghost = useMemo(() => hintGhost(revealed, hiddenGhosts).ghost, [revealed, hiddenGhosts]);
   const vp = usePaperViewport();
   const size = useViewportSize();
   const lay = useMemo(() => designLayout(size.width, size.height), [size.width, size.height]);
+  // 横のパネルの列に積む案内(上:吹き出し・一言、下:試走ボタン)の高さに合わせてパネルを縮める
+  const [guideRef, guideH] = useMeasuredHeight();
+  const [runRef, runH] = useMeasuredHeight();
+  const docks = useMemo(
+    () => sideDocks(lay, guide ? guideH : 0, testRun ? runH : 0),
+    [lay, guide, guideH, testRun, runH],
+  );
   const live = vp.ready;
   const paper = live ? vp.screen : predictPaperRect(size.width, size.height, lay.insets);
   const { xMin, yMin, xMax, yMax } = vp.design;
@@ -101,10 +126,14 @@ export function DesignScreen({
     '--ds-toolbar-top': lay.toolbar.top,
     '--ds-toolbar-w': lay.toolbar.width,
     '--ds-toolbar-h': lay.toolbar.height,
-    '--ds-side-left': lay.side.left,
-    '--ds-side-top': lay.side.top,
-    '--ds-side-w': lay.side.width,
-    '--ds-side-h': lay.side.height,
+    '--ds-side-left': docks.side.left,
+    '--ds-side-top': docks.side.top,
+    '--ds-side-w': docks.side.width,
+    '--ds-side-h': docks.side.height,
+    '--ds-col-top': lay.side.top,
+    '--ds-col-bottom': size.height - (lay.side.top + lay.side.height),
+    '--ds-dock-top-h': docks.top.height,
+    '--ds-dock-bottom-h': docks.bottom.height,
     '--ds-paper-left': paper.left,
     '--ds-paper-top': paper.top,
     '--ds-paper-w': paper.width,
@@ -134,19 +163,44 @@ export function DesignScreen({
         <div className="ds-slot ds-slot--hints" data-slot="hints">
           {hints}
         </div>
-        <Button variant="primary" onClick={onTestRun ?? goTestRun}>
-          {t('app.design.testRun')}
-        </Button>
+        {!testRun && (
+          <Button variant="primary" onClick={onTestRun ?? goTestRun}>
+            {t('app.design.testRun')}
+          </Button>
+        )}
       </header>
       <MechanismEditor
         className="ds-editor"
         view={view}
-        allowedParts={stage?.parts}
+        allowedParts={stage ? allowedParts : undefined}
         lockedJoints={lockedJoints}
         ghost={ghost}
         budget={stage?.budget ?? null}
+        legArray={stage?.features.legArray ?? true}
         {...editor}
       />
+      {guide && (
+        <div
+          className="ds-dock ds-dock--guide"
+          data-slot="guide"
+          data-scroll={guideH > docks.top.height + 0.5 || undefined}
+        >
+          <div ref={guideRef} className="ds-dock__inner">
+            {guide}
+          </div>
+        </div>
+      )}
+      {testRun && (
+        <div
+          className="ds-dock ds-dock--run"
+          data-slot="testRun"
+          data-scroll={runH > docks.bottom.height + 0.5 || undefined}
+        >
+          <div ref={runRef} className="ds-dock__inner">
+            {testRun}
+          </div>
+        </div>
+      )}
       <div className="ds-slot ds-slot--float" data-slot="tutorial">
         {tutorial}
       </div>
@@ -193,6 +247,29 @@ export function useDesignPaperInsets(): void {
     window.addEventListener('resize', apply);
     return () => window.removeEventListener('resize', apply);
   }, []);
+}
+
+/**
+ * 要素の(縮める前の)中身の高さを測り続ける。ResizeObserver がない環境(jsdom)では 0 のまま。
+ * ref は差し込み口の中身を包む要素に付ける(差し込み口そのものは高さを制限してスクロールさせる)
+ */
+function useMeasuredHeight(): [(el: HTMLElement | null) => void, number] {
+  const [height, setHeight] = useState(0);
+  const observer = useRef<ResizeObserver | null>(null);
+  const ref = useCallback((el: HTMLElement | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
+    if (!el) {
+      setHeight(0);
+      return;
+    }
+    const read = () => setHeight(Math.ceil(el.getBoundingClientRect().height));
+    read();
+    if (typeof ResizeObserver === 'undefined') return;
+    observer.current = new ResizeObserver(read);
+    observer.current.observe(el);
+  }, []);
+  return [ref, height];
 }
 
 function useViewportSize(): { width: number; height: number } {

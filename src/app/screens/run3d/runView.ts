@@ -38,7 +38,10 @@ export interface RunView {
 
 export interface RunViewState {
   view: RunView | null;
-  /** 試走前チェックで止まったことを設計画面に知らせる(試走ボタンを押したときだけ開く) */
+  /**
+   * 試走前チェックで止まったことを設計画面に知らせる(試走ボタンを押したときだけ開く)。
+   * 設計画面の試走ボタン(INT-7a)はこれが true の間だけ問題の一覧を開いて出す
+   */
   preflightOpen: boolean;
 }
 

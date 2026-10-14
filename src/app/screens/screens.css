@@ -22,6 +22,39 @@
   pointer-events: none;
 }
 
+/*
+ * ---- 初回の「はじめての方へ」(INT-7b)----
+ * 右の壁(額と棚)の前に置き、左上のメニューと中央の作業台(続きから)を空ける。重ねるだけで、
+ * メニューや工房の物体はそのまま使える(モーダルにしない)
+ */
+.app-welcome {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+@media (max-width: 1000px) {
+  .app-welcome {
+    right: 16px;
+  }
+}
+/* メニューの横に入らない幅:下に寄せる(メニューの上に重なるので高さを抑えてスクロール) */
+@media (max-width: 760px) {
+  .app-welcome {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    transform: none;
+    display: flex;
+    justify-content: center;
+    max-height: 55%;
+  }
+}
+
 /* ---- 画面の端のパネル(ステージ選択・設定・図鑑) ---- */
 .app-dock {
   position: absolute;

@@ -7,6 +7,7 @@ import { version } from '../../../package.json';
 import { designForExport, exportDesignFile, importDesignFile, resetProgress } from '../actions';
 import { setUserSettings } from '../settings';
 import { useApp } from '../store';
+import { useGuideBook } from './GuideBook';
 import './screens.css';
 
 /**
@@ -14,6 +15,7 @@ import './screens.css';
  *  - 音量(flow が保存)・ミュート・動きを減らす・低性能モード(利用者の選択として prefs に保存)
  *  - 低性能モードを自動で選んでいるときは、その理由を添える(出どころ:自動 / 利用者)
  *  - 設計の書き出し・読み込み(U-03)、進行のリセット(2 段階)
+ *  - 遊び方の本(INT-7b。用語集・操作一覧へも)
  */
 export function SettingsScreen() {
   const settings = useApp((s) => s.settings);
@@ -29,6 +31,7 @@ export function SettingsScreen() {
     }),
     [settings],
   );
+  const guide = useGuideBook();
   const reason = perfStatus.decision?.reason;
   const autoNote =
     settings.sources?.lowPerf !== 'user' &&
@@ -45,11 +48,13 @@ export function SettingsScreen() {
         onChange={(patch) => setUserSettings(patch)}
         onExportDesign={canExport ? () => void exportDesignFile() : undefined}
         onImportDesign={(file) => void importDesignFile(file)}
+        onHowToPlay={() => guide.open('book')}
         onResetProgress={resetProgress}
         onClose={() => useApp.getState().back()}
         version={`v${version}`}
       />
       {autoNote && <p className="app-note">{autoNote}</p>}
+      {guide.element}
     </div>
   );
 }

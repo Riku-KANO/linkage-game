@@ -5,7 +5,6 @@
 export const appRun: Record<string, string> = {
   // 試走画面(INT-2)
   'app.run.hud': '試走の状況',
-  'app.run.progress': 'ゴールまで',
   'app.run.sandbox': 'サンドボックス',
   'app.run.backKey': 'Esc',
 

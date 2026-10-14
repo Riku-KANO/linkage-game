@@ -38,24 +38,32 @@ test('共有リンクの機械を工房の試走コースで走らせ、結果�
   // 設計画面 → 試走(T-03)。窓の外の試走コースで本物の sim が走り、相手のゴーストが並走する
   await testRun.click();
   await expect(html(page)).toHaveAttribute('data-screen', 'testRun');
-  const strip = page.getByRole('region', { name: '試走の状況' });
+  // 計器(HUD の RunHud、INT-7b)とステージ名・ゴーストの凡例
+  const strip = page.getByRole('group', { name: '試走中の計器' });
+  const info = page.getByRole('region', { name: '試走の状況' });
+  const toResult = page.getByRole('button', { name: '結果へ' });
   await expect(strip).toBeVisible({ timeout: 30_000 });
   // 1-1 は 2 秒ほどでゴールするので、一時停止(Space)して操作盤を確かめる
   await page.keyboard.press('Space');
   const controls = page.getByRole('toolbar', { name: '試走の操作' });
   await expect(controls.getByRole('button', { name: '再生' })).toBeVisible();
-  await expect(strip).toContainText('ステージ 1-1');
-  await expect(strip).toContainText('相手');
+  await expect(info).toContainText('ステージ 1-1');
+  await expect(info).toContainText('相手');
+  // 負荷は計器に出るので、クランクトルクの計器は既定で隠す(表示の切り替えで出せる)
+  await expect(strip.getByRole('meter', { name: 'モーター負荷' })).toBeVisible();
+  await expect(page.getByText('クランクトルク')).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'トルク' }).check();
   await expect(page.getByText('クランクトルク')).toBeVisible();
   await expect(page.getByRole('heading', { name: '設計図' })).toBeVisible();
-  await page.keyboard.press('Space');
-  await expect(strip).toContainText(/時間 (0\.[1-9]|[1-9]\.\d) \/ 15 秒/, { timeout: 20_000 });
+  // (フォーカスが切り替えの上にあるので、Space ではなくボタンで再開する)
+  await controls.getByRole('button', { name: '再生' }).click();
+  await expect(strip.getByRole('timer', { name: '時間' })).toContainText(
+    /(0\.[1-9]|[1-9]\.\d)\/ 15/,
+    { timeout: 20_000 },
+  );
 
   // ゴール(または「結果へ」)→ 結果パネルが右に出る(T-04)
-  await strip
-    .getByRole('button', { name: '結果へ' })
-    .click({ timeout: 5_000 })
-    .catch(() => {}); // 先にゴールして結果へ移っていてもよい
+  await toResult.click({ timeout: 5_000 }).catch(() => {}); // 先にゴールして結果へ移っていてもよい
   const result = page.getByRole('region', { name: '試走の結果' });
   await expect(result).toBeVisible({ timeout: 30_000 });
   await expect(html(page)).toHaveAttribute('data-screen', 'result');
@@ -68,7 +76,7 @@ test('共有リンクの機械を工房の試走コースで走らせ、結果�
   // もう一度:前回の試走がゴーストで並走する。Esc で試走をやめて設計に戻る
   await result.getByRole('button', { name: 'もう一度' }).click();
   await expect(strip).toBeVisible({ timeout: 30_000 });
-  await expect(strip).toContainText('前回の試走');
+  await expect(info).toContainText('前回の試走');
   await page.keyboard.press('Escape');
   await expect(html(page)).toHaveAttribute('data-screen', 'design');
   await expect(testRun).toBeVisible({ timeout: 30_000 });
@@ -77,10 +85,7 @@ test('共有リンクの機械を工房の試走コースで走らせ、結果�
   // もう一度試走して、結果から「設計に戻る」(T-05):製図用紙の設計画面
   await testRun.click();
   await expect(strip).toBeVisible({ timeout: 30_000 });
-  await strip
-    .getByRole('button', { name: '結果へ' })
-    .click({ timeout: 5_000 })
-    .catch(() => {});
+  await toResult.click({ timeout: 5_000 }).catch(() => {});
   await expect(result).toBeVisible({ timeout: 30_000 });
   await result.click({ position: { x: 20, y: 20 } });
   await result.getByRole('button', { name: '設計に戻る' }).click();
@@ -103,6 +108,6 @@ test('試走前チェックに通らない設計は、設計画面のまま問�
     timeout: 20_000,
   });
   await expect(html(page)).toHaveAttribute('data-screen', 'design');
-  await expect(page.getByRole('region', { name: '試走の状況' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: '試走中の計器' })).toHaveCount(0);
   w.expectClean();
 });

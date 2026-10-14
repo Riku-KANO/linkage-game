@@ -162,6 +162,14 @@ export function rememberSlot(slot: DesignSlot): void {
   persist(r);
 }
 
+/** (int-polish で追加)初回の「はじめての方へ」でどれかを選んだことを保存する(もう出さない) */
+export function markWelcomed(): void {
+  const r = runtime();
+  if (r.prefs.welcomed === true) return;
+  r.prefs = { ...r.prefs, welcomed: true };
+  persist(r);
+}
+
 /** テスト用:同期を止め、読み込んだ prefs を捨てる */
 export function resetSettingsSync(): void {
   unsub?.();

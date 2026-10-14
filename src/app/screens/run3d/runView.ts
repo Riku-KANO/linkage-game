@@ -70,6 +70,8 @@ export function createRunView(input: RunViewInput): RunView {
       previousGhost: input.previousGhost,
       // 再生は「転倒の瞬間」を見せるものなので、自動スローは重ねない(もう ×0.5)
       autoSlowMo: !input.replay,
+      // クランクトルクの計器は HUD の計器(モーター負荷)と重なるので、既定では隠す(表示の切り替えで出せる)
+      show: { torque: false },
     }),
     replay: input.replay,
     previousGhost: input.previousGhost,

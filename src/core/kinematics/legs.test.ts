@@ -8,7 +8,7 @@ import { jansenLeg, jansenWalker, fourBar } from '@/core/model/presets';
 describe('leg set solving (E-06)', () => {
   it('compiles normal and mirrored mechanisms once and shares them between instances', () => {
     const set = compileLegSet(jansenWalker());
-    expect(set.instances).toHaveLength(6);
+    expect(set.instances).toHaveLength(12);
     expect(set.mirrored).not.toBeNull();
     set.instances.forEach((inst, k) => {
       expect(legMechanism(set, k)).toBe(inst.mirrored ? set.mirrored : set.normal);

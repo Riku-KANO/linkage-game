@@ -11,6 +11,7 @@
 | `pnpm verify` | **検証ゲート**:format → typecheck → test → build。合否はこれだけで決める |
 | `pnpm verify --quick` | build を省く(内側ループ用) |
 | `pnpm verify --fix` | prettier で整形してから検証 |
+| `pnpm e2e` / `pnpm verify --e2e` | Playwright の E2E:本番ビルドを本番ヘッダー(CSP)つきで配信し、実 Chromium で開く(`e2e/`) |
 | `pnpm test -- <path>` | 一部のテストだけ実行 |
 | `scripts/wt.sh new/sync/gate/rm <name>` | ワークツリーの作成・同期・合流(`docs/loop/README.md`) |
 | `pnpm deps:check` / `pnpm deps:update` | 依存の脆弱性と鮮度のゲート / 最新へ更新(セキュリティ方針:できるだけ最新) |

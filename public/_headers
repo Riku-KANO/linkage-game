@@ -1,9 +1,18 @@
+# Cloudflare(Workers 静的アセット)が配信時に付けるヘッダー。scripts/serve-dist.mjs も同じ内容で手元検証する。
+# CSP:外部への通信・外部スクリプトを一切許さない。WASM(Rapier など)は 'wasm-unsafe-eval' だけを許可。
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), hid=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /models/*
   Cache-Control: public, max-age=604800
-
-/*
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin

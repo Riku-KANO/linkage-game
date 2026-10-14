@@ -5,6 +5,7 @@
  *   pnpm verify            format → typecheck → test → build
  *   pnpm verify --quick    build を省く(内側ループ用)
  *   pnpm verify --fix      先に prettier --write してから検証
+ *   pnpm verify --e2e      最後に Playwright の E2E(本番ビルド+本番ヘッダー、実 Chromium)も実行
  *
  * 失敗したステップは出力の末尾だけを表示する(エージェントの文脈を節約するため)。
  */
@@ -13,6 +14,7 @@ import { spawnSync } from 'node:child_process';
 const args = new Set(process.argv.slice(2));
 const quick = args.has('--quick');
 const fix = args.has('--fix');
+const e2e = args.has('--e2e');
 
 const steps = [
   fix && {
@@ -23,6 +25,7 @@ const steps = [
   { name: 'typecheck', cmd: ['pnpm', 'exec', 'tsc', '--noEmit', '-p', 'tsconfig.json'] },
   { name: 'test', cmd: ['pnpm', 'exec', 'vitest', 'run', '--reporter=dot'] },
   !quick && { name: 'build', cmd: ['pnpm', 'exec', 'vite', 'build', '--logLevel', 'warn'] },
+  !quick && e2e && { name: 'e2e', cmd: ['pnpm', 'exec', 'playwright', 'test', '--reporter=line'] },
 ].filter(Boolean);
 
 const TAIL = 60;

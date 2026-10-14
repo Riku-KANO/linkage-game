@@ -8,8 +8,14 @@ Cloudflare の新しい統合 CLI `cf`(Wrangler の次期版、テクニカル�
 | --- | --- |
 | `cloudflare.config.ts` | Worker 名 `ashikumi`、互換日付、`assets.notFoundHandling: single-page-application` |
 | `vite.config.ts` | `@cloudflare/vite-plugin` を追加(`cf build` がこれを使って Build Output を作る) |
-| `public/_headers` | `/assets/*` を immutable で長期キャッシュ |
+| `public/_headers` | セキュリティヘッダー(CSP:外部通信・外部スクリプト禁止、WASM は `'wasm-unsafe-eval'` のみ許可、フレーム埋め込み禁止など)と、`/assets/*` の immutable キャッシュ |
 | `pnpm-workspace.yaml` | pnpm 11 で `workerd` のビルドスクリプトを許可 |
+
+## 手元での本番相当の確認
+
+```sh
+pnpm build && pnpm serve:dist   # _headers を適用して http://localhost:4173 で配信(CSP 違反はブラウザのコンソールに出る)
+```
 
 ## 手順
 

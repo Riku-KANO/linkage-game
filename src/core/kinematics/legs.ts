@@ -2,7 +2,7 @@ import type { DesignDoc } from '@/core/model/types';
 import { CM } from '@/core/model/types';
 import type { LegInstance } from '@/core/sim/types';
 import { compileMechanism, type CompiledMechanism } from './compile';
-import { poseDerivative, solvePose } from './solve';
+import { extrapolatePose, poseDerivative, solvePose } from './solve';
 
 /**
  * E-06 脚列の複製。
@@ -71,6 +71,8 @@ export interface LegSet {
   theta: number | null;
   /** 組ごとの作業用バッファ(前フレームの位置) */
   scratch: Float64Array[];
+  /** 予測位置の作業用(初回に作る) */
+  predict?: Float64Array[];
 }
 
 export interface SolveLegOptions {
@@ -139,13 +141,20 @@ export function solveLegInstances(
     const diff = wrapAngle(target - from);
     const n = Math.min(720, Math.ceil(Math.abs(diff) / maxStep));
     let ok = true;
+    // 等間隔に刻むあいだは、前の 2 姿勢から外挿した位置で交点の解を選ぶ(変位点を越えるため、KIN-7)
+    let prev2: Float64Array | null = null;
+    const predict = (set.predict ??= set.instances.map(
+      () => new Float64Array(set.scratch[0]!.length),
+    ))[k]!;
     for (let s = set.theta === null ? 0 : 1; s <= n; s++) {
       const th = s === n ? target : from + (diff * s) / n;
       // 出力と prev が同じバッファにならないよう、2 つを入れ替えて使う
       const out = set.scratch[k]!;
-      const res = solvePose(mech, th, { prev, out });
+      const pred = prev && prev2 ? extrapolatePose(prev, prev2, 1, predict) : null;
+      const res = solvePose(mech, th, { prev, predict: pred, out });
       set.scratch[k] = set.positions[k]!;
       set.positions[k] = res.positions;
+      prev2 = prev && res.ok ? set.scratch[k]! : null;
       prev = res.positions;
       ok = res.ok;
     }

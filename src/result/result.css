@@ -1,0 +1,313 @@
+/* 結果画面のパネル(RS-1〜RS-3)。中身の配置は固定で、演出は mech 部品の transform だけ */
+
+.rs-panel {
+  width: 560px;
+  max-width: 100%;
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+}
+.rs-panel .mech-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px calc(var(--mech-gutter) + 8px) 12px;
+}
+.rs-icon {
+  flex: none;
+}
+
+/* ---- 見出し ---- */
+
+.rs-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  column-gap: 12px;
+}
+.rs-headline {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.rs-headline[data-cleared='true'] {
+  color: var(--accent, #f2a65a);
+  text-shadow: 0 0 22px rgba(242, 166, 90, 0.35);
+}
+.rs-headline[data-cleared='false'] {
+  color: #ef8b74;
+}
+.rs-head__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  padding-bottom: 3px;
+}
+.rs-stage {
+  font-size: 12.5px;
+  color: var(--muted, #b9a68f);
+}
+.rs-skip {
+  font-size: 11px;
+  color: rgba(185, 166, 143, 0.72);
+  transition: opacity 0.2s;
+}
+.rs-skip[data-hidden] {
+  opacity: 0;
+}
+.rs-reason {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 4px;
+}
+.rs-reason__tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 9px;
+  background: rgba(224, 83, 61, 0.22);
+  color: #f4a896;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.rs-reason__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.rs-reason__text {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rs-reason__dist {
+  font-size: 12px;
+  color: var(--muted, #b9a68f);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.rs-reason .mech-btn {
+  margin-left: auto;
+  /* 台の分だけ下にずれるので、天板の中心を文字の高さにそろえる */
+  margin-bottom: -12px;
+}
+
+/* ---- 4 軸のカード ---- */
+
+.rs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.rs-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 8px 9px 10px;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 6px 6px, rgba(201, 154, 91, 0.55) 1.4px, transparent 2px),
+    radial-gradient(
+      circle at calc(100% - 6px) 6px,
+      rgba(201, 154, 91, 0.55) 1.4px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 6px calc(100% - 6px),
+      rgba(201, 154, 91, 0.55) 1.4px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at calc(100% - 6px) calc(100% - 6px),
+      rgba(201, 154, 91, 0.55) 1.4px,
+      transparent 2px
+    ),
+    linear-gradient(180deg, var(--mech-wood-2) 0%, #2d1f15 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 233, 200, 0.05);
+}
+.rs-card__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.rs-card__label {
+  align-self: stretch;
+  margin: 0 0 2px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.rs-card__thresholds {
+  display: flex;
+  gap: 9px;
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted, #b9a68f);
+  font-variant-numeric: tabular-nums;
+}
+.rs-card__thresholds > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.rs-card__versus {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 18px;
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  color: #b8dbe7;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.rs-card__press {
+  width: 64px;
+  height: 120px;
+}
+.rs-dot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.rs-dot--gold {
+  background: var(--mech-gold);
+}
+.rs-dot--silver {
+  background: var(--mech-silver);
+}
+.rs-dot--bronze {
+  background: var(--mech-bronze);
+}
+.rs-dot--ghost {
+  background: var(--mech-ghost);
+  box-shadow: 0 0 0 2px rgba(140, 195, 214, 0.25);
+}
+.rs-badge {
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.rs-card__versus[data-settled] .rs-badge {
+  opacity: 1;
+}
+.rs-badge--you {
+  background: var(--accent, #f2a65a);
+  color: #2a1808;
+}
+.rs-badge--them {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--muted, #b9a68f);
+}
+.rs-badge--tie {
+  background: rgba(140, 195, 214, 0.22);
+  color: #d4ebf3;
+}
+
+/* ---- 相手との比較 ---- */
+
+.rs-versus {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+  padding: 2px 4px;
+  font-size: 13px;
+  transition: opacity 0.25s;
+}
+.rs-versus[data-hidden] {
+  opacity: 0;
+}
+.rs-versus__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b8dbe7;
+}
+.rs-versus__score {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.rs-versus__note {
+  font-size: 12px;
+  color: var(--muted, #b9a68f);
+}
+
+/* ---- 共有 ---- */
+
+.rs-share {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.rs-share__status {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  margin-top: -6px;
+}
+.rs-share__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a9dbac;
+}
+.rs-share__err {
+  color: #f4a896;
+}
+.rs-share__note {
+  color: var(--muted, #b9a68f);
+}
+.rs-share__manual {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  font-size: 11px;
+}
+.rs-share__url {
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(201, 154, 91, 0.45);
+  border-radius: 4px;
+  background: #120c08;
+  color: var(--text, #f6eadb);
+  font:
+    11.5px var(--mech-mono),
+    monospace;
+}
+.rs-share__url:focus {
+  outline: 2px solid var(--accent, #f2a65a);
+  outline-offset: 1px;
+}
+
+/* ---- 行動 ---- */
+
+.rs-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}

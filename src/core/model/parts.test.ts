@@ -31,18 +31,19 @@ describe('bill of materials (E-07)', () => {
   it('multiplies cost by leg instances but shares the crank', () => {
     const one = computeBill(jansenLeg());
     const many = computeBill(jansenWalker());
-    expect(many.instances).toBe(6);
+    expect(many.instances).toBe(12);
     expect(many.parts).toBe(one.parts);
-    expect(many.cost).toBeCloseTo((one.cost - 30) * 6 + 30, 0);
+    // 片脚のコストは 0.1 単位に丸めてあるので、12 倍すると最大 0.6 ずれる
+    expect(Math.abs(many.cost - ((one.cost - 30) * 12 + 30))).toBeLessThan(1);
   });
 });
 
 describe('leg array (E-06)', () => {
   it('lays out instances symmetrically with phase steps', () => {
     const inst = legInstances(jansenWalker());
-    expect(inst).toHaveLength(6);
-    expect(inst[0]!.z).toBeCloseTo(-inst[5]!.z);
-    expect(inst.filter((i) => i.mirrored)).toHaveLength(3);
+    expect(inst).toHaveLength(12);
+    expect(inst[0]!.z).toBeCloseTo(-inst[11]!.z);
+    expect(inst.filter((i) => i.mirrored)).toHaveLength(6);
     expect(inst[2]!.phase).toBeCloseTo((120 * Math.PI) / 180);
   });
   it('mirrored legs share the crank pin', () => {

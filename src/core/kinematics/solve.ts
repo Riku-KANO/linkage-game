@@ -29,6 +29,11 @@ export interface SolveResult {
 export interface SolveOptions {
   /** 前フレームの位置。交点の 2 解のうち近い方を選ぶ(S-02)。null なら設計姿勢の向きを使う */
   prev?: Float64Array | null;
+  /**
+   * この角度での予測位置(前の 2 姿勢からの外挿など。`extrapolatePose`)。与えると交点の 2 解のうち
+   * これに近い方を選ぶ。変位点(2 解が接する姿勢)を、速度を保ったまま越えるため(KIN-7)
+   */
+  predict?: Float64Array | null;
   /** ニュートン法の最大反復回数 */
   maxIterations?: number;
   /** 再利用する出力バッファ */
@@ -52,7 +57,47 @@ export function solvePose(
 ): SolveResult {
   const n = mech.jointIds.length;
   const prev = options.prev ?? null;
+  const predict = options.predict && options.predict.length === n * 2 ? options.predict : null;
   const pos = options.out && options.out.length === n * 2 ? options.out : new Float64Array(n * 2);
+  const first = runPlan(mech, theta, prev, predict ?? prev, pos, null, options.maxIterations);
+  if (first.result.ok || !first.checksFailed || first.nearSingular.length === 0)
+    return first.result;
+  // 余分なリンク(検査)が守れないとき:変位点付近の交点を反対側の解にして解き直す(KIN-7)。
+  // 二重平行四辺形のように、冗長な拘束が正しい組立モードを決める機構のため
+  const candidates = [...first.nearSingular].sort((a, b) => a.slack - b.slack);
+  const trial = new Float64Array(n * 2);
+  for (const c of candidates) {
+    const again = runPlan(mech, theta, prev, predict ?? prev, trial, c.step, options.maxIterations);
+    if (again.result.ok) {
+      pos.set(trial);
+      return { ...again.result, positions: pos };
+    }
+  }
+  return runPlan(mech, theta, prev, predict ?? prev, pos, null, options.maxIterations).result;
+}
+
+/** 変位点に近いとみなす dyad の余裕(これ未満なら、検査に失敗したとき反対側の解も試す) */
+const RETRY_SLACK = 0.35;
+
+interface PlanRun {
+  result: SolveResult;
+  /** 余分なリンクの検査で失敗したか */
+  checksFailed: boolean;
+  /** 余裕が小さかった dyad(plan の index) */
+  nearSingular: { step: number; slack: number }[];
+}
+
+/** 解法プランを 1 回実行する。flipStep の dyad だけ、参照点から遠い方の解を選ぶ */
+function runPlan(
+  mech: CompiledMechanism,
+  theta: number,
+  prev: Float64Array | null,
+  ref: Float64Array | null,
+  pos: Float64Array,
+  flipStep: number | null,
+  maxIterations: number | undefined,
+): PlanRun {
+  const n = mech.jointIds.length;
   // start from previous pose (good initial guess for newton, keeps floating joints in place)
   pos.set(prev && prev.length === n * 2 ? prev : mech.designPos);
   // fixed joints are always at design positions
@@ -71,11 +116,14 @@ export function solvePose(
   const failedJoints: number[] = [];
   const failedLinks: number[] = [];
   const causeJoints: number[] = [];
+  const nearSingular: { step: number; slack: number }[] = [];
   let minSlack = 1;
   let minSlackJoint = -1;
   let residual = 0;
+  let checksFailed = false;
 
-  for (const step of mech.plan) {
+  for (let si = 0; si < mech.plan.length; si++) {
+    const step = mech.plan[si]!;
     switch (step.kind) {
       case 'crank':
         runCrank(mech, step, theta, pos);
@@ -91,7 +139,7 @@ export function solvePose(
         // 親の点が失敗していれば、この点は引きずられただけ(原因には数えない)
         const cascaded = failed[step.a] || failed[step.b];
         if (cascaded) markFailed(step.j);
-        const res = runDyad(step, pos, prev);
+        const res = runDyad(step, pos, ref, si === flipStep);
         if (cascaded) break;
         if (res < 0) {
           markFailed(step.j);
@@ -99,14 +147,17 @@ export function solvePose(
           failedLinks.push(step.linkA, step.linkB);
           minSlack = 0;
           minSlackJoint = step.j;
-        } else if (res < minSlack) {
-          minSlack = res;
-          minSlackJoint = step.j;
+        } else {
+          if (res < RETRY_SLACK) nearSingular.push({ step: si, slack: res });
+          if (res < minSlack) {
+            minSlack = res;
+            minSlackJoint = step.j;
+          }
         }
         break;
       }
       case 'newton': {
-        residual = runNewton(step, pos, options.maxIterations ?? 40);
+        residual = runNewton(step, pos, maxIterations ?? 40);
         if (residual > NEWTON_FAIL) {
           for (const j of step.unknowns) {
             if (!failed[j]) causeJoints.push(j);
@@ -128,6 +179,7 @@ export function solvePose(
       if (failed[i] || failed[j]) continue;
       const len = Math.hypot(pos[i * 2]! - pos[j * 2]!, pos[i * 2 + 1]! - pos[j * 2 + 1]!);
       if (Math.abs(len - d) <= CHECK_TOL_ABS + CHECK_TOL_REL * d) continue;
+      checksFailed = true;
       failedLinks.push(link);
       for (const k of [i, j]) {
         if (mech.fixed[k] || failed[k]) continue;
@@ -138,14 +190,18 @@ export function solvePose(
   }
 
   return {
-    ok: failedJoints.length === 0,
-    positions: pos,
-    failedJoints,
-    failedLinks: [...new Set(failedLinks)],
-    minSlack,
-    minSlackJoint,
-    residual,
-    causeJoints,
+    result: {
+      ok: failedJoints.length === 0,
+      positions: pos,
+      failedJoints,
+      failedLinks: [...new Set(failedLinks)],
+      minSlack,
+      minSlackJoint,
+      residual,
+      causeJoints,
+    },
+    checksFailed,
+    nearSingular,
   };
 
   function markFailed(j: number) {
@@ -153,6 +209,20 @@ export function solvePose(
     failed[j] = 1;
     failedJoints.push(j);
   }
+}
+
+/**
+ * 前の 2 姿勢から、次の姿勢を直線で外挿する(KIN-7 の予測位置)。
+ * ratio = 今回の角度の刻み / 前回の刻み(等間隔なら 1)。
+ */
+export function extrapolatePose(
+  prev: Float64Array,
+  prev2: Float64Array,
+  ratio: number,
+  out: Float64Array,
+): Float64Array {
+  for (let i = 0; i < out.length; i++) out[i] = prev[i]! + (prev[i]! - prev2[i]!) * ratio;
+  return out;
 }
 
 function runCrank(
@@ -194,7 +264,8 @@ function runRigid(step: Extract<SolveStep, { kind: 'rigid' }>, pos: Float64Array
 function runDyad(
   step: Extract<SolveStep, { kind: 'dyad' }>,
   pos: Float64Array,
-  prev: Float64Array | null,
+  ref: Float64Array | null,
+  flip: boolean,
 ): number {
   const ax = pos[step.a * 2]!;
   const ay = pos[step.a * 2 + 1]!;
@@ -222,9 +293,10 @@ function runDyad(
   const p2x = hit.ax - hit.hx * h;
   const p2y = hit.ay - hit.hy * h;
   let pickFirst: boolean;
-  if (prev) {
-    const qx = prev[step.j * 2]!;
-    const qy = prev[step.j * 2 + 1]!;
+  if (ref) {
+    // 参照点(予測位置、なければ前フレームの位置)に近い方
+    const qx = ref[step.j * 2]!;
+    const qy = ref[step.j * 2 + 1]!;
     const d1 = (p1x - qx) ** 2 + (p1y - qy) ** 2;
     const d2 = (p2x - qx) ** 2 + (p2y - qy) ** 2;
     pickFirst = d1 <= d2;
@@ -232,6 +304,7 @@ function runDyad(
     // (hx, hy) is the left normal of a→b, so +h is the "left" (+1) solution
     pickFirst = step.sign > 0;
   }
+  if (flip) pickFirst = !pickFirst;
   pos[step.j * 2] = pickFirst ? p1x : p2x;
   pos[step.j * 2 + 1] = pickFirst ? p1y : p2y;
   return Math.min(1, h / Math.max(1e-9, Math.min(step.ra, step.rb)));
@@ -462,11 +535,15 @@ export function sampleCycle(
   const failedLinks = new Set<number>();
   const causeJoints = new Set<number>();
   let prev: Float64Array | null = null;
+  let prev2: Float64Array | null = null;
+  const predict = new Float64Array(mech.jointIds.length * 2);
   let minSlack = 1;
   for (let s = 0; s < steps; s++) {
     const th = start + (dir * 2 * Math.PI * s) / steps;
     thetas[s] = th;
-    const res = solvePose(mech, th, { prev });
+    // 等間隔なので前の 2 姿勢から直線で外挿した位置を予測に使う(変位点を速度を保って越える)
+    const pred = prev && prev2 ? extrapolatePose(prev, prev2, 1, predict) : null;
+    const res = solvePose(mech, th, { prev, predict: pred });
     positions.push(res.positions);
     ok.push(res.ok);
     slack[s] = res.minSlack;
@@ -474,6 +551,7 @@ export function sampleCycle(
     for (const l of res.failedLinks) failedLinks.add(l);
     if (res.causeJoints) for (const j of res.causeJoints) causeJoints.add(j);
     minSlack = Math.min(minSlack, res.minSlack);
+    prev2 = res.ok ? prev : null;
     prev = res.positions;
   }
   const asc = (a: number, b: number) => a - b;

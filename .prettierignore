@@ -7,3 +7,5 @@ coverage
 *.md
 .cloudflare
 worker-configuration.d.ts
+.e2e-results
+playwright-report

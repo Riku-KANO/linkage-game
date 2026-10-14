@@ -91,10 +91,14 @@ export function jansenLeg(
   };
 }
 
-/** 見本機:ヤンセン脚を前後反転ペアで 3 組、120°ずらし */
+/**
+ * 見本機:ヤンセン脚を前後反転ペアで 6 組(計 12 脚)、120°ずらし。
+ * 6 脚(3 組)だと接地する脚先が常に 2 本ほどで一直線に並び、横に倒れる(sim の検証結果)。
+ * 位相 0/120/240 の組が左右に 1 つずつ来るので、常に 4 本前後が地面を支える。
+ */
 export function jansenWalker(): DesignDoc {
   return {
-    ...jansenLeg(JANSEN_LENGTHS, { count: 3, phaseStepDeg: 120, spacing: 22, mirrorX: true }),
+    ...jansenLeg(JANSEN_LENGTHS, { count: 6, phaseStepDeg: 120, spacing: 12, mirrorX: true }),
     name: 'ヤンセン型 見本機',
   };
 }

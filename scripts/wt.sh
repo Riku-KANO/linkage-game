@@ -4,7 +4,7 @@
 #   scripts/wt.sh new <name> [base]  .worktrees/<name> に feat/<name> ブランチを作り依存を入れる
 #   scripts/wt.sh list               一覧
 #   scripts/wt.sh sync <name>        ワークツリーに main の最新を取り込む
-#   scripts/wt.sh gate <name>        ワークツリーで verify → main に --no-commit でマージ → main で verify → 合格ならコミット
+#   scripts/wt.sh gate <name>        ワークツリーで verify → main に --no-commit でマージ → main で verify --e2e → 合格ならコミット
 #   scripts/wt.sh rm <name>          ワークツリーとブランチを片付ける(マージ済みのみ)
 set -euo pipefail
 # main チェックアウトの場所(ワークツリーの中から呼んでも main を指す)
@@ -41,8 +41,8 @@ case "$cmd" in
       echo "GATE: merge conflict. Resolve in main checkout, or 'git merge --abort'"; exit 1
     fi
     pnpm install --frozen-lockfile --prefer-offline --silent || pnpm install --prefer-offline --silent
-    echo "== verify merged main"
-    if node scripts/verify.mjs; then
+    echo "== verify merged main (+ E2E in a real browser)"
+    if node scripts/verify.mjs --e2e; then
       git commit --no-edit -m "Merge $branch" >/dev/null
       echo "GATE: PASS — merged $branch @ $(git rev-parse --short HEAD)"
     else

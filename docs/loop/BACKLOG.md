@@ -139,6 +139,8 @@
 | ID | 内容 | 状態 |
 | --- | --- | --- |
 | POLISH-1 | 設計ビューの全体表示に脚先軌道(と全ジョイントの軌道)の範囲を含める | done |
+| SEC-1 | 本番ヘッダー:CSP(外部通信・外部スクリプト禁止、WASM は 'wasm-unsafe-eval' のみ)、X-Frame-Options、Permissions-Policy、COOP/CORP、HSTS。`pnpm serve:dist` で手元検証 | done |
+| SEC-2 | sim・scene 合流後に本番ビルドを `pnpm serve:dist` で開き、CSP 違反がないこと(Rapier の WASM、drei の外部アセット読み込みがないこと)を確認 | todo |
 
 
 - タイトルロゴ(T-00)、図鑑と設定のパネル、性能監査(60fps、初回ロード 15MB 以下)、ブラウザでの通しプレイ確認

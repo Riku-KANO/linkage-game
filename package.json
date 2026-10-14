@@ -17,7 +17,8 @@
     "deploy": "node scripts/deps.mjs check && node scripts/verify.mjs && cf deploy",
     "deploy:dry": "cf deploy --dry-run",
     "deps:check": "node scripts/deps.mjs check",
-    "deps:update": "node scripts/deps.mjs update"
+    "deps:update": "node scripts/deps.mjs update",
+    "serve:dist": "node scripts/serve-dist.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",

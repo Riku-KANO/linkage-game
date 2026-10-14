@@ -410,6 +410,11 @@ describe('share boot (FLOW-3)', () => {
     expect(selectOpponent(S())).toEqual(run);
     expect(S().opponentGhost?.frames.length).toBe(ghost.frames.length);
     expect(S().notices.map((n) => n.key)).toEqual(['model.share.loaded']);
+    // 共有された機械ではチュートリアルを始めない
+    expect(selectTutorial(S())).toBeNull();
+    // 開いただけでは自分の設計のスロットを上書きしない
+    S().flush();
+    expect(savedDesign('c1-s1')).toBeNull();
     // 別のステージでは相手を出さない
     S().openSandbox();
     expect(selectOpponent(S())).toBeNull();
@@ -418,7 +423,6 @@ describe('share boot (FLOW-3)', () => {
   it('races the opponent ghost in the test run', async () => {
     const ghost = syntheticWalkGhost(3);
     boot({ readShare: () => decodeShare(encodeShare({ design: ref, run, ghost })) });
-    S().skipTutorial();
     await S().startRun();
     const r = S().run;
     expect(r.phase === 'running' && r.opponentGhost === S().opponentGhost).toBe(true);

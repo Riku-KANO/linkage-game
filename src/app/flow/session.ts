@@ -319,8 +319,10 @@ export function createSessionStore(): UseBoundStore<StoreApi<SessionState>> {
       const s = get();
       const isStage = slot !== SANDBOX_SLOT;
       let tutorials = s.tutorials;
+      // チュートリアルはステージの設計(保存したもの・最初のもの)で始める。共有リンクの機械では始めない
       if (
         isStage &&
+        !given &&
         st.tutorial &&
         st.tutorial.length > 0 &&
         !tutorials[slot] &&

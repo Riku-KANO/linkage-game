@@ -1,6 +1,6 @@
 import { Component, Suspense, useMemo, type ReactNode } from 'react';
 import { useGLTF } from '@react-three/drei';
-import type { Mesh } from 'three';
+import type { Material, Mesh } from 'three';
 import { modelUrl, presentModelUrls, type ModelId } from '../assets';
 
 /**
@@ -28,7 +28,8 @@ function GltfModel({ url }: { url: string }) {
     s.traverse((o) => {
       const m = o as Mesh;
       if (m.isMesh) {
-        m.castShadow = true;
+        // 透明な素材(窓・瓶のガラス)は影を落とさない(手続き生成のガラスと同じ。窓の光を遮らない)
+        m.castShadow = !(m.material as Material).transparent;
         m.receiveShadow = true;
       }
     });

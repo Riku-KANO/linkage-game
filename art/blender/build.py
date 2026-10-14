@@ -22,6 +22,7 @@ import kit  # noqa: E402
 
 #: id(src/scene/assets.ts の MODEL_MANIFEST のキー)→ モジュール名
 MODELS = {
+    "workbench": "workbench",
     "shelf": "shelf",
     "toolbox": "toolbox",
     "logo": "logo",

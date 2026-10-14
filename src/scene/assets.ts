@@ -27,7 +27,7 @@ export const MODEL_MANIFEST = {
   },
   workbench: {
     file: 'workbench.glb',
-    present: false,
+    present: true,
     note: '作業台の本体と小物(Workbench)。製図用紙・ドラフター・卓上ライトは手続き生成のまま',
   },
   courseModel: {

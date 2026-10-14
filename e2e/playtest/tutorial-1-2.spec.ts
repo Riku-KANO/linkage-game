@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { watchErrors } from '../helpers';
 import * as h from './helpers';
+import { expectCleared, play12, shortenCrank } from './play';
 
 /**
  * PLAY-1:1-2「回らないクランク」を、初めての人が吹き出しの指示だけを頼りに直す。
@@ -16,61 +17,11 @@ async function openStage(page: Page) {
   await page.getByRole('button', { name: /1-2/ }).click();
 }
 
-/** オレンジ色の棒(クランク)の、軸でない方の端の点と、いちばん上の点 */
-async function crankTip(page: Page) {
-  const crank = page.locator('[data-link].is-crank');
-  await expect(crank).toHaveCount(1);
-  const ids = await page.locator('[data-joint]').evaluateAll((els) =>
-    els.map((el) => ({
-      id: el.getAttribute('data-joint')!,
-      fixed: !!el.querySelector('.ed-ground'),
-      y: Number(el.querySelector('.ed-pin')!.getAttribute('cy')),
-    })),
-  );
-  const topmost = [...ids].sort((a, b) => a.y - b.y)[0]!.id;
-  // 回る矢印のついた軸(固定点)
-  const axis = ids.filter((j) => j.fixed);
-  return { topmost, axis };
-}
-
-/** クランクの先の点を、軸の方へ (1 - keep) だけ動かす(keep = 残す長さの割合) */
-async function shortenCrank(page: Page, tip: string, axis: string, keep: number) {
-  const a = await h.jointCenter(page, tip);
-  const o = await h.jointCenter(page, axis);
-  await h.drag(page, a, { x: o.x + (a.x - o.x) * keep, y: o.y + (a.y - o.y) * keep });
-}
-
 test('1-2 回らないクランク:吹き出しのとおりにクランクを短くして歩かせる', async ({ page }) => {
   const w = watchErrors(page);
   await openStage(page);
-
-  // 1・2. 説明を読む。赤い表示(一回転できない)が出ている
-  await h.expectStep(page, 1, TOTAL);
-  await expect(page.locator('.ed-chip-fail, .ed-link.is-problem').first()).toBeVisible();
-  await h.shot(page, '12-01-stuck');
-  await h.clickNext(page);
-  await h.expectStep(page, 2, TOTAL);
-  await h.shot(page, '12-02-grashof');
-  await h.clickNext(page);
-
-  // 3. クランクの先(いちばん上の点)をつかんで、軸の方へまっすぐ下げて半分に
-  await h.expectStep(page, 3, TOTAL);
-  expect(await h.enabledTools(page)).toEqual(['選択', '脚先', '削除']);
-  const { topmost } = await crankTip(page);
-  expect(topmost).toBe('A');
-  await expect(page.locator('[data-link="crank"]')).toHaveClass(/is-crank/);
-  await h.shot(page, '12-03-shorten');
-  await shortenCrank(page, 'A', 'O2', 0.5);
-
-  // 4. 一回転できる:赤い表示が消えて試走へ
-  await h.expectStep(page, 4, TOTAL);
-  await expect(page.locator('.ed-link.is-problem')).toHaveCount(0);
-  await expect(page.getByText('一回転できます', { exact: true })).toBeVisible();
-  await h.shot(page, '12-04-fixed');
-  await page.getByRole('button', { name: '試走', exact: true }).click();
-  await expect(h.bubble(page)).toHaveCount(0);
-  await h.skipToResult(page);
-  await expect(page.getByText('クリア!').first()).toBeVisible();
+  await play12(page, '12');
+  await expectCleared(page);
   w.expectClean();
 });
 

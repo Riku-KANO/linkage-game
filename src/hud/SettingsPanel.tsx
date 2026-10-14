@@ -32,6 +32,8 @@ export interface SettingsPanelProps {
   onExportDesign?: () => void;
   /** 選んだ JSON ファイルを読み込む(U-03)。省略時はボタンを出さない */
   onImportDesign?: (file: File) => void;
+  /** (int-polish で追加)遊び方の本を開く。省略時はボタンを出さない */
+  onHowToPlay?: () => void;
   /** 進行をリセットする(2 段階で確かめてから呼ぶ) */
   onResetProgress: () => void;
   /** 閉じる(Esc・閉じるボタン)。省略時は閉じるボタンを出さない */
@@ -59,6 +61,7 @@ export function SettingsPanel({
   osReducedMotion = false,
   onExportDesign,
   onImportDesign,
+  onHowToPlay,
   onResetProgress,
   onClose,
   version = '',
@@ -181,6 +184,25 @@ export function SettingsPanel({
           </p>
         </div>
       </Group>
+
+      {onHowToPlay && (
+        <Group title={t('hud.settings.help')}>
+          <div className="hud-row hud-row--buttons">
+            <LinkButton
+              size="sm"
+              reducedMotion={rm}
+              aria-describedby={`${id}-help`}
+              onClick={onHowToPlay}
+            >
+              <HudIcon name="info" size={14} />
+              {t('hud.settings.howToPlay')}
+            </LinkButton>
+            <span className="hud-row__hint" id={`${id}-help`}>
+              {t('hud.settings.howToPlay.desc')}
+            </span>
+          </div>
+        </Group>
+      )}
 
       {(onExportDesign || onImportDesign) && (
         <Group title={t('hud.settings.data')}>

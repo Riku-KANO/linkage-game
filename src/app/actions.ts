@@ -10,6 +10,7 @@ import { continueTarget, targetSlot, type ContinueTarget } from './continue';
 import { useSession } from './flow';
 import { getPrefs } from './settings';
 import { useApp } from './store';
+import { TUTORIAL_STAGE } from './welcome';
 import { resetWorld } from './worldBridge';
 
 /**
@@ -31,6 +32,13 @@ export function openStage(id: StageId): boolean {
   }
   useApp.getState().go('design', { stageId: id });
   return true;
+}
+
+/** (INT-7b)初回の案内の「チュートリアルから始める」:章 1 の最初のステージ(チュートリアルつき)の設計画面へ */
+export function startTutorial(): boolean {
+  if (useApp.getState().screen !== 'home') return false;
+  playSfx('press');
+  return openStage(TUTORIAL_STAGE);
 }
 
 /** サンドボックス(窓の外の荒野):自由設計のスロットを開いて設計画面へ */

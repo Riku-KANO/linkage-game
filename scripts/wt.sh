@@ -7,7 +7,8 @@
 #   scripts/wt.sh gate <name>        ワークツリーで verify → main に --no-commit でマージ → main で verify → 合格ならコミット
 #   scripts/wt.sh rm <name>          ワークツリーとブランチを片付ける(マージ済みのみ)
 set -euo pipefail
-ROOT="$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)"
+# main チェックアウトの場所(ワークツリーの中から呼んでも main を指す)
+ROOT="$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")"
 cd "$ROOT"
 cmd="${1:-}"; name="${2:-}"
 dir="$ROOT/.worktrees/$name"; branch="feat/$name"

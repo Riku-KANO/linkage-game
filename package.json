@@ -13,7 +13,11 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "deploy": "node scripts/deps.mjs check && node scripts/verify.mjs && cf deploy",
+    "deploy:dry": "cf deploy --dry-run",
+    "deps:check": "node scripts/deps.mjs check",
+    "deps:update": "node scripts/deps.mjs update"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",
@@ -28,12 +32,14 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-67fa336fd",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "cf": "1.0.0-beta.17",
     "jsdom": "^30.1.2",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",

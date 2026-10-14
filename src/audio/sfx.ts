@@ -1,6 +1,7 @@
 /**
- * 効果音の API(金属と木の機械音で統一)。担当:audio(ウェーブ 2 で Web Audio 実装)。
- * それまでは何もしない。呼び出し側はこの API だけを使う。
+ * 効果音の API(金属と木の機械音で統一)。担当:audio。
+ * 呼び出し側はこの API だけを使う。実装は `installAudio()`(src/audio/index.ts)が登録する。
+ * 登録前・Web Audio が使えない環境では何もしない。
  */
 export type SfxName =
   | 'snap' // 部品がジョイントにはまる「カチッ」
@@ -14,9 +15,12 @@ export type SfxName =
   | 'success';
 
 export interface SfxOptions {
+  /** 強さ 0..1(振幅の倍率)。既定 1 */
   volume?: number;
-  /** 再生速度(音程) */
+  /** 再生速度(音程)。0.25..4、既定 1。gear では歯の刻む速さ */
   rate?: number;
+  /** 左右の定位 -1(左)..1(右)。既定 0 */
+  pan?: number;
 }
 
 type Player = (name: SfxName, opts?: SfxOptions) => void;

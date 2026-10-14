@@ -95,6 +95,24 @@ describe('MechanismEditor (smoke)', () => {
     expect(S().tool).toBe('select');
   });
 
+  it('Esc steps back one level at a time and leaves the last Esc to the outer screen', () => {
+    act(() => {
+      S().setTool('link');
+      S().setSelection({ joints: ['A'], links: [] });
+    });
+    const { container } = render(<MechanismEditor />);
+    const root = container.querySelector('.ed-root') as HTMLElement;
+    const esc = () => fireEvent.keyDown(root, { key: 'Escape' });
+    // fireEvent returns false when the handler called preventDefault (= the editor consumed it)
+    expect(esc()).toBe(false);
+    expect(S().selection.joints).toEqual([]);
+    expect(S().tool).toBe('link');
+    expect(esc()).toBe(false);
+    expect(S().tool).toBe('select');
+    // nothing left to cancel: not handled, so the game screen can treat it as "back"
+    expect(esc()).toBe(true);
+  });
+
   it('drags a joint and coalesces the drag into one undo step', () => {
     const { container } = render(<MechanismEditor />);
     const before = S().design;

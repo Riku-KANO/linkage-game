@@ -24,3 +24,8 @@ export { SettingsScreen } from './SettingsScreen';
 export { ZukanScreen } from './ZukanScreen';
 export { SandboxScreen } from './SandboxScreen';
 export { NoticeLayer } from './NoticeLayer';
+
+// 設計画面(INT-1):製図用紙に重ねるエディタと、3D の紙に描く今の設計
+export { DesignScreen, useDesignPaperInsets, type DesignScreenProps } from './design/DesignScreen';
+export { PaperInk } from './design/PaperInk';
+export { designSignals } from './design/signals';

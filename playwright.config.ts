@@ -7,7 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   pnpm e2e              ビルドしてから実行
  *   pnpm verify --e2e     検証ゲートの最後に実行(wt.sh gate はこれを使う)
  */
-const PORT = 4174;
+/** 並行して走らせるときはエージェントごとに E2E_PORT を変える */
+const PORT = Number(process.env.E2E_PORT ?? 4174);
 
 export default defineConfig({
   testDir: 'e2e',

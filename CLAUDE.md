@@ -11,7 +11,7 @@
 | `pnpm verify` | **検証ゲート**:format → typecheck → test → build。合否はこれだけで決める |
 | `pnpm verify --quick` | build を省く(内側ループ用) |
 | `pnpm verify --fix` | prettier で整形してから検証 |
-| `pnpm e2e` / `pnpm verify --e2e` | Playwright の E2E:本番ビルドを本番ヘッダー(CSP)つきで配信し、実 Chromium で開く(`e2e/`) |
+| `pnpm e2e` / `pnpm verify --e2e` | Playwright の E2E:本番ビルドを本番ヘッダー(CSP)つきで配信し、実 Chromium で開く(`e2e/`)。並行実行時は `E2E_PORT=<空きポート>` |
 | `pnpm test -- <path>` | 一部のテストだけ実行 |
 | `scripts/wt.sh new/sync/gate/rm <name>` | ワークツリーの作成・同期・合流(`docs/loop/README.md`) |
 | `pnpm deps:check` / `pnpm deps:update` | 依存の脆弱性と鮮度のゲート / 最新へ更新(セキュリティ方針:できるだけ最新) |
@@ -60,3 +60,6 @@
 7. 報告:やったこと、契約の変更、残課題、次にやるべきこと
 
 検証を通らない状態でコミットを終えない。テストを消したり弱めたりして通さない。
+
+見た目の確認:共有のブラウザ画面は使わず、Playwright で自分のポート(`E2E_PORT`)に本番ビルドを出し、
+`page.screenshot()` で PNG を保存して Read で見る。画面に関わる変更は E2E テスト(`e2e/`)も足す。

@@ -107,6 +107,8 @@ export const guide: Record<string, string> = {
   'guide.fig.crank': 'クランク',
   'guide.fig.motor': 'モーター',
   'guide.fig.pin': 'ピン',
+  'guide.fig.snap': 'カチッ',
+  'guide.fig.seconds': '{s} 秒',
   'guide.fig.foot': '脚先',
   'guide.fig.path': '軌道',
   'guide.fig.contact': '接地',
@@ -327,6 +329,9 @@ export const guide: Record<string, string> = {
   'guide.dev.noTip': '言うことはありません(良い設計です)',
   'guide.dev.log': '呼ばれたコールバック',
   'guide.dev.termDemo': '文中の用語:',
+  'guide.dev.termList':
+    '[[dof|自由度]]・[[grubler]]・[[grashof]]・[[crankRocker]]・[[deadPoint]]・[[couplerCurve]]・[[legPhase]]・[[notAssemblable]]・[[specialGeometry]]',
+  'guide.dev.reverse': '回転を逆にする',
   'guide.dev.sample.blank': '白紙',
   'guide.dev.sample.noFixed': '棒だけ(固定点なし)',
   'guide.dev.sample.noCrank': '四節(クランクなし)',

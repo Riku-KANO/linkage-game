@@ -1,0 +1,1061 @@
+/*
+ * 遊び方・用語集・操作一覧・一言(guide)。木と真鍮の枠(src/ui/mech)に、設計ビューと同じ
+ * 紙と墨の図を載せる。動かすのは transform と opacity だけ。動きを減らすときはアニメーションを止める。
+ */
+:root {
+  --gd-paper: #f2e8d2;
+  --gd-ink: #2b2118;
+  --gd-ink-soft: #6b5a48;
+  --gd-crank: #e0761c;
+  --gd-crank-soft: #fbe2c4;
+  --gd-foot: #17577f;
+  --gd-live: #2a77a6;
+  --gd-error: #d23d29;
+  --gd-warn: #c98a12;
+  --gd-ok: #3f9a4a;
+  --gd-select: #2f80ed;
+}
+
+/* ---------- 重ねて出す枠 ---------- */
+.gd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(12, 8, 5, 0.62);
+  animation: gd-fade 0.2s ease-out both;
+}
+.gd-dialog {
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 6px;
+  outline: none;
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+}
+.gd-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.gd-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text, #f6eadb);
+}
+.gd-head__note {
+  flex: 1;
+  color: var(--muted, #b9a68f);
+  font-size: 12.5px;
+}
+.gd-head .mech-btn {
+  padding-bottom: 8px;
+}
+.gd-x {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted, #b9a68f);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gd-x:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text, #f6eadb);
+}
+.gd-x:focus-visible,
+.gd-term:focus-visible,
+.gd-dots__pin:focus-visible,
+.gd-gloss__item:focus-visible,
+.gd-tip__action:focus-visible {
+  outline: 2px solid var(--accent, #f2a65a);
+  outline-offset: 2px;
+}
+.gd-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.gd-muted {
+  color: var(--muted, #b9a68f);
+  font-size: 13px;
+}
+
+/* ---------- 遊び方の本 ---------- */
+.gd-book {
+  width: min(920px, calc(100vw - 44px));
+}
+.gd-book__count {
+  flex: 1;
+  color: var(--mech-brass, #c99a5b);
+  font-family: var(--mech-mono, monospace);
+  font-size: 13px;
+}
+.gd-book__spread {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 18px;
+  min-height: 400px;
+}
+.gd-book__figure {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--gd-paper);
+  background-image: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 255, 255, 0.35),
+    rgba(120, 90, 50, 0.1)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(120, 90, 50, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.gd-book__text {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--text, #f6eadb);
+}
+.gd-book__text p {
+  margin: 0 0 9px;
+}
+.gd-book__page-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 2px 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.gd-book__no {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--mech-brass-hi, #e8c287), var(--mech-brass-lo, #7d5a32));
+  color: #2a1808;
+  font-size: 14px;
+}
+.gd-book__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.gd-book__hint {
+  margin: 4px 0 0;
+  text-align: center;
+  color: var(--muted, #b9a68f);
+  font-size: 11.5px;
+}
+
+/* ページの点:真鍮のピンを 1 本の棒でつないだ形 */
+.gd-dots {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 4px;
+}
+.gd-dots__bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 2px;
+  background: var(--mech-brass-lo, #7d5a32);
+}
+.gd-dots__pin {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 2px solid var(--mech-brass, #c99a5b);
+  border-radius: 50%;
+  background: var(--mech-wood-0, #1d140d);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.gd-dots__pin:hover {
+  transform: scale(1.2);
+}
+.gd-dots__pin[aria-current] {
+  background: var(--mech-brass-hi, #e8c287);
+  transform: scale(1.4);
+  box-shadow: 0 0 8px rgba(242, 166, 90, 0.7);
+}
+
+.gd-turn-in--next {
+  animation: gd-page-next 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.gd-turn-in--prev {
+  animation: gd-page-prev 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes gd-page-next {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+@keyframes gd-page-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+@keyframes gd-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.gd-loop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.gd-loop li {
+  white-space: nowrap;
+  padding: 3px 11px;
+  border: 1px solid rgba(201, 154, 91, 0.45);
+  border-radius: 999px;
+  background: rgba(201, 154, 91, 0.14);
+  color: var(--mech-brass-hi, #e8c287);
+  font-size: 13px;
+  font-weight: 700;
+}
+.gd-loop li:not(:last-child)::after {
+  content: '→';
+  margin: 0 -2px 0 10px;
+  color: var(--muted, #b9a68f);
+}
+.gd-axes {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 9px;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+}
+.gd-axes li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.gd-medals {
+  display: inline-flex;
+  gap: 3px;
+}
+.gd-medal {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid;
+  border-radius: 50%;
+}
+.gd-medal--gold {
+  background: var(--mech-gold, #e9b748);
+  border-color: var(--mech-gold-lo, #9a7015);
+}
+.gd-medal--silver {
+  background: var(--mech-silver, #d3d8de);
+  border-color: var(--mech-silver-lo, #848b94);
+}
+.gd-medal--bronze {
+  background: var(--mech-bronze, #c9844d);
+  border-color: var(--mech-bronze-lo, #7a4822);
+}
+
+/* ---------- 図(SVG) ---------- */
+.gd-fig {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  font-family: var(--font, sans-serif);
+}
+.gd-grid {
+  fill: none;
+  stroke: rgba(58, 104, 126, 0.11);
+  stroke-width: 1;
+}
+.gd-bar-outer {
+  fill: none;
+  stroke: var(--gd-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gd-bar-inner {
+  fill: none;
+  stroke: var(--gd-paper);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gd-plate {
+  fill: rgba(43, 33, 24, 0.09);
+  stroke: none;
+}
+.gd-tone-crank .gd-bar-outer {
+  stroke: var(--gd-crank);
+}
+.gd-tone-crank .gd-bar-inner {
+  stroke: var(--gd-crank-soft);
+}
+.gd-tone-crank .gd-plate {
+  fill: rgba(224, 118, 28, 0.18);
+}
+.gd-tone-problem .gd-bar-outer {
+  stroke: var(--gd-error);
+}
+.gd-tone-problem .gd-bar-inner {
+  stroke: #f8d4cc;
+}
+.gd-tone-loose .gd-bar-outer {
+  stroke: var(--gd-warn);
+}
+.gd-tone-loose .gd-bar-inner {
+  stroke: #fbe9c4;
+}
+.gd-tone-ghost {
+  opacity: 0.32;
+}
+.gd-tone-ghost .gd-bar-outer {
+  stroke: #8a7457;
+  stroke-dasharray: 5 4;
+}
+.gd-tone-leg1 {
+  opacity: 0.55;
+}
+.gd-tone-leg2 {
+  opacity: 0.3;
+}
+.gd-pin {
+  fill: var(--gd-paper);
+  stroke: var(--gd-ink);
+  stroke-width: 1.6;
+}
+.gd-pin--ghost {
+  opacity: 0.35;
+}
+.gd-foot {
+  fill: var(--gd-foot);
+  stroke: #fdfaf2;
+  stroke-width: 1.5;
+}
+.gd-foot--ghost {
+  opacity: 0.35;
+}
+.gd-ground {
+  fill: var(--gd-paper);
+  stroke: var(--gd-ink);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.gd-ground-base,
+.gd-hatch {
+  stroke: var(--gd-ink);
+  stroke-width: 0.9;
+}
+.gd-ground-line {
+  stroke: var(--gd-ink-soft);
+  stroke-width: 1.3;
+  stroke-dasharray: 9 4;
+  opacity: 0.8;
+}
+.gd-trace {
+  fill: none;
+  stroke: var(--gd-live);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  opacity: 0.55;
+}
+.gd-trace--crank {
+  stroke: var(--gd-crank);
+}
+.gd-trace--foot {
+  stroke: var(--gd-foot);
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+.gd-trace--rocker {
+  stroke: var(--gd-foot);
+  stroke-width: 2.4;
+  stroke-dasharray: none;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.gd-trace--fail {
+  stroke: var(--gd-error);
+  stroke-width: 2.4;
+  stroke-dasharray: 4 3;
+  opacity: 0.9;
+}
+.gd-trace--p1 {
+  stroke: #8e44ad;
+  stroke-width: 1.8;
+  stroke-dasharray: none;
+  opacity: 0.85;
+}
+.gd-trace--p3 {
+  stroke: var(--gd-ok);
+  stroke-width: 1.8;
+  stroke-dasharray: none;
+  opacity: 0.85;
+}
+.gd-dot {
+  stroke: #fdfaf2;
+  stroke-width: 1.5;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+.gd-dot.gd-trace--p1 {
+  fill: #8e44ad;
+}
+.gd-dot.gd-trace--foot {
+  fill: var(--gd-foot);
+}
+.gd-dot.gd-trace--p3 {
+  fill: var(--gd-ok);
+}
+.gd-contact {
+  fill: none;
+  stroke: var(--gd-foot);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.2;
+}
+.gd-contact-dot {
+  fill: var(--gd-foot);
+  opacity: 0.35;
+}
+.gd-dim line {
+  stroke: var(--gd-ink-soft);
+  stroke-width: 1;
+}
+.gd-dim-head {
+  fill: var(--gd-ink-soft);
+}
+.gd-dim text,
+.gd-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  fill: var(--gd-ink);
+  paint-order: stroke;
+  stroke: var(--gd-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.gd-dim text,
+.gd-label--muted {
+  fill: var(--gd-ink-soft);
+  font-weight: 500;
+}
+.gd-label--crank {
+  fill: #c25f0e;
+}
+.gd-label--foot {
+  fill: var(--gd-foot);
+}
+.gd-label--ok {
+  fill: #2f7d39;
+}
+.gd-label--error {
+  fill: #c0341f;
+  font-weight: 700;
+}
+.gd-label--warn {
+  fill: #a8720c;
+}
+.gd-turn path {
+  fill: none;
+  stroke: var(--gd-crank);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.gd-turn .gd-turn-head {
+  fill: var(--gd-crank);
+  stroke: none;
+}
+.gd-turn--error path {
+  stroke: var(--gd-error);
+  stroke-dasharray: 3 3;
+}
+.gd-turn--error .gd-turn-head {
+  fill: var(--gd-error);
+}
+.gd-axle {
+  fill: var(--gd-crank);
+  stroke: var(--gd-ink);
+  stroke-width: 1;
+}
+.gd-frame {
+  fill: none;
+  stroke: #8a6440;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.gd-body {
+  fill: #8a6440;
+  stroke: #4a3420;
+  stroke-width: 1.2;
+}
+.gd-flag line {
+  stroke: var(--gd-ink);
+  stroke-width: 1.5;
+}
+.gd-flag path {
+  fill: var(--gd-crank);
+}
+.gd-flag--goal path {
+  fill: var(--gd-ok);
+}
+.gd-snap-ring {
+  fill: none;
+  stroke: var(--gd-select);
+  stroke-width: 2;
+}
+.gd-cursor path {
+  fill: #fff;
+  stroke: var(--gd-ink);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.gd-free-end {
+  fill: var(--gd-paper);
+  stroke: var(--gd-ink);
+  stroke-width: 1.2;
+}
+.gd-cap {
+  font-size: 13px;
+  font-weight: 800;
+}
+.gd-cap--ok {
+  fill: #2f7d39;
+}
+.gd-cap--locked {
+  fill: #c0341f;
+}
+.gd-cap--loose,
+.gd-cap--warn {
+  fill: #a8720c;
+}
+.gd-cap-sub {
+  font-size: 11px;
+  fill: var(--gd-ink-soft);
+}
+.gd-sep {
+  stroke: rgba(43, 33, 24, 0.18);
+  stroke-dasharray: 3 4;
+}
+.gd-front-leg {
+  stroke: var(--gd-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.gd-com {
+  fill: var(--gd-error);
+}
+.gd-com-line {
+  stroke: var(--gd-error);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.gd-keycap-base {
+  fill: #6b5a48;
+}
+.gd-keycap-top {
+  fill: #f6efe0;
+  stroke: var(--gd-ink);
+  stroke-width: 1.2;
+}
+.gd-keycap text {
+  font-size: 12px;
+  font-weight: 800;
+  fill: var(--gd-ink);
+}
+.gd-keycap.is-down .gd-keycap-top {
+  fill: #ffe0b0;
+}
+.gd-badge circle {
+  fill: var(--gd-ink);
+}
+.gd-badge text {
+  font-size: 10.5px;
+  font-weight: 800;
+  fill: var(--gd-paper);
+}
+.gd-pin-ring {
+  fill: none;
+  stroke: var(--gd-select);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2;
+}
+.gd-frame-line {
+  stroke: var(--gd-ink);
+  stroke-width: 1.4;
+  stroke-dasharray: 6 3;
+  opacity: 0.55;
+}
+.gd-dead-mark {
+  fill: none;
+  stroke: var(--gd-error);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.gd-phase circle {
+  fill: var(--gd-foot);
+  stroke: #fdfaf2;
+  stroke-width: 1.5;
+}
+.gd-phase--1 circle {
+  fill: var(--gd-live);
+  opacity: 0.8;
+}
+.gd-phase--2 circle {
+  fill: #8cc3d6;
+}
+.gd-walk line {
+  stroke: var(--gd-ok);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.gd-walk path {
+  fill: var(--gd-ok);
+}
+.gd-shake {
+  animation: gd-shake 0.35s linear infinite;
+}
+@keyframes gd-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-1.4px, 0.4px);
+  }
+  40% {
+    transform: translate(1.2px, -0.4px);
+  }
+  60% {
+    transform: translate(-0.8px, -0.3px);
+  }
+  80% {
+    transform: translate(1px, 0.3px);
+  }
+}
+
+.gd-clock rect {
+  fill: var(--mech-wood-1, #2a1c13);
+  stroke: var(--mech-brass, #c99a5b);
+  stroke-width: 1;
+}
+.gd-clock text {
+  font:
+    700 13px var(--mech-mono, monospace),
+    monospace;
+  fill: #f6eadb;
+}
+.gd-clock.is-done text {
+  fill: #9be39f;
+}
+
+/* ---------- 用語のリンクと小窓 ---------- */
+.gd-term {
+  display: inline;
+  margin: 0;
+  padding: 0 1px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--mech-brass-hi, #e8c287);
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.gd-term:hover {
+  color: var(--accent, #f2a65a);
+}
+.gd-term[aria-expanded='true'] {
+  background: rgba(242, 166, 90, 0.18);
+}
+.gd-pop {
+  position: fixed;
+  z-index: 60;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 10px 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--mech-wood-1, #2a1c13), var(--mech-wood-0, #1d140d));
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(201, 154, 91, 0.45);
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.65;
+  outline: none;
+  animation: gd-pop-in 0.16s ease-out both;
+}
+@keyframes gd-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.gd-pop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.gd-pop__title,
+.gd-gloss__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.gd-gloss__name {
+  font-size: 19px;
+  margin-bottom: 4px;
+}
+.gd-pop__reading {
+  margin-left: 8px;
+  color: var(--muted, #b9a68f);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.gd-pop__short {
+  margin: 4px 0;
+  color: var(--mech-brass-hi, #e8c287);
+  font-weight: 700;
+}
+.gd-pop__fig,
+.gd-gloss__fig {
+  margin: 6px 0 8px;
+  padding: 4px;
+  border-radius: 6px;
+  background: var(--gd-paper);
+}
+.gd-pop__body {
+  margin: 0 0 8px;
+}
+.gd-pop__play {
+  margin: 0;
+  padding: 6px 9px;
+  border-left: 3px solid var(--mech-brass, #c99a5b);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.gd-pop__tag {
+  display: inline-block;
+  margin-right: 7px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--mech-brass, #c99a5b);
+  color: var(--mech-wood-0, #1d140d);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+/* ---------- 用語集 ---------- */
+.gd-gloss {
+  width: min(880px, calc(100vw - 44px));
+}
+.gd-gloss__body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 16px;
+}
+.gd-gloss__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gd-gloss__item {
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text, #f6eadb);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.gd-gloss__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.gd-gloss__item[aria-current] {
+  background: rgba(201, 154, 91, 0.2);
+  box-shadow: inset 3px 0 0 var(--mech-brass, #c99a5b);
+  color: var(--mech-brass-hi, #e8c287);
+  font-weight: 700;
+}
+.gd-gloss__detail {
+  min-height: 420px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.gd-gloss__detail p {
+  margin: 0 0 8px;
+}
+.gd-gloss__fig {
+  max-width: 440px;
+}
+.gd-gloss__related .gd-term {
+  margin-right: 10px;
+}
+
+/* ---------- 操作一覧 ---------- */
+.gd-sheet {
+  width: min(840px, calc(100vw - 44px));
+}
+.gd-sheet__groups {
+  column-count: 2;
+  column-gap: 28px;
+}
+.gd-sheet__group {
+  break-inside: avoid;
+  margin-bottom: 6px;
+}
+.gd-sheet .gd-keys__row {
+  grid-template-columns: 12.5em 1fr;
+}
+@media (max-width: 760px) {
+  .gd-sheet__groups {
+    column-count: 1;
+  }
+}
+.gd-sheet__group h3 {
+  margin: 6px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(201, 154, 91, 0.28);
+  color: var(--mech-brass, #c99a5b);
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+}
+.gd-keys {
+  margin: 0 0 8px;
+}
+.gd-keys__row {
+  display: grid;
+  grid-template-columns: 9.5em 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 0;
+}
+.gd-keys dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.gd-keys dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text, #f6eadb);
+}
+.gd-keys__combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.gd-keys__or,
+.gd-keys__alt,
+.gd-keys__plus {
+  color: var(--muted, #b9a68f);
+  font-size: 11px;
+}
+.gd-keys kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #f6efe0, #e2d4b8);
+  box-shadow:
+    0 2px 0 #8a7457,
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  color: var(--gd-ink);
+  font:
+    700 12px var(--mech-mono, monospace),
+    monospace;
+  white-space: nowrap;
+}
+
+/* ---------- 状況の一言 ---------- */
+.gd-tip {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 470px;
+  padding: 10px 10px 10px 12px;
+  border-left: 4px solid var(--mech-brass, #c99a5b);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--mech-wood-1, #2a1c13), var(--mech-wood-0, #1d140d));
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(201, 154, 91, 0.32);
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+  animation: gd-tip-in 0.34s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.gd-tip::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--mech-wood-0, #1d140d);
+  box-shadow: 1px 1px 0 rgba(201, 154, 91, 0.32);
+  transform: rotate(45deg);
+}
+.gd-tip--warn {
+  border-left-color: #e0a43a;
+}
+.gd-tip--error {
+  border-left-color: var(--danger, #e0533d);
+}
+@keyframes gd-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+.gd-tip__icon {
+  flex: none;
+  width: 44px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--gd-paper);
+}
+.gd-tip__main {
+  flex: 1;
+  min-width: 0;
+}
+.gd-tip__label {
+  display: block;
+  color: var(--mech-brass, #c99a5b);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.gd-tip--warn .gd-tip__label {
+  color: #f0b44c;
+}
+.gd-tip--error .gd-tip__label {
+  color: #ff8a73;
+}
+.gd-tip__text {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.gd-tip__action {
+  margin-top: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--mech-brass, #c99a5b);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mech-brass-hi, #e8c287);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+/* ---------- はじめての方へ ---------- */
+.gd-welcome {
+  width: min(430px, calc(100vw - 32px));
+  outline: none;
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+}
+.gd-welcome__fig {
+  margin-bottom: 10px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--gd-paper);
+}
+.gd-welcome__body {
+  margin: 6px 0 10px;
+  font-size: 14px;
+  line-height: 1.75;
+}
+.gd-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 10px;
+}
+
+/* ---------- 狭い画面 ---------- */
+@media (max-width: 720px) {
+  .gd-book__spread,
+  .gd-gloss__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gd-gloss__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .gd-gloss__item {
+    width: auto;
+  }
+  .gd-dots {
+    gap: 10px;
+  }
+}
+
+/* ---------- 動きを減らす ---------- */
+.gd-reduced,
+.gd-reduced * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gd-overlay,
+  .gd-pop,
+  .gd-tip,
+  .gd-turn-in--next,
+  .gd-turn-in--prev,
+  .gd-shake {
+    animation: none;
+  }
+}

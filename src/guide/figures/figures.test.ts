@@ -69,13 +69,13 @@ describe('図の機構(本物のソルバーで解く)', () => {
     expect(maxMove).toBeGreaterThan(5);
   });
 
-  it('歩く脚の見本:底が平らで、歩幅と足上げがあり、前へ歩く', () => {
+  it('歩く脚の見本(第 1 章の基本の脚):底が平らで、歩幅と足上げがあり、前へ歩く', () => {
     const { analysis, design } = cycleFigure('goodLeg');
     expect(analysis.fullRotation).toBe(true);
     const f = analysis.foot!;
     expect(f.flatness).toBeLessThan(0.6);
-    expect(f.stride).toBeGreaterThan(15);
-    expect(f.lift).toBeGreaterThan(15);
+    expect(f.stride).toBeGreaterThan(10);
+    expect(f.lift).toBeGreaterThan(10);
     expect(walkDirection(f, design.motor.rpm)).toBe(1);
   });
 
@@ -136,16 +136,21 @@ describe('図の動きの補助', () => {
     expect(poseAt(cycle, (bad + 0.1) / cycle.steps).ok).toBe(false);
   });
 
-  it('walkerTrack:3 本の脚を 1/3 ずつずらすと前へ進み、いちばん低い脚先が地面につく', () => {
-    const { cycle, mech } = cycleFigure('goodLeg');
+  it('walkerTrack:3 本の脚を 1/3 ずつずらすと、モーターの向きに回せば前へ進み、いちばん低い脚先が地面につく', () => {
+    const { cycle, mech, design } = cycleFigure('goodLeg');
     const offsets = [0, 1 / 3, 2 / 3];
-    const tr = walkerTrack(cycle, mech.footIndex, offsets);
-    expect(tr.advance).toBeGreaterThan(30);
-    for (let s = 0; s < cycle.steps; s++) {
+    const dir = Math.sign(design.motor.rpm) as 1 | -1;
+    const tr = walkerTrack(cycle, mech.footIndex, offsets, dir);
+    expect(tr.advance).toBeGreaterThan(25);
+    // 逆に回すと後ろへ進む
+    expect(walkerTrack(cycle, mech.footIndex, offsets, -dir as 1 | -1).advance).toBeLessThan(-25);
+    for (let k = 0; k < cycle.steps; k++) {
       const low = Math.min(
-        ...offsets.map((o) => cycle.positions[legSample(cycle, s, o)]![mech.footIndex * 2 + 1]!),
+        ...offsets.map(
+          (o) => cycle.positions[legSample(cycle, dir * k, o)]![mech.footIndex * 2 + 1]!,
+        ),
       );
-      expect(low + tr.bodyY[s]!).toBeCloseTo(0, 9);
+      expect(low + tr.bodyY[k]!).toBeCloseTo(0, 9);
     }
     // 平らな底なので、機体はほとんど上下しない
     const ys = Array.from(tr.bodyY);

@@ -1,6 +1,7 @@
 import { dyadPoint, fourBar, jansenLeg } from '@/core/model/presets';
 import type { DesignDoc, Joint, Link } from '@/core/model/types';
 import { DESIGN_VERSION, DEFAULT_LEGS } from '@/core/model/types';
+import { basicLeg } from '@/game/designs';
 
 /**
  * 遊び方・用語解説の図に使う小さな機構(GUIDE-1, GUIDE-2)。どれも本物のソルバー
@@ -37,11 +38,11 @@ function doc(
 }
 
 /**
- * 歩く脚の見本:てこクランクのカップラーを伸ばした先が脚先。軌道の底が平ら(平らさ 0.5cm 未満)で、
- * 反時計回り(rpm > 0)で +x へ歩く。
+ * 歩く脚の見本:第 1 章の基本の脚(てこクランクの連結棒を下へ伸ばした先が脚先)。
+ * 軌道の底が平らで、時計回り(rpm < 0)で +x へ歩く。チュートリアルで組む脚と同じ形。
  */
 export function goodLeg(): DesignDoc {
-  return { ...fourBar(12, 40, 30, 35, { x: 35, y: -35 }), name: 'guide-good-leg' };
+  return { ...basicLeg({ ...DEFAULT_LEGS }), name: 'guide-good-leg' };
 }
 
 /** 自由度 1:地面+棒 3 本の輪(四節リンク)。O1 がクランク軸 */

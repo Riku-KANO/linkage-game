@@ -104,46 +104,48 @@ export function fiveBarSway(steps = 48, amplitudeDeg = 20): Float64Array[] {
 }
 
 export interface WalkerTrack {
-  /** サンプルごとの機体の位置(cm)。bodyX[0] = 0 */
+  /** 時間の刻み k(0..steps)ごとの機体の位置(cm)。bodyX[0] = 0 */
   bodyX: Float64Array;
-  /** サンプルごとの機体の高さ:いちばん低い脚先が地面(y = 0)につく高さ */
+  /** 刻み k ごとの機体の高さ:いちばん低い脚先が地面(y = 0)につく高さ */
   bodyY: Float64Array;
-  /** 1 回転で進む距離(cm) */
+  /** 1 回転で進む距離(cm)。前へ進めば正 */
   advance: number;
+  /** モーターの回る向き。刻み k のサンプルは (dir·k) mod steps */
+  dir: 1 | -1;
 }
 
 /**
- * 位相をずらした同じ脚を何本か並べた機械が、地面の上をどう進むか。各サンプルで最も低い脚先が
+ * 位相をずらした同じ脚を何本か並べた機械が、地面の上をどう進むか。各刻みで最も低い脚先が
  * 地面について滑らないとして、その脚先が機体に対して動いた分だけ機体を逆に動かす。
- * offsets は脚ごとの位相(1 回転を 1 とする割合)。
+ * offsets は脚ごとの位相(1 回転を 1 とする割合)、dir はモーターの回る向き(rpm の符号)。
  */
 export function walkerTrack(
   cycle: CycleSample,
   footIndex: number,
   offsets: readonly number[],
+  dir: 1 | -1 = 1,
 ): WalkerTrack {
   const n = cycle.steps;
   const bodyX = new Float64Array(n + 1);
   const bodyY = new Float64Array(n);
-  const sampleOf = (s: number, off: number) => (((s + Math.round(off * n)) % n) + n) % n;
-  const foot = (s: number) => cycle.positions[s]!;
-  for (let s = 0; s < n; s++) {
+  const foot = (k: number, off: number) => cycle.positions[legSample(cycle, dir * k, off)]!;
+  for (let k = 0; k < n; k++) {
     let low = 0;
     let lowY = Infinity;
-    offsets.forEach((off, k) => {
-      const y = foot(sampleOf(s, off))[footIndex * 2 + 1]!;
+    offsets.forEach((off, j) => {
+      const y = foot(k, off)[footIndex * 2 + 1]!;
       if (y < lowY) {
         lowY = y;
-        low = k;
+        low = j;
       }
     });
-    bodyY[s] = -lowY;
+    bodyY[k] = -lowY;
     const off = offsets[low] ?? 0;
-    const x0 = foot(sampleOf(s, off))[footIndex * 2]!;
-    const x1 = foot(sampleOf(s + 1, off))[footIndex * 2]!;
-    bodyX[s + 1] = bodyX[s]! - (x1 - x0);
+    const x0 = foot(k, off)[footIndex * 2]!;
+    const x1 = foot(k + 1, off)[footIndex * 2]!;
+    bodyX[k + 1] = bodyX[k]! - (x1 - x0);
   }
-  return { bodyX, bodyY, advance: bodyX[n]! };
+  return { bodyX, bodyY, advance: bodyX[n]!, dir };
 }
 
 /** 脚 k の位相 offset に合わせたサンプル番号 */
@@ -197,4 +199,9 @@ export function fitMap(b: Bounds, width: number, height: number, pad = 12): FitM
   const ox = (width - w * scale) / 2 - b.minX * scale;
   const oy = (height - h * scale) / 2 + b.maxY * scale;
   return { x: (x) => ox + x * scale, y: (y) => oy - y * scale, scale };
+}
+
+/** モーターの回る向き(rpm の符号。0 は +1 とみなす)。図はこの向きに 1 回転を再生する */
+export function motorDir(design: DesignDoc): 1 | -1 {
+  return design.motor.rpm < 0 ? -1 : 1;
 }

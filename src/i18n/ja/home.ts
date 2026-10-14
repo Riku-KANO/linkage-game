@@ -14,5 +14,4 @@ export const home: Record<string, string> = {
 
   'home.settings.lowPerfAuto':
     '低性能モードは起動時に自動で選びました({reason})。切り替えると以後はその選択を使います。',
-  'home.settings.reducedMotionOs': '動きの軽減は OS の設定に従っています。',
 };

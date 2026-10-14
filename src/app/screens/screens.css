@@ -35,10 +35,16 @@
   left: 24px;
   align-items: flex-start;
 }
-/* ステージ選択:右に寄せ、左のジオラマ(3D)を空ける。通知(右上)とは高さをずらす */
+/*
+ * ステージ選択:右下に寄せ、左のジオラマ(3D)を空ける。下に寄せるのは右上の通知(解放の札など)と
+ * 重ならないようにするため(T-06 で戻ってきたときに「新しいステージ」の札が出る)
+ */
 .app-dock--stage {
+  top: auto;
   right: 24px;
-  top: 24px;
+  /* 右下の「Esc・右クリックで戻る」の添え書きの上 */
+  bottom: 44px;
+  max-height: calc(100% - 68px);
   align-items: flex-end;
 }
 .app-dock--stage .hud-select {

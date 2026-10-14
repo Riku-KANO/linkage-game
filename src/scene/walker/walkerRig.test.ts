@@ -13,11 +13,11 @@ import {
 describe('見本機のモデル', () => {
   const model = createWalkerModel(jansenWalker());
 
-  it('ヤンセン型見本機:前後反転ペア 3 組で 6 脚、棒 66 本、ピン 48 本', () => {
-    expect(model.legs).toHaveLength(6);
-    expect(model.legs.filter((l) => l.mirrored)).toHaveLength(3);
-    expect(model.bars).toHaveLength(66);
-    expect(model.pins).toHaveLength(48);
+  it('ヤンセン型見本機:前後反転ペア 6 組(左右両側)で 12 脚、棒 132 本、ピン 96 本', () => {
+    expect(model.legs).toHaveLength(12);
+    expect(model.legs.filter((l) => l.mirrored)).toHaveLength(6);
+    expect(model.bars).toHaveLength(132);
+    expect(model.pins).toHaveLength(96);
     expect(model.footIndex).toBeGreaterThanOrEqual(0);
   });
 

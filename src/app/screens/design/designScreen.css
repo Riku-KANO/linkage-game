@@ -1,0 +1,221 @@
+/*
+ * 設計画面(INT-1):製図用紙に重ねたエディタと、その周りの帯・パネル。
+ * 位置はすべて DesignScreen が CSS 変数で渡す(layout.ts の designLayout と、紙の画面矩形)。
+ */
+
+.ak-overlay > .ds-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 木の工房に置いた道具箱のような帯とパネル(scene の .ak-panel と同じ材質) */
+.ds-header,
+.ds-editor .ed-toolbar,
+.ds-editor .ed-side {
+  border: 1px solid rgba(201, 162, 74, 0.45);
+  background: linear-gradient(180deg, rgba(43, 30, 22, 0.9), rgba(27, 19, 14, 0.9));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+/* 上の帯:← 戻る │ 見出し(差し込み口) │ ヒント(差し込み口) │ 試走する */
+.ds-header {
+  position: absolute;
+  left: var(--ds-m);
+  right: var(--ds-m);
+  top: var(--ds-m);
+  height: var(--ds-header-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 4px;
+  border-radius: 12px;
+  color: var(--text);
+  animation: ak-in-top 0.22s ease-out both;
+}
+
+.ds-slot--stage {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ds-title {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.ds-sub {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ds-slot--hints {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ds-slot--hints:empty {
+  display: none;
+}
+
+/* 画面全体に重なる差し込み口(チュートリアルの吹き出しなど)。中身だけがマウスを受け取る */
+.ds-slot--float {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ds-slot--float > * {
+  pointer-events: auto;
+}
+
+/* ---------- エディタ:根は全画面の層にして、部品を帯・紙・パネルへ配る ---------- */
+.ds-editor.ed-root {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  /*
+   * 図面の色を、3D の紙に描いたインク(PaperInk)が夕暮れの工房の光で見える色に合わせる。
+   * 降りきった定位置で、3D のインクとエディタの SVG を同じ位置で比べて測った値
+   * (紙色 = 棒の中・ピン・ラベルの縁取り)。これで切り替わりの瞬間に色が変わらない。
+   * 動いている機構(--ed-live)は 3D に描かないので、目立つ元の色のまま。
+   */
+  --ed-paper: #dab9a2;
+  --ed-ink: #231108;
+  --ed-crank: #e0661b;
+  --ed-crank-soft: #e2bb9d;
+  --ed-foot: #13334c;
+}
+
+.ds-editor .ed-toolbar {
+  position: absolute;
+  left: var(--ds-toolbar-left);
+  top: var(--ds-toolbar-top);
+  max-width: var(--ds-toolbar-w);
+  height: var(--ds-toolbar-h);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  border-radius: 12px;
+  animation: ak-in-top 0.22s 0.04s ease-out both;
+}
+
+.ds-editor .ed-toolbar .ed-btn {
+  flex: none;
+}
+
+/* 全体表示はこの画面では使わない(紙そのものがビュー) */
+.ds-editor .ed-toolbar > .ed-btn:last-child,
+.ds-editor .ed-toolbar > .ed-sep:nth-last-child(2) {
+  display: none;
+}
+
+/* 描画面 = 製図用紙。背景は透明にして 3D の紙を見せる */
+.ds-editor .ed-canvas {
+  position: absolute;
+  left: var(--ds-paper-left);
+  top: var(--ds-paper-top);
+  width: var(--ds-paper-w);
+  height: var(--ds-paper-h);
+  background: none;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+/* カメラが降りきるまでは隠して用意だけしておく(位置は予測した紙の矩形) */
+.ds-root:not(.is-live) .ds-editor .ed-canvas {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 方眼と軸は 3D の紙に印刷されたものを使う(二重に描かない) */
+.ds-editor .ed-svg > rect:not(.ed-rect),
+.ds-editor .ed-axis {
+  display: none;
+}
+
+/* 状態行は紙の外(すぐ下)に出す */
+.ds-editor .ed-statusbar {
+  top: calc(100% + var(--ds-status-gap));
+  bottom: auto;
+  padding: 3px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(27, 19, 14, 0.72);
+  color: var(--muted);
+}
+
+.ds-editor .ed-side {
+  position: absolute;
+  left: var(--ds-side-left);
+  top: var(--ds-side-top);
+  width: var(--ds-side-w);
+  height: var(--ds-side-h);
+  border-radius: 14px;
+  animation: ak-in-right 0.22s 0.06s ease-out both;
+}
+
+.ds-root.is-compact .ds-editor .ed-side {
+  border-top: 1px solid rgba(201, 162, 74, 0.45);
+  animation-name: ak-in-bottom;
+}
+
+/*
+ * 降りきった瞬間:静止した図面は 3D の紙のインクと同じなので変わらない。
+ * 動いている機構・死点・寸法線・バッジ・状態行だけがふわっと現れる。
+ */
+.ds-root.is-live .ds-editor .ed-live,
+.ds-root.is-live .ds-editor .ed-dead,
+.ds-root.is-live .ds-editor .ed-dead-range,
+.ds-root.is-live .ds-editor .ed-guides,
+.ds-root.is-live .ds-editor .ed-chips,
+.ds-root.is-live .ds-editor .ed-statusbar {
+  animation: ds-fade-in 0.35s ease-out both;
+}
+
+@keyframes ds-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.ds-root.is-reduced .ds-header,
+.ds-root.is-reduced .ds-editor .ed-toolbar,
+.ds-root.is-reduced .ds-editor .ed-side,
+.ds-root.is-reduced.is-live .ds-editor .ed-live,
+.ds-root.is-reduced.is-live .ds-editor .ed-dead,
+.ds-root.is-reduced.is-live .ds-editor .ed-dead-range,
+.ds-root.is-reduced.is-live .ds-editor .ed-guides,
+.ds-root.is-reduced.is-live .ds-editor .ed-chips,
+.ds-root.is-reduced.is-live .ds-editor .ed-statusbar {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-header,
+  .ds-editor .ed-toolbar,
+  .ds-editor .ed-side,
+  .ds-root.is-live .ds-editor .ed-live,
+  .ds-root.is-live .ds-editor .ed-dead,
+  .ds-root.is-live .ds-editor .ed-dead-range,
+  .ds-root.is-live .ds-editor .ed-guides,
+  .ds-root.is-live .ds-editor .ed-chips,
+  .ds-root.is-live .ds-editor .ed-statusbar {
+    animation: none;
+  }
+}

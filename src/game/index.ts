@@ -14,3 +14,4 @@ export * from './progress';
 export * from './hints';
 export * from './tutorial';
 export * from './diagnose';
+export * from './run';

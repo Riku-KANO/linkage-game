@@ -23,9 +23,10 @@ import type { HintGhost, HintText, StageDef, StageId } from './types';
 /**
  * 章 1「はじめの一歩」と章 2「段差を越える」のステージ(MVP の 10 ステージ)。
  *
- * メダル基準・制限時間は仮の値(小さいほど良い)。時間は参考解の歩幅 × 回転数からの見積もり、
- * エネルギーは距離あたりの目安(四節 40/70/120 J/m、ヤンセン 80/140/240 J/m 前後)。
- * sim の統合後に、参考解(reference)をヘッドレス試走して調整する。
+ * メダル基準(小さいほど良い)・制限時間・予算は、参考解(reference)を本物の sim で試走した実測から
+ * calibrate.ts の方法で決めた値(TUNE-3)。sim を変えたら `pnpm calibrate` で表を出して書き直す
+ * (calibrate.test.ts がずれを検出する)。全ステージの参考解がクリアでき、最初の設計が意図どおりに
+ * 失敗することは stages.sim.test.ts が本物の sim で確かめる(TUNE-1・TUNE-2)。
  *
  * STAGES は読み取り専用として扱う。設計を編集に渡すときは startDesign() で複製する。
  */
@@ -58,7 +59,7 @@ const c1s1 = (): StageDef => {
     terrain: flatCourse(),
     start: { x: 0, z: 0 },
     goal: { x: 1.5 },
-    timeLimit: 30,
+    timeLimit: 15,
     budget: null,
     parts: CH1_PARTS,
     features: { legArray: false },
@@ -67,11 +68,12 @@ const c1s1 = (): StageDef => {
     initialDesign: withName(withoutLinks(ref, ['rocker']), t('game.design.broken')),
     lockedJoints: ['O2', 'O4', 'A', 'B', 'F'],
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 1.79 秒・54 J)
     medals: {
-      time: [5, 8, 12],
-      parts: [10, 12, 16],
-      cost: [550, 650, 800],
-      energy: [60, 105, 180],
+      time: [1.9, 2.5, 3.3],
+      parts: [10, 12, 15],
+      cost: [1250, 1500, 1900],
+      energy: [60, 82, 120],
     },
     hints: [
       text(id, 1),
@@ -100,7 +102,7 @@ const c1s2 = (): StageDef => {
     terrain: flatCourse(),
     start: { x: 0, z: 0 },
     goal: { x: 1.5 },
-    timeLimit: 30,
+    timeLimit: 15,
     budget: null,
     parts: CH1_PARTS,
     features: { legArray: false },
@@ -109,11 +111,12 @@ const c1s2 = (): StageDef => {
     initialDesign: withName(withJointAt(ref, 'A', 0, 30), t('game.design.stuckCrank')),
     lockedJoints: ['O2', 'O4', 'B', 'F'],
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 1.79 秒・54 J)
     medals: {
-      time: [5, 8, 12],
-      parts: [10, 12, 16],
-      cost: [550, 650, 800],
-      energy: [60, 105, 180],
+      time: [1.9, 2.5, 3.3],
+      parts: [10, 12, 15],
+      cost: [1250, 1500, 1900],
+      energy: [60, 82, 120],
     },
     hints: [
       text(id, 1),
@@ -140,17 +143,18 @@ const c1s3 = (): StageDef => {
     terrain: flatCourse(),
     start: { x: 0, z: 0 },
     goal: { x: 2 },
-    timeLimit: 40,
+    timeLimit: 15,
     budget: null,
     parts: CH1_PARTS,
     features: { legArray: false },
     defaultLegs: STANDARD_LEGS,
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 2.32 秒・67 J)
     medals: {
-      time: [7, 10, 15],
-      parts: [10, 12, 16],
-      cost: [550, 650, 800],
-      energy: [80, 140, 240],
+      time: [2.5, 3.2, 4.2],
+      parts: [10, 12, 15],
+      cost: [1250, 1500, 1900],
+      energy: [74, 105, 150],
     },
     hints: [
       text(id, 1),
@@ -182,17 +186,18 @@ const c1s4 = (): StageDef => {
     terrain: flatCourse(),
     start: { x: 0, z: 0 },
     goal: { x: 3 },
-    timeLimit: 30,
+    timeLimit: 15,
     budget: null,
     parts: CH1_PARTS,
     features: { legArray: false },
     defaultLegs: STANDARD_LEGS,
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 2.64 秒・132 J)
     medals: {
-      time: [8, 12, 18],
-      parts: [10, 12, 16],
-      cost: [550, 650, 800],
-      energy: [120, 210, 360],
+      time: [2.8, 3.6, 4.8],
+      parts: [10, 12, 15],
+      cost: [1250, 1500, 1900],
+      energy: [150, 200, 300],
     },
     hints: [
       text(id, 1),
@@ -214,17 +219,18 @@ const c1s5 = (): StageDef => {
     terrain: flatCourse(),
     start: { x: 0, z: 0 },
     goal: { x: 5 },
-    timeLimit: 30,
+    timeLimit: 25,
     budget: null,
     parts: CH1_PARTS,
     features: { legArray: false },
     defaultLegs: STANDARD_LEGS,
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 4.53 秒・475 J)
     medals: {
-      time: [12, 17, 24],
-      parts: [10, 12, 16],
-      cost: [600, 700, 850],
-      energy: [200, 350, 600],
+      time: [4.8, 6.2, 8.2],
+      parts: [10, 12, 15],
+      cost: [1500, 1800, 2300],
+      energy: [540, 720, 1050],
     },
     hints: [
       text(id, 1),
@@ -248,18 +254,19 @@ const c2s1 = (): StageDef => {
     terrain: stepCourse([[1.2, 8, 0.14]]),
     start: { x: 0, z: 0 },
     goal: { x: 2.6 },
-    timeLimit: 40,
+    timeLimit: 15,
     budget: null,
     parts: CH2_PARTS,
     features: { legArray: true },
     defaultLegs: STANDARD_LEGS,
     initialDesign: withName(basicLeg(), t('game.design.shuffler')),
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 2.64 秒・246 J)
     medals: {
-      time: [8, 12, 18],
-      parts: [10, 12, 16],
-      cost: [600, 700, 850],
-      energy: [110, 190, 330],
+      time: [2.8, 3.6, 4.8],
+      parts: [10, 12, 15],
+      cost: [1500, 1800, 2300],
+      energy: [280, 370, 560],
     },
     hints: [
       text(id, 1),
@@ -277,15 +284,14 @@ const c2s2 = (): StageDef => {
     chapter: 2,
     order: 2,
     ...keys(id),
-    // 低いでこぼこ(4cm)
+    // 低い台(4cm)が 2 つ。短い台を 3 つ並べると、参考解でも 1 割ほど台の端で止まった
     terrain: stepCourse([
-      [1.2, 1.5, 0.04],
-      [2.2, 2.5, 0.04],
-      [3.0, 3.3, 0.04],
+      [1.2, 1.8, 0.04],
+      [2.4, 3.0, 0.04],
     ]),
     start: { x: 0, z: 0 },
     goal: { x: 3.6 },
-    timeLimit: 40,
+    timeLimit: 20,
     budget: null,
     parts: CH2_PARTS,
     features: { legArray: true },
@@ -293,11 +299,12 @@ const c2s2 = (): StageDef => {
     // 脚が 1 本だけなので立っていられない。脚列の複製で脚を増やせば直る
     initialDesign: withName(withLegs(ref, SINGLE_LEG), t('game.design.oneLeg')),
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 3.30 秒・322 J)
     medals: {
-      time: [9, 13, 19],
-      parts: [10, 12, 16],
-      cost: [600, 700, 850],
-      energy: [150, 260, 450],
+      time: [3.5, 4.5, 6],
+      parts: [10, 12, 15],
+      cost: [1500, 1800, 2300],
+      energy: [360, 490, 720],
     },
     hints: [
       text(id, 1),
@@ -309,20 +316,21 @@ const c2s2 = (): StageDef => {
 
 const c2s3 = (): StageDef => {
   const id = 'c2-s3';
-  const ref = jansenMachine();
+  // ヤンセン機は重いので、段の途中で止まらないよう回転数を上げて勢いをつける(-40 では 2 秒ほど止まる)
+  const ref = withRpm(jansenMachine(), -60);
   return {
     id,
     chapter: 2,
     order: 3,
     ...keys(id),
-    // 8cm の段を 2 つ上る
+    // 6cm の段を 2 つ上る(8cm だと 12 脚のヤンセン機が段の途中で止まることがある)
     terrain: stepCourse([
-      [1.2, 2.4, 0.08],
-      [2.4, 8, 0.16],
+      [1.2, 2.4, 0.06],
+      [2.4, 8, 0.12],
     ]),
     start: { x: 0, z: 0 },
     goal: { x: 3.6 },
-    timeLimit: 45,
+    timeLimit: 30,
     budget: null,
     parts: CH2_PARTS,
     features: { legArray: true },
@@ -333,11 +341,12 @@ const c2s3 = (): StageDef => {
       t('game.design.locked'),
     ),
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 5.61 秒・482 J)
     medals: {
-      time: [13, 18, 26],
-      parts: [14, 20, 26],
-      cost: [1100, 1600, 2000],
-      energy: [300, 520, 900],
+      time: [6, 7.6, 10.5],
+      parts: [20, 24, 30],
+      cost: [3200, 3800, 4700],
+      energy: [540, 740, 1100],
     },
     hints: [
       text(id, 1),
@@ -363,17 +372,18 @@ const c2s4 = (): StageDef => {
     ]),
     start: { x: 0, z: 0 },
     goal: { x: 4.2 },
-    timeLimit: 50,
-    budget: 2000,
+    timeLimit: 35,
+    budget: 3900,
     parts: CH2_PARTS,
     features: { legArray: true },
     defaultLegs: STANDARD_LEGS,
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 6.92 秒・310 J)
     medals: {
-      time: [15, 21, 30],
-      parts: [14, 20, 26],
-      cost: [1100, 1600, 2000],
-      energy: [350, 600, 1000],
+      time: [7.4, 9.4, 12.5],
+      parts: [20, 24, 30],
+      cost: [3200, 3800, 3900],
+      energy: [350, 470, 700],
     },
     hints: [
       text(id, 1),
@@ -391,8 +401,9 @@ const c2s5 = (): StageDef => {
     chapter: 2,
     order: 5,
     ...keys(id),
-    // 10cm 上がって、幅 25cm の溝をまたぎ、10cm 下りる。溝の底は -15cm
-    terrain: ditchCourse(-0.15, [
+    // 10cm 上がって、幅 25cm の溝をまたぎ、10cm 下りる。溝の底は -5cm(台の上から 15cm)。
+    // 溝に落ちた脚先が自力で上がれる深さにする(底 -15cm だと四節の参考解でも 3 割ほど抜け出せない)
+    terrain: ditchCourse(-0.05, [
       [-3, 1.2, 0],
       [1.2, 2.2, 0.1],
       [2.45, 3.4, 0.1],
@@ -400,17 +411,18 @@ const c2s5 = (): StageDef => {
     ]),
     start: { x: 0, z: 0 },
     goal: { x: 4.6 },
-    timeLimit: 50,
-    budget: 900,
+    timeLimit: 25,
+    budget: 1900,
     parts: CH2_PARTS,
     features: { legArray: true },
     defaultLegs: STANDARD_LEGS,
     reference: ref,
+    // 校正値(calibrate.ts。参考解の実測 4.11 秒・411 J)
     medals: {
-      time: [13, 19, 27],
-      parts: [10, 12, 16],
-      cost: [600, 700, 850],
-      energy: [220, 380, 650],
+      time: [4.4, 5.6, 7.6],
+      parts: [10, 12, 15],
+      cost: [1500, 1800, 1900],
+      energy: [460, 620, 920],
     },
     hints: [
       text(id, 1),

@@ -95,8 +95,9 @@ describe('failure diagnosis (GAME-6)', () => {
 
 describe('stability helpers', () => {
   it('measures the support margin from the leg array and the stance', () => {
+    // 標準の脚列は 12 脚(6 組 × 前後反転)を 12cm 間隔:端の脚は中心から 0.66m
     const wide = supportMargin(basicLeg())!;
-    expect(wide.z).toBeCloseTo(0.55 + 0.02, 6);
+    expect(wide.z).toBeCloseTo(0.66 + 0.02, 6);
     expect(wide.x).toBeGreaterThan(0.4);
     const one = supportMargin(withLegs(basicLeg(), SINGLE_LEG))!;
     expect(one.z).toBeCloseTo(0.02, 6);

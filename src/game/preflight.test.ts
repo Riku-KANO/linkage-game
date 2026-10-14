@@ -84,11 +84,12 @@ describe('preflight (GAME-2)', () => {
   });
 
   it('checks the budget', () => {
+    const budget = stage('c2-s5').budget!;
     const r = preflight(stage('c2-s5'), jansenMachine());
     const p = r.problems.find((q) => q.code === 'overBudget');
     expect(p).toBeDefined();
-    expect(p!.params).toMatchObject({ budget: 900 });
-    expect(Number(p!.params!.cost)).toBeGreaterThan(900);
+    expect(p!.params).toMatchObject({ budget });
+    expect(Number(p!.params!.cost)).toBeGreaterThan(budget);
     expect(r.ok).toBe(false);
   });
 

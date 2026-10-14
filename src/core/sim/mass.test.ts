@@ -5,7 +5,7 @@ import { legInstances, mirrorDesignX } from '@/core/kinematics/legs';
 import { computeBill } from '@/core/model/parts';
 import { chebyshevLambda, fourBar, jansenLeg, jansenWalker } from '@/core/model/presets';
 import type { DesignDoc } from '@/core/model/types';
-import { jansenTwoSided } from './fixtures';
+import { jansenOneSided, jansenTwoSided } from './fixtures';
 
 function model(design: DesignDoc, chassisMass = 8) {
   const instances = legInstances(design);
@@ -54,7 +54,7 @@ describe('mass model (SIM-2)', () => {
   });
 
   it('builds a chassis box around the fixed points and the leg rows', () => {
-    const m = model(jansenWalker());
+    const m = model(jansenOneSided());
     // Jansen fixed points: O(0,0), B(-38,-7.8) and the mirrored B(38,-7.8)
     expect(m.chassisMin[0]).toBeCloseTo(-0.43, 6);
     expect(m.chassisMax[0]).toBeCloseTo(0.43, 6);

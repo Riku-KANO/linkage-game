@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { Walker, createWalkerSim } from './walker';
 import { createFlatTerrain } from './terrain';
 import { runHeadless } from './headless';
-import { awkwardFourBar, chebyshevWalker, jammingFourBar, jansenTwoSided } from './fixtures';
+import {
+  awkwardFourBar,
+  chebyshevWalker,
+  jammingFourBar,
+  jansenOneSided,
+  jansenTwoSided,
+} from './fixtures';
 import { fourBar, jansenWalker } from '@/core/model/presets';
 import type { DesignDoc } from '@/core/model/types';
 import type { SimSnapshot } from './types';
@@ -114,10 +120,10 @@ describe('walking (SIM-5, milestone 2)', () => {
     expect(fast.distance).toBeGreaterThan(slow.distance * 2);
   });
 
-  it('the one-sided 6-leg jansenWalker() rests on a line of two feet and tips over (preset issue)', () => {
+  it('the one-sided 6-leg Jansen machine rests on a line of two feet and tips over', () => {
     // 片側 6 脚は、接地しているのが前後 1 本ずつだけ(支持が線)なので物理的に倒れる。
     // ここでは「倒れても転倒として検出され、数値が壊れない」ことだけを確かめる
-    const res = runHeadless({ design: jansenWalker(), terrain: flat, start }, { maxTime: 20 });
+    const res = runHeadless({ design: jansenOneSided(), terrain: flat, start }, { maxTime: 20 });
     expect(Number.isFinite(res.distance)).toBe(true);
     if (res.fallen) expect(res.maxTilt).toBeGreaterThan(deg(60));
   });
@@ -125,7 +131,7 @@ describe('walking (SIM-5, milestone 2)', () => {
 
 describe('stability across mechanisms (SIM-5)', () => {
   const machines: [string, DesignDoc][] = [
-    ['jansen 6 legs (preset)', jansenWalker()],
+    ['jansen 6 legs (one-sided)', jansenOneSided()],
     ['jansen 12 legs', jansenTwoSided()],
     ['chebyshev 4 legs', chebyshevWalker()],
     ['awkward four-bar 6 legs', awkwardFourBar()],

@@ -1,4 +1,10 @@
-import { chebyshevLambda, fourBar, jansenWalker } from '@/core/model/presets';
+import {
+  JANSEN_LENGTHS,
+  chebyshevLambda,
+  fourBar,
+  jansenLeg,
+  jansenWalker,
+} from '@/core/model/presets';
 import type { DesignDoc } from '@/core/model/types';
 
 /**
@@ -7,17 +13,21 @@ import type { DesignDoc } from '@/core/model/types';
  */
 
 /**
- * ヤンセン型の両側版(12 脚)。`jansenWalker()` の脚列を 2 倍(3 位相 × 前後反転 × 左右)にしたもの。
- *
- * `jansenWalker()`(6 脚、片側だけ)は、どの瞬間も接地しているのが前脚 1 本と後脚 1 本だけで、
- * 支持が「線」になるため静的に不安定(物理的にも転ぶ)。左右に同じ位相の脚を置くと
- * 支持が四角形になり、重心が常にその中に入る。
+ * ヤンセン型の両側版(12 脚:3 位相 × 前後反転 × 左右)。見本機 `jansenWalker()` と同じ脚列。
+ * 左右に同じ位相の脚を置くと支持が四角形になり、重心が常にその中に入る。
  */
 export function jansenTwoSided(): DesignDoc {
+  return { ...jansenWalker(), name: 'ヤンセン型 両側 12 脚' };
+}
+
+/**
+ * 以前の見本機(6 脚、片側だけ)。どの瞬間も接地しているのが前脚 1 本と後脚 1 本だけで、
+ * 支持が「線」になるため静的に不安定(物理的にも転ぶ)。転倒の検出の検証に使う。
+ */
+export function jansenOneSided(): DesignDoc {
   return {
-    ...jansenWalker(),
-    name: 'ヤンセン型 両側 12 脚',
-    legs: { count: 6, phaseStepDeg: 120, spacing: 12, mirrorX: true },
+    ...jansenLeg(JANSEN_LENGTHS, { count: 3, phaseStepDeg: 120, spacing: 22, mirrorX: true }),
+    name: 'ヤンセン型 片側 6 脚',
   };
 }
 

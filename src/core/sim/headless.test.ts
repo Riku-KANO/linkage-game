@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runHeadless } from './headless';
 import { createFlatTerrain } from './terrain';
-import { jammingFourBar, jansenTwoSided } from './fixtures';
-import { jansenWalker } from '@/core/model/presets';
+import { jammingFourBar, jansenOneSided, jansenTwoSided } from './fixtures';
 import { compileMechanism } from '@/core/kinematics/compile';
 import { solvePose } from '@/core/kinematics/solve';
 
@@ -64,7 +63,7 @@ describe('runHeadless (SIM-6)', () => {
   });
 
   it('perf: 30 s of the Jansen walker runs in well under 1 s in Node', () => {
-    for (const design of [jansenWalker(), jansenTwoSided()]) {
+    for (const design of [jansenOneSided(), jansenTwoSided()]) {
       const t0 = performance.now();
       const res = runHeadless({ design, terrain: flat, start }, { maxTime: 30, stopOnFail: false });
       const ms = performance.now() - t0;

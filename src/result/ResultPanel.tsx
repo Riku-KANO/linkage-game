@@ -60,10 +60,9 @@ export function ResultPanel({
 }: ResultPanelProps) {
   const rm = useReducedMotion(reducedMotion);
   const cleared = result.cleared;
-  const timeline = useMemo(
-    () => buildResultTimeline({ short, reducedMotion: rm, stamps: cleared }),
-    // 演出の段取りは開いたときに決める(途中で設定が変わっても組み直さない)
-    [],
+  // 演出の段取りは開いたときに 1 回だけ決める(途中で設定が変わっても組み直さない)
+  const [timeline] = useState(() =>
+    buildResultTimeline({ short, reducedMotion: rm, stamps: cleared }),
   );
   const [skipped, setSkipped] = useState(false);
   const [done, setDone] = useState(false);

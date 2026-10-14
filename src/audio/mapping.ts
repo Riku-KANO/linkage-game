@@ -53,6 +53,8 @@ export interface MotorParams {
   /** 歯車の鳴き(三角波)の周波数 */
   whineHz: number;
   whineGain: number;
+  /** 鳴きの音程の揺れ幅(Hz)。負荷が高いと 1 回転ごとに粘って揺れる */
+  wobbleHz: number;
   /** 負荷で出てくる鳴きの倍音(きしみ) */
   strainGain: number;
   /** 噛み合いの粒(パチパチ雑音)を通す帯域通過の中心周波数 */
@@ -72,12 +74,14 @@ export function motorParams(rpm: number, load: number): MotorParams {
   const l = clamp(finiteOr(load, 0), 0, 1);
   const running = s > 1e-4;
   const sag = 1 - 0.06 * l;
+  const whineHz = (180 + 900 * s) * (1 - 0.04 * l);
   return {
     level: running ? (0.1 + 0.14 * Math.sqrt(s)) * (1 + 0.4 * l) : 0,
     droneHz: (38 + 70 * s) * sag,
     cutoffHz: 220 + 520 * s + 1400 * l,
-    whineHz: (180 + 900 * s) * (1 - 0.04 * l),
+    whineHz,
     whineGain: 0.05 + 0.2 * Math.pow(s, 0.7),
+    wobbleHz: whineHz * (0.004 + 0.02 * l),
     strainGain: 0.12 * l * l,
     gritHz: 700 + 1100 * s + 500 * l,
     gritGain: 0.03 + 0.6 * Math.pow(l, 1.3),
@@ -85,4 +89,22 @@ export function motorParams(rpm: number, load: number): MotorParams {
     amRate: Math.max(0.4, (s * MOTOR_MAX_RPM * 12) / 60),
     amDepth: 0.06 + 0.4 * l,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 風切りの音量の山(setValueCurveAtTime に渡す曲線)
+
+/**
+ * 0 から滑らかに立ち上がり、peakAt(0..1)で 1 になり、滑らかに 0 へ戻る曲線(n 点)。
+ * 両側とも sin² なので、つなぎ目で傾きが 0 になる(プツッと鳴らない)。
+ */
+export function sweepEnvelope(peakAt: number, n = 32): Float32Array {
+  const peak = clamp(finiteOr(peakAt, 0.5), 0.05, 0.95);
+  const out = new Float32Array(Math.max(2, n));
+  for (let i = 0; i < out.length; i++) {
+    const x = i / (out.length - 1);
+    const u = x < peak ? x / peak : 1 - (x - peak) / (1 - peak);
+    out[i] = Math.sin((Math.PI / 2) * u) ** 2;
+  }
+  return out;
 }

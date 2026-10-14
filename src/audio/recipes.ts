@@ -145,7 +145,7 @@ function snap(rnd: Rand): Layer[] {
   const g = vary(rnd, 1, 0.08);
   const t2 = vary(rnd, 0.014, 0.12);
   return [
-    click(rnd, 0, 'bandpass', 2300 * p, 1.2, 0.012, 0.5 * g),
+    click(rnd, 0, 'bandpass', 2300 * p, 1.2, 0.012, 0.8 * g),
     {
       kind: 'modal',
       at: 0,
@@ -154,7 +154,7 @@ function snap(rnd: Rand): Layer[] {
       partials: wood([0.16, 0.06], [0.03, 0.018]),
       attack: 0.0008,
     },
-    click(rnd, t2, 'highpass', 4200 * p, 0.7, 0.008, 0.4 * g),
+    click(rnd, t2, 'highpass', 4200 * p, 0.7, 0.008, 0.28 * g),
     {
       kind: 'modal',
       at: t2,
@@ -190,10 +190,10 @@ function press(rnd: Rand): Layer[] {
       q: 0.7,
       attack: 0.001,
       decay: 0.03,
-      gain: 0.28 * g,
+      gain: 0.35 * g,
       offset: rnd(),
     },
-    click(rnd, 0.009, 'bandpass', 3600 * p, 3, 0.006, 0.12 * g),
+    click(rnd, 0.009, 'bandpass', 3600 * p, 3, 0.006, 0.25 * g),
     {
       kind: 'modal',
       at: 0.009,
@@ -210,7 +210,7 @@ function release(rnd: Rand): Layer[] {
   const p = vary(rnd, 1, 0.03);
   const g = vary(rnd, 1, 0.06);
   return [
-    click(rnd, 0, 'bandpass', 2800 * p, 2, 0.006, 0.12 * g),
+    click(rnd, 0, 'bandpass', 2800 * p, 2, 0.006, 0.3 * g),
     {
       kind: 'modal',
       at: 0.006,
@@ -230,7 +230,7 @@ function release(rnd: Rand): Layer[] {
       q: 0.7,
       attack: 0.001,
       decay: 0.018,
-      gain: 0.13 * g,
+      gain: 0.2 * g,
       offset: rnd(),
     },
   ];
@@ -259,7 +259,7 @@ function error(rnd: Rand): Layer[] {
       q: 0.7,
       attack: 0.001,
       decay: 0.03,
-      gain: 0.22,
+      gain: 0.4,
       offset: rnd(),
     },
   ];
@@ -267,7 +267,7 @@ function error(rnd: Rand): Layer[] {
   times.forEach((t0, i) => {
     const k = 1 - i * 0.15;
     const at = t0 + (rnd() * 2 - 1) * 0.004;
-    layers.push(click(rnd, at, 'bandpass', 2100 * vary(rnd, p, 0.02), 4, 0.01, 0.26 * k));
+    layers.push(click(rnd, at, 'bandpass', 2100 * vary(rnd, p, 0.02), 4, 0.01, 0.6 * k));
     layers.push({
       kind: 'modal',
       at,
@@ -296,7 +296,7 @@ function whoosh(rnd: Rand): Layer[] {
       duration: 0.6,
       freqs: [320 * p, 1300 * p, 520 * p],
       q: 0.9,
-      gain: 0.13,
+      gain: 0.3,
       peakAt: 0.45,
       pan: [-0.3 * dir, 0.3 * dir],
       offset: rnd(),
@@ -307,7 +307,7 @@ function whoosh(rnd: Rand): Layer[] {
       duration: 0.6,
       freqs: [160 * p, 480 * p, 220 * p],
       q: 0.7,
-      gain: 0.08,
+      gain: 0.25,
       peakAt: 0.4,
       pan: [-0.15 * dir, 0.15 * dir],
       offset: rnd(),
@@ -325,7 +325,7 @@ function gear(rnd: Rand): Layer[] {
     const k = 1 - i * 0.08;
     // 爪と歯が交互に当たるので音程が 1 つおきに少し違う
     const alt = i % 2 === 1 ? 1.06 : 1;
-    layers.push(click(rnd, t, 'bandpass', 3300 * alt * p, 2.5, 0.005, 0.28 * k));
+    layers.push(click(rnd, t, 'bandpass', 3300 * alt * p, 2.5, 0.005, 0.5 * k));
     layers.push({
       kind: 'modal',
       at: t,
@@ -363,10 +363,10 @@ function stamp(rnd: Rand): Layer[] {
       q: 0.8,
       attack: 0.001,
       decay: 0.06,
-      gain: 0.42,
+      gain: 0.8,
       offset: rnd(),
     },
-    click(rnd, 0, 'bandpass', 2400 * p, 1.5, 0.012, 0.32),
+    click(rnd, 0, 'bandpass', 2400 * p, 1.5, 0.012, 0.5),
     {
       kind: 'modal',
       at: 0.002,
@@ -423,10 +423,10 @@ function step(rnd: Rand): Layer[] {
       q: 0.7,
       attack: 0.0015,
       decay: 0.03,
-      gain: 0.2 * g,
+      gain: 0.35 * g,
       offset: rnd(),
     },
-    click(rnd, 0, 'bandpass', 1500 * p, 1.4, 0.008, 0.07 * g),
+    click(rnd, 0, 'bandpass', 1500 * p, 1.4, 0.008, 0.15 * g),
   ];
 }
 
@@ -447,7 +447,7 @@ function success(rnd: Rand): Layer[] {
     attack: 0.001,
   });
   return [
-    click(rnd, 0, 'bandpass', 3800 * p, 2, 0.006, 0.14),
+    click(rnd, 0, 'bandpass', 3800 * p, 2, 0.006, 0.25),
     tine(0.02, 1175, 1),
     tine(0.12, 1760, 0.85),
   ];

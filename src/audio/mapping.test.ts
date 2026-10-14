@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MOTOR_MAX_RPM, motorParams, normalizeOptions, volumeToGain } from './mapping';
+import {
+  MOTOR_MAX_RPM,
+  motorParams,
+  normalizeOptions,
+  sweepEnvelope,
+  volumeToGain,
+} from './mapping';
 
 describe('volumeToGain(設定の音量 → 主音量)', () => {
   it('0 で無音、1 で等倍、範囲外は丸める', () => {
@@ -73,6 +79,7 @@ describe('motorParams(モーターのうなり:rpm と負荷 → 音のパラメ
       expect(p.amDepth).toBeGreaterThan(prev.amDepth);
       expect(p.cutoffHz).toBeGreaterThan(prev.cutoffHz);
       expect(p.strainGain).toBeGreaterThanOrEqual(prev.strainGain);
+      expect(p.wobbleHz).toBeGreaterThan(prev.wobbleHz);
       expect(p.droneHz).toBeLessThan(prev.droneHz);
       prev = p;
     }
@@ -94,5 +101,24 @@ describe('motorParams(モーターのうなり:rpm と負荷 → 音のパラメ
         expect(p.amRate).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('sweepEnvelope(風切りの音量の山)', () => {
+  it('両端は 0、山の位置で 1、その間は 0..1', () => {
+    const c = sweepEnvelope(0.4, 51);
+    expect(c[0]).toBeCloseTo(0, 6);
+    expect(c[50]).toBeCloseTo(0, 6);
+    expect(c[20]).toBeCloseTo(1, 6);
+    for (const v of c) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+    }
+  });
+  it('山までは単調に増え、山からは単調に減る', () => {
+    const c = sweepEnvelope(0.3, 41);
+    const peak = c.indexOf(Math.max(...c));
+    for (let i = 1; i <= peak; i++) expect(c[i]!).toBeGreaterThanOrEqual(c[i - 1]!);
+    for (let i = peak + 1; i < c.length; i++) expect(c[i]!).toBeLessThanOrEqual(c[i - 1]!);
   });
 });

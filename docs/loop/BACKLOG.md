@@ -147,11 +147,11 @@
 
 | ID | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- |
-| HUD-1 | 設計画面の枠:ステージ名・課題・制限、試走ボタンと試走前チェックの一覧、ヒント 3 段階、チュートリアルの吹き出し | props だけで動く表示部品。スモークテスト | todo |
-| HUD-2 | ステージ選択の一覧(章・解放状態・最高メダル、キーボード操作) | | todo |
-| HUD-3 | 設定パネル(音量・ミュート・動きを減らす・低性能モード・進行のリセット・JSON 入出力) | | todo |
-| HUD-4 | 通知(章・部品の解放、保存の失敗、共有リンクの読み込み) | | todo |
-| HUD-5 | 試走中の表示(時間・距離・ゴールまでの進み具合、設計に戻る) | | todo |
+| HUD-1 | 設計画面の枠:ステージ名・課題・制限、試走ボタンと試走前チェックの一覧、ヒント 3 段階、チュートリアルの吹き出し | props だけで動く表示部品。スモークテスト | done(StageHeader・BudgetMeter・TestRunButton・HintPanel・TutorialBubble。置き場は HudDock(画面の端、中央は空ける)、見出しとヒントはたためる。エラーがあると試走せず、押すと最初のエラーを onHighlight。ブラウザでの目視は未実施) |
+| HUD-2 | ステージ選択の一覧(章・解放状態・最高メダル、キーボード操作) | | done(StageSelectPanel:章 × ステージの格子を矢印・Home/End・Enter・Esc で操作、読み上げ名、「次」の強調、軸ごとのメダルの粒、下の欄に課題と最高記録。ホームの TextMenu と homeMenuItems) |
+| HUD-3 | 設定パネル(音量・ミュート・動きを減らす・低性能モード・進行のリセット・JSON 入出力) | | done(SettingsPanel。値は HudSettings(AppSettings にミュートを足した形)で受け取り onChange で返す。OS で動きを減らしているときはオンで固定。リセットは 2 段階で 8 秒で戻る) |
+| HUD-4 | 通知(章・部品の解放、保存の失敗、共有リンクの読み込み) | | done(NoticeStack:自動で消え、ホバー・フォーカス中は止まる。エラーは閉じるまで残る(role=alert)。解放は歯車と錠の飾り。列は呼び出し側が pushNotice・dismissNotice で持つ。unlockNotices・loadFailNotice・saveFailNotice・shareLoadedNotice) |
+| HUD-5 | 試走中の表示(時間・距離・ゴールまでの進み具合、設計に戻る) | | done(RunHud:時間/制限(残り 5 秒で注意)、距離とゴールまでの帯(ゴーストの印)、モーター負荷計、停動・転倒・詰まったの札、設計に戻る。毎フレームの更新は transform と SVG の属性だけ) |
 
 ### stream `guide` — `src/guide`, `src/dev/GuidePlayground.tsx`, `src/i18n/ja/guide.ts`(利用者の要望:遊び方とチュートリアルでわかりやすく)
 

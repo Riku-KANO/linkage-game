@@ -178,18 +178,22 @@ export function TerrainView({
     const uv: number[] = [];
     const idx: number[] = [];
     const w = 0.26;
-    const dz = 0.13;
-    const z = bounds.zMax - 0.22;
+    const hd = 0.13;
+    // 札をカメラ側へ起こす(水平から 55°):横から見ても読める
+    const tilt = (55 * Math.PI) / 180;
+    const up = hd * Math.sin(tilt);
+    const back = hd * Math.cos(tilt);
+    const z = bounds.zMax - 0.12;
     ticks.forEach((tk, i) => {
-      const y = terrainHeightAt(terrain, tk.x, z);
+      const y = terrainHeightAt(terrain, tk.x, z - back);
       const yy = (Number.isFinite(y) ? y : 0) + 0.003;
       const u0 = (i % cols) / cols;
       const u1 = (i % cols) / cols + 1 / cols;
       const v1 = 1 - Math.floor(i / cols) / rows;
       const v0 = v1 - 1 / rows;
       const b = pos.length / 3;
-      pos.push(tk.x - w / 2, yy, z + dz / 2, tk.x + w / 2, yy, z + dz / 2);
-      pos.push(tk.x + w / 2, yy, z - dz / 2, tk.x - w / 2, yy, z - dz / 2);
+      pos.push(tk.x - w / 2, yy, z, tk.x + w / 2, yy, z);
+      pos.push(tk.x + w / 2, yy + up, z - back, tk.x - w / 2, yy + up, z - back);
       uv.push(u0, v0, u1, v0, u1, v1, u0, v1);
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
     });
@@ -320,6 +324,10 @@ export function TerrainView({
             rotation={[0, Math.PI / 2, 0]}
           >
             <planeGeometry args={[width + 0.16, 0.22]} />
+          </mesh>
+          {/* 手前の柱の旗(横から見るカメラに向ける) */}
+          <mesh material={checker} position={[0.22, gateHeight - 0.16, width / 2 + 0.08]}>
+            <planeGeometry args={[0.4, 0.26]} />
           </mesh>
         </group>
       )}

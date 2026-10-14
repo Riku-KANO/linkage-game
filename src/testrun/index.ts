@@ -28,6 +28,7 @@ export * from './ghostPlayer';
 export * from './trails';
 export * from './mini';
 export * from './controller';
+export { useTestRunController } from './useTestRunController';
 
 // 3D(R3F。<Canvas> の中に置く)
 export {

@@ -93,10 +93,11 @@ export function lerpSnapshot(
   t: number,
   out: SimSnapshot,
 ): SimSnapshot {
-  const sameShape =
-    a.legPositions.length === b.legPositions.length &&
-    a.contacts.length === b.contacts.length &&
-    a.legPositions.every((p, k) => p.length === b.legPositions[k]!.length);
+  let sameShape =
+    a.legPositions.length === b.legPositions.length && a.contacts.length === b.contacts.length;
+  for (let k = 0; sameShape && k < a.legPositions.length; k++) {
+    sameShape = a.legPositions[k]!.length === b.legPositions[k]!.length;
+  }
   if (!sameShape || t >= 1) return copySnapshot(b, out);
   if (t <= 0) return copySnapshot(a, out);
   copySnapshot(b, out);

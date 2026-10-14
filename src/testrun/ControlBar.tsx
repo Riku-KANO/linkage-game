@@ -52,6 +52,8 @@ export function ControlBar({ controller, keyboard = false }: ControlBarProps) {
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))
         return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // フォーカスのあるボタンが Space で押されて二重に効かないよう、フォーカスを外す
+      if (el && el.tagName === 'BUTTON') el.blur();
       if (e.code === 'Space') {
         e.preventDefault();
         controller.togglePause();

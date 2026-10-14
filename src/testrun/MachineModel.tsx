@@ -258,13 +258,15 @@ function poseLegs(rig: Rig, m: Meshes, legs: readonly Float64Array[]) {
       writeMat(footArr, k, 1, 0, w * 0.5, w * 0.5, len * 0.9, x, y, z0 + zc);
     }
   }
-  rig.plateGroups.forEach((g, gi) => {
+  for (let gi = 0; gi < rig.plateGroups.length; gi++) {
+    const g = rig.plateGroups[gi]!;
     const mesh = m.plates[gi];
-    if (!mesh) return;
+    if (!mesh) continue;
     const arr = mesh.instanceMatrix.array as Float32Array;
-    g.instances.forEach((k, slot) => {
+    for (let slot = 0; slot < g.instances.length; slot++) {
+      const k = g.instances[slot]!;
       const pos = legs[k];
-      if (!pos) return;
+      if (!pos) continue;
       const ax = pos[g.plate.a * 2]! * CM;
       const ay = pos[g.plate.a * 2 + 1]! * CM;
       const bx = pos[g.plate.b * 2]! * CM;
@@ -287,9 +289,9 @@ function poseLegs(rig: Rig, m: Meshes, legs: readonly Float64Array[]) {
         py,
         layout.instances[k]!.z + layout.layerZ[g.plate.layer]!,
       );
-    });
+    }
     mesh.instanceMatrix.needsUpdate = true;
-  });
+  }
   if (m.bars) m.bars.instanceMatrix.needsUpdate = true;
   if (m.bosses) m.bosses.instanceMatrix.needsUpdate = true;
   if (m.pins) m.pins.instanceMatrix.needsUpdate = true;
@@ -358,15 +360,16 @@ export function MachineModel({
         m.bosses?.setColorAt(idx * 2 + 1, tmp);
       }
     }
-    rig.plateGroups.forEach((g, gi) => {
+    for (let gi = 0; gi < rig.plateGroups.length; gi++) {
+      const g = rig.plateGroups[gi]!;
       const mesh = m.plates[gi];
-      if (!mesh) return;
+      if (!mesh) continue;
       const hot = highlight.has(layout.linkIds[g.plate.link]!);
       tmp.copy(g.plate.crank ? palette.crank : palette.plate);
       if (hot) tmp.lerp(palette.highlight, pulse);
       for (let s = 0; s < g.instances.length; s++) mesh.setColorAt(s, tmp);
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    });
+    }
     if (m.bars?.instanceColor) m.bars.instanceColor.needsUpdate = true;
     if (m.bosses?.instanceColor) m.bosses.instanceColor.needsUpdate = true;
   };

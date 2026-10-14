@@ -45,26 +45,31 @@ export function MiniDesignView({
     let shownDeg = Number.NaN;
     const f = (v: number) => (Math.round(v * 10) / 10).toString();
     const draw = (pos: ArrayLike<number>) => {
-      model.bars.forEach((b, i) => {
+      for (let i = 0; i < model.bars.length; i++) {
+        const b = model.bars[i]!;
         const el = bars.current[i];
-        if (!el) return;
+        if (!el) continue;
         el.setAttribute('x1', f(pos[b.a * 2]!));
         el.setAttribute('y1', f(-pos[b.a * 2 + 1]!));
         el.setAttribute('x2', f(pos[b.b * 2]!));
         el.setAttribute('y2', f(-pos[b.b * 2 + 1]!));
-      });
-      model.plates.forEach((p, i) => {
+      }
+      for (let i = 0; i < model.plates.length; i++) {
+        const p = model.plates[i]!;
         const el = plates.current[i];
-        if (!el) return;
-        el.setAttribute(
-          'points',
-          p.joints.map((j) => `${f(pos[j * 2]!)},${f(-pos[j * 2 + 1]!)}`).join(' '),
-        );
-      });
-      joints.current.forEach((el, j) => {
-        if (!el) return;
+        if (!el) continue;
+        let pts = '';
+        for (let q = 0; q < p.joints.length; q++) {
+          const j = p.joints[q]!;
+          pts += `${q > 0 ? ' ' : ''}${f(pos[j * 2]!)},${f(-pos[j * 2 + 1]!)}`;
+        }
+        el.setAttribute('points', pts);
+      }
+      for (let j = 0; j < joints.current.length; j++) {
+        const el = joints.current[j];
+        if (!el) continue;
         el.setAttribute('transform', `translate(${f(pos[j * 2]!)} ${f(-pos[j * 2 + 1]!)})`);
-      });
+      }
       if (footDot.current && model.foot >= 0) {
         footDot.current.setAttribute('cx', f(pos[model.foot * 2]!));
         footDot.current.setAttribute('cy', f(-pos[model.foot * 2 + 1]!));

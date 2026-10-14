@@ -41,7 +41,7 @@ const COURSES: Record<CourseId, TerrainSpec> = {
       { kind: 'box', min: [4, -0.6, -W], max: [7, 0.06, W] },
       // 溝(幅 40cm、深さ 25cm)
       { kind: 'box', min: [7, -0.6, -W], max: [7.4, -0.25, W] },
-      { kind: 'box', min: [7.4, -0.6, -W], max: [16, 0, W] },
+      { kind: 'box', min: [7.4, -0.6, -W], max: [24, 0, W] },
     ],
   },
   flat: { ground: { y: 0 }, shapes: [] },
@@ -92,7 +92,7 @@ const selectStyle = {
 export default function TestrunPlayground() {
   const [machine, setMachine] = useState<MachineId>('jansen');
   const [course, setCourse] = useState<CourseId>('sample');
-  const [ghostId, setGhostId] = useState<GhostId>('previous');
+  const [ghostId, setGhostId] = useState<GhostId>('sample');
   const [tipOver, setTipOver] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const [shadows, setShadows] = useState(true);

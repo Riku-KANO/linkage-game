@@ -1,6 +1,7 @@
 import type { StoreApi, UseBoundStore } from 'zustand';
 import { sandboxStage, useSession, type LiveRun, type SessionState } from '@/app/flow';
 import { useApp } from '@/app/store';
+import { focusWorldStage } from '@/app/worldBridge';
 import type { StageId } from '@/game';
 import { useEditor } from '@/editor/store';
 import type { Screen } from '@/ui/tokens';
@@ -132,15 +133,16 @@ export function backToDesign(store: SessionStore = useSession): void {
 }
 
 /**
- * 次のステージへ(T-06:結果 → ステージ選択。機械が次のステージまで歩く)。
- * 次のステージを開いておき、ステージ選択ではそれを選んだ状態にする。
+ * 次のステージへ(T-06:結果 → ステージ選択。機械がジオラマの上を次のステージまで歩く)。
+ * ステージ選択では次のステージを選んだ状態にする(ジオラマがあればその目印も)。今のステージは
+ * ステージ選択に出たところで app の boot が閉じる(leaveStage)。
  */
 export function goNextStage(next: StageId, store: SessionStore = useSession): void {
   const s = store.getState();
   if (s.run.phase === 'finished') s.dismissResult();
-  s.startStage(next);
   go('stageSelect', { stageId: next });
   trimRunHistory();
+  focusWorldStage(next);
 }
 
 /** 転倒の瞬間を見る:終わりの少し前から ×0.5 で再生し(試走画面)、終わったら結果へ戻る */

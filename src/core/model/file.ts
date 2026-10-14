@@ -1,5 +1,5 @@
 import type { DesignDoc } from './types';
-import { safeJsonParse } from './guards';
+import { safeJsonParse, sanitizeText } from './guards';
 import { readDesign, toEnvelope } from './migrate';
 import type { DesignReadResult } from './migrate';
 
@@ -32,9 +32,15 @@ export function parseDesignFile(text: string): DesignReadResult {
   return readDesign(parsed.value);
 }
 
-/** 設計名からファイル名を作る。OS で使えない文字は _ に置き換える */
+/**
+ * 設計名からファイル名を作る。OS で使えない文字・パスの区切りは _ に置き換え、制御文字と
+ * 双方向の上書き文字(拡張子の見た目をごまかせる)を取り除く。先頭の . は隠しファイルになるので取る
+ */
 export function designFileName(design: DesignDoc): string {
-  const base = design.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim();
+  const base = sanitizeText(design.name)
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/^[\s.]+/, '')
+    .trim();
   return `${base || 'design'}${DESIGN_FILE_EXTENSION}`;
 }
 

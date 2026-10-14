@@ -16,14 +16,15 @@ import {
 
 /**
  * 画面(useApp)・セッション(flow)・試走コースの表示(runView)をつなぐ(INT-2 / INT-3)。
- * App の起動時に 1 回 installRunBridge() を呼ぶ(戻り値で外す)。
+ * App の起動時(bootApp の後)に 1 回 installRunBridge() を呼ぶ(戻り値で外す)。
+ * セッションの起動・共有リンクの設計を開く・ステージ選択からステージを開く・ステージを閉じる
+ * (ホーム・ステージ選択へ出たら leaveStage)は app の boot / actions が受け持つ。
  *
  *  - 試走が始まったら(run: running の新しい LiveRun)コースに出す。結果画面でもそのまま残す
  *  - 屋外の画面(試走・結果)を離れてカメラが着いたら片付ける(工房の見本機が戻る)
  *  - 試走画面に直接来たら試走を始める(チェックに通らなければ設計画面へ戻す)
  *  - 試走画面・結果画面を離れたら、走行中の試走はやめる・結果は閉じる
  *  - 試走・結果の画面での Esc・右クリックは「設計に戻る」(履歴をたどって試走へ戻らない)
- *  - 選んだステージ(useApp.stageId)をセッションでも開く(ステージ選択の統合 INT-4 まで)
  *  - カメラ:試走は追従カメラ、結果は右の結果パネルを避けて機械を左寄りに
  */
 
@@ -95,10 +96,6 @@ export function installRunBridge(store: SessionStore = useSession): () => void {
         const phase = store.getState().run.phase;
         if (phase !== 'running' && phase !== 'loading') setRunView(null);
       }
-      // 選んだステージをセッションでも開く
-      if (s.stageId !== prev.stageId && s.stageId && s.stageId !== store.getState().stageId) {
-        store.getState().startStage(s.stageId);
-      }
     }),
   );
 
@@ -149,30 +146,4 @@ function isEditable(t: EventTarget | null): boolean {
     t.tagName === 'TEXTAREA' ||
     t.tagName === 'SELECT'
   );
-}
-
-/**
- * 起動(App で 1 回):セッションを読み込み(init)、画面との橋を架ける。共有リンクで設計を
- * 開いたら、ホームに出たところで設計画面へ向かう(T-07)。戻り値で外す。
- */
-export function bootRunSession(store: SessionStore = useSession): () => void {
-  const boot = store.getState().init();
-  const uninstall = installRunBridge(store);
-  let unShare = () => {};
-  if (boot.share === 'loaded') {
-    const open = () => {
-      unShare();
-      useApp.getState().go('design', { stageId: store.getState().stageId });
-    };
-    if (useApp.getState().screen === 'home') open();
-    else {
-      unShare = useApp.subscribe((s) => {
-        if (s.screen === 'home') open();
-      });
-    }
-  }
-  return () => {
-    unShare();
-    uninstall();
-  };
 }

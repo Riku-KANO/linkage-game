@@ -31,6 +31,7 @@ import {
 import type { Locked } from './ops';
 import type { WorldRect } from './viewport';
 import './editor.css';
+import { MAX_JOINTS, MAX_LINKS } from '@/core/model/validate';
 
 export interface MechanismEditorProps {
   /** 使える部品(チュートリアル用)。'link' / 'fixed' / 'crank' が道具に、'pin' が既存の点への接続に対応。省略で全部 */
@@ -167,6 +168,15 @@ export function MechanismEditor({
     const id = window.setTimeout(() => setNotice(null), 2300);
     return () => window.clearTimeout(id);
   }, [notice]);
+
+  // 大きさの上限で編集を断ったとき
+  const limitHits = useEditor((s) => s.limitHits);
+  const lastLimitHits = useRef(limitHits);
+  useEffect(() => {
+    if (limitHits === lastLimitHits.current) return;
+    lastLimitHits.current = limitHits;
+    onNotice('editor.notice.limit', 'error', { joints: MAX_JOINTS, links: MAX_LINKS });
+  }, [limitHits, onNotice]);
 
   // 自由度がちょうど 1 になった瞬間、一度だけ試しに動かす(ED-8)
   const [dofPulse, setDofPulse] = useState(0);

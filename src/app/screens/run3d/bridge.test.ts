@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSessionStore, type SessionDeps } from '@/app/flow';
 import { useApp } from '@/app/store';
-import { decodeShare, encodeShare, type ShareRun } from '@/core/model/share';
 import { jansenLeg } from '@/core/model/presets';
 import { createFlatTerrain } from '@/core/sim';
 import { createMemoryStorage, createPersistence, SANDBOX_SLOT } from '@/core/storage/persistence';
@@ -18,7 +17,7 @@ import {
   replayFall,
   type SessionStore,
 } from './actions';
-import { bootRunSession, installRunBridge } from './bridge';
+import { installRunBridge } from './bridge';
 import { createFollowRig } from './camera';
 import { END_PAUSE, runFrame } from './frame';
 import { followRig, getRunView, run3dSignals, runViewStore, setRunView } from './runView';
@@ -244,7 +243,7 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     expect(getRunView()!.previousDesign).not.toBeNull();
   });
 
-  it('次のステージ opens the next stage and goes to the stage select (T-06)', async () => {
+  it('次のステージ goes to the stage select with the next stage chosen (T-06)', async () => {
     boot();
     store.getState().startStage('c1-s1');
     useEditor.getState().replaceDesign(c1s1.reference!);
@@ -258,7 +257,6 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     expect(useApp.getState().transition?.id).toBe('T-06');
     expect(useApp.getState().stageId).toBe(next);
     expect(useApp.getState().history).toEqual(['home']);
-    expect(store.getState().stageId).toBe(next);
     expect(store.getState().run.phase).toBe('idle');
   });
 
@@ -283,13 +281,6 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     playToEnd();
     expect(useApp.getState().screen).toBe('result');
     expect(store.getState().run.phase).toBe('finished');
-  });
-
-  it('opens the selected stage in the session when the stage select picks one', () => {
-    boot();
-    useApp.getState().go('stageSelect');
-    useApp.getState().go('design', { stageId: 'c1-s1' });
-    expect(store.getState().stageId).toBe('c1-s1');
   });
 });
 
@@ -352,38 +343,5 @@ describe('camera stations', () => {
     expect(
       runFrame(view, 1 / 60, { ...env, nowMs: END_PAUSE * 1000 }, { follow: followRig }).finish,
     ).toBe(true);
-  });
-});
-
-describe('bootRunSession', () => {
-  it('opens a shared design on the design screen once the title has handed over to the home', () => {
-    const design = c1s1.reference!;
-    const run: ShareRun = {
-      stageId: 'c1-s1',
-      time: 2,
-      parts: 8,
-      cost: 900,
-      energy: 90,
-      cleared: true,
-    };
-    useApp.setState({ screen: 'boot', transition: null, history: [], stageId: null });
-    store = createSessionStore();
-    // 共有リンクの読み込みは deps で差し替える(init は 2 回目以降は最初の結果を返す)
-    store.getState().init(deps({ readShare: () => decodeShare(encodeShare({ design, run })) }));
-    uninstall = bootRunSession(store);
-    expect(store.getState().slot).toBe('c1-s1');
-    expect(useApp.getState().screen).toBe('boot');
-    useApp.getState().go('home');
-    expect(useApp.getState().screen).toBe('design');
-    expect(useApp.getState().stageId).toBe('c1-s1');
-  });
-
-  it('does nothing special without a share link', () => {
-    useApp.setState({ screen: 'boot', transition: null, history: [], stageId: null });
-    store = createSessionStore();
-    store.getState().init(deps());
-    uninstall = bootRunSession(store);
-    useApp.getState().go('home');
-    expect(useApp.getState().screen).toBe('home');
   });
 });

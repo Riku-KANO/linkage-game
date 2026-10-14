@@ -3,13 +3,13 @@ import type { ScreenOverlay } from '@/scene/overlay/placeholders';
 import type { Screen } from '@/ui/tokens';
 import { ResultScreen } from '../ResultScreen';
 import { TestRunScreen } from '../TestRunScreen';
-import { bootRunSession } from './bridge';
+import { installRunBridge } from './bridge';
 
 /**
  * 試走画面・結果画面の統合(INT-2 / INT-3、stream int-run)の公開 API。
  *
- * App での組み立て:
- *   useRunSession();   // 起動:session.init()・画面との橋・共有リンクの設計を開く
+ * App での組み立て(起動 bootApp() の後):
+ *   useRunBridge();   // 画面とセッションと試走コースの表示をつなぐ
  *   <GameShell overlays={{ ...RUN_OVERLAYS }} scene3d={<RunWorld />}><RunLayer /></GameShell>
  *
  * 設計画面(INT-1)の試走ボタンは beginTestRun() を呼ぶ。
@@ -19,9 +19,9 @@ export const RUN_OVERLAYS: Partial<Record<Screen, ScreenOverlay>> = {
   result: ResultScreen,
 };
 
-/** 起動時に 1 回:セッションを読み込み、画面と試走をつなぐ(アンマウントで外す) */
-export function useRunSession(): void {
-  useEffect(() => bootRunSession(), []);
+/** 画面と試走をつなぐ(App で 1 回。アンマウントで外す)。セッションの起動は bootApp が行う */
+export function useRunBridge(): void {
+  useEffect(() => installRunBridge(), []);
 }
 
 export { TestRunScreen } from '../TestRunScreen';
@@ -37,8 +37,9 @@ export {
   goNextStage,
   replayFall,
   ensureSlot,
+  trimRunHistory,
 } from './actions';
-export { bootRunSession, installRunBridge, RESULT_PANEL_PX } from './bridge';
+export { installRunBridge, RESULT_PANEL_PX } from './bridge';
 export { runViewStore, run3dSignals, getRunView, type RunView, type RunViewState } from './runView';
 export { createLiveRunController, type LiveRunController } from './liveController';
 export { trackPlacement, toWorld, TRACK_SURFACE_Y, type TrackPlacement } from './placement';

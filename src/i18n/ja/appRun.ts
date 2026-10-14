@@ -11,7 +11,4 @@ export const appRun: Record<string, string> = {
 
   // 設計画面に出す試走前チェック(試走ボタンで止まったとき)
   'app.run.preflight.hint': '直すと試走できます',
-
-  // 通知
-  'app.run.notices': '通知',
 };

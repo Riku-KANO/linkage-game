@@ -47,3 +47,14 @@ describe('keyboard shortcuts', () => {
     expect(resolveShortcut(key('l', { altKey: true }))).toBeNull();
   });
 });
+
+describe('crank stepping keys', () => {
+  it('steps 5° with , and . and 15° with < and > (what Shift+, / Shift+. actually send)', () => {
+    const k = (key: string, shiftKey = false) =>
+      resolveShortcut({ key, shiftKey, metaKey: false, ctrlKey: false, altKey: false });
+    expect(k(',')).toEqual({ kind: 'stepAngle', deg: -5 });
+    expect(k('.')).toEqual({ kind: 'stepAngle', deg: 5 });
+    expect(k('<', true)).toEqual({ kind: 'stepAngle', deg: -15 });
+    expect(k('>', true)).toEqual({ kind: 'stepAngle', deg: 15 });
+  });
+});

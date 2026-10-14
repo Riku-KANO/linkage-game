@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useStore } from 'zustand';
 import { useSession } from '@/app/flow';
 import { useApp } from '@/app/store';
@@ -6,51 +5,18 @@ import { t } from '@/i18n';
 import { runViewStore, setPreflightOpen } from './runView';
 import './run3d.css';
 
-/** 通知を自動で消すまでの時間(ms)。エラーは手で閉じるまで残す */
-const AUTO_DISMISS_MS = 7000;
-
 /**
- * どの画面にも重ねる DOM(GameShell の children):
- *  - 通知(解放・保存の失敗・共有リンクの読み込みなど、session.notices)の簡単な一覧
- *  - 設計画面で試走ボタンが試走前チェックに止められたときの問題の一覧
+ * どの画面にも重ねる DOM(GameShell の children):設計画面で試走ボタンが試走前チェックに
+ * 止められたときの問題の一覧。通知(解放など)は app の NoticeLayer が出す。
  *
- * TODO(hud):HUD-4 の NoticeStack が main に入ったら通知はそちらに、HUD-1 の TestRunButton
- * (試走前チェックの一覧つき)が設計画面に入ったら問題の一覧はそちらに任せて、ここは消す。
+ * TODO(int-design / INT-7):設計画面に HUD-1 の TestRunButton(試走前チェックの一覧つき)が入ったら、
+ * 問題の一覧はそちらに任せてここは消す(runViewStore.preflightOpen が「試走ボタンで止まった」合図)。
  */
 export function RunLayer() {
   return (
     <>
       <PreflightProblems />
-      <RunNotices />
     </>
-  );
-}
-
-function RunNotices() {
-  const notices = useSession((s) => s.notices);
-  useEffect(() => {
-    const timers = notices
-      .filter((n) => n.severity !== 'error')
-      .map((n) => setTimeout(() => useSession.getState().dismissNotice(n.id), AUTO_DISMISS_MS));
-    return () => timers.forEach(clearTimeout);
-  }, [notices]);
-  if (notices.length === 0) return null;
-  return (
-    <ul className="ak-run-notices" aria-live="polite" aria-label={t('app.run.notices')}>
-      {notices.map((n) => (
-        <li key={n.id} className="ak-run-notice" data-severity={n.severity} data-kind={n.kind}>
-          <span>{t(n.key, n.params)}</span>
-          <button
-            type="button"
-            className="ak-run-notice__close"
-            aria-label={t('flow.ui.dismiss')}
-            onClick={() => useSession.getState().dismissNotice(n.id)}
-          >
-            ×
-          </button>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -66,7 +32,7 @@ function PreflightProblems() {
         <strong>{t('flow.ui.preflight.title')}</strong>
         <button
           type="button"
-          className="ak-run-notice__close"
+          className="ak-run-preflight__close"
           aria-label={t('flow.ui.dismiss')}
           onClick={() => setPreflightOpen(false)}
         >

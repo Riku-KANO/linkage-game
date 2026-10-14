@@ -30,10 +30,44 @@ export function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string');
 }
 
-/** JSON.parse の例外を結果に変える */
+/**
+ * 画面・ファイル名に出すと危ない、または見えない文字:C0・C1 制御文字、DEL、行・段落の区切り、
+ * 双方向テキストの埋め込み・上書き・分離(RLO などで表示の順序をごまかせる)、BOM。
+ * 絵文字の結合に使う ZWJ(U+200D)は残す
+ */
+const UNSAFE_CHARS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/;
+const UNSAFE_CHARS_G = new RegExp(UNSAFE_CHARS.source, 'g');
+/** 対になっていないサロゲート(壊れた UTF-16) */
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+const LONE_SURROGATE_G = new RegExp(LONE_SURROGATE.source, 'g');
+
+/** 危ない文字・壊れたサロゲートを含むか */
+export function hasUnsafeChars(s: string): boolean {
+  return UNSAFE_CHARS.test(s) || LONE_SURROGATE.test(s);
+}
+
+/** 危ない文字を取り除き、壊れたサロゲートを U+FFFD にする */
+export function sanitizeText(s: string): string {
+  return s.replace(UNSAFE_CHARS_G, '').replace(LONE_SURROGATE_G, '\ufffd');
+}
+
+/** プロトタイプに関わるキー。外から来た JSON からは取り除く */
+const PROTO_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+/** これらのキーがありうるか(\u でエスケープしたキーも同じ名前になるので、\u があれば調べる) */
+const MAY_HAVE_PROTO_KEYS = /__proto__|constructor|prototype|\\u/;
+const dropProtoKeys = (key: string, value: unknown) => (PROTO_KEYS.has(key) ? undefined : value);
+
+/**
+ * JSON.parse の例外を結果に変える。外から来た JSON 用なので、`__proto__`・`constructor`・
+ * `prototype` のキーは取り除く(後でオブジェクトをコピー・Object.assign しても
+ * プロトタイプを書き換えないように。多層の防御で、検査側も新しいオブジェクトを作る)
+ */
 export function safeJsonParse(text: string): { ok: true; value: unknown } | { ok: false } {
   try {
-    return { ok: true, value: JSON.parse(text) as unknown };
+    const value: unknown = MAY_HAVE_PROTO_KEYS.test(text)
+      ? JSON.parse(text, dropProtoKeys)
+      : JSON.parse(text);
+    return { ok: true, value };
   } catch {
     return { ok: false };
   }

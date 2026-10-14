@@ -180,52 +180,7 @@
   }
 }
 
-/* 通知(HUD-4 の NoticeStack が入るまで) */
-.ak-overlay > .ak-run-notices {
-  position: absolute;
-  top: 64px;
-  left: 16px;
-  z-index: 5;
-  display: grid;
-  gap: 6px;
-  width: min(360px, calc(100% - 32px));
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  pointer-events: none;
-}
-
-.ak-run-notice {
-  display: flex;
-  gap: 8px;
-  align-items: start;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(43, 33, 24, 0.95);
-  border-left: 4px solid var(--muted);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  color: var(--text);
-  font-size: 13px;
-  pointer-events: auto;
-}
-
-.ak-run-notice[data-severity='success'] {
-  border-left-color: var(--ok);
-}
-
-.ak-run-notice[data-severity='warn'] {
-  border-left-color: var(--accent);
-}
-
-.ak-run-notice[data-severity='error'] {
-  border-left-color: var(--danger);
-}
-
-.ak-run-notice > span {
-  flex: 1;
-}
-
-.ak-run-notice__close {
+.ak-run-preflight__close {
   background: none;
   border: none;
   color: var(--muted);

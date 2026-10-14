@@ -11,6 +11,7 @@ import {
 } from './history';
 import { EMPTY_SELECTION, sanitizeSelection, type Clipboard, type Selection } from './ops';
 import type { ToolId } from './keyboard';
+import { exceedsDesignLimits } from '@/core/model/validate';
 
 /**
  * 編集中の設計データ。アプリ全体でこれが唯一の正。
@@ -32,6 +33,8 @@ export interface EditorState {
    * 変更がなければ(同じオブジェクト)何もしない。
    */
   commit(next: DesignDoc, opts?: { group?: string }): void;
+  /** 大きさの上限(validate の MAX_*)を超える編集を断った回数。エディタが知らせを出すのに使う */
+  limitHits: number;
   /** まとまりを区切る(ドラッグ終了時に呼ぶ) */
   seal(): void;
   undo(): void;
@@ -80,9 +83,15 @@ export const useEditor = create<EditorState>((set, get) => {
     loadCount: 0,
 
     history: createHistory(initial),
+    limitHits: 0,
     commit(next, opts) {
       const h = synced();
       if (next === h.present) return;
+      // 上限を超える編集は受け付けない(超えた設計は保存しても読み込めない)
+      if (exceedsDesignLimits(next) && !exceedsDesignLimits(h.present)) {
+        set({ limitHits: get().limitHits + 1 });
+        return;
+      }
       applyHistory(record(h, next, opts?.group ?? null));
     },
     seal() {

@@ -29,6 +29,8 @@ export const analysis: Record<string, string> = {
   'analysis.issue.crank-link-has-other-fixed': 'クランクが別の固定点に留められています',
   'analysis.issue.link-all-fixed': '両端が固定点のリンクは動きません',
   'analysis.issue.floating-joint': 'どこにもつながっていない部品があります',
+  'analysis.issue.newton-too-large':
+    '一度に計算しなければならない点が多すぎます。三角形や四節リンクの組み合わせに分けて組んでください',
   'analysis.grashof.crank-rocker': 'グラスホフ判定:てこクランク(クランクは一回転できます)',
   'analysis.grashof.double-crank': 'グラスホフ判定:両クランク(クランクも出力側も一回転できます)',
   'analysis.grashof.double-rocker':

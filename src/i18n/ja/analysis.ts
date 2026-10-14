@@ -5,7 +5,9 @@ export const analysis: Record<string, string> = {
   'analysis.dof.loose': '自由度 {dof}:ぐらつきます',
   'analysis.noCrank': 'クランクがありません',
   'analysis.notAssemblable': 'リンクが届かず、組み立てられません',
-  'analysis.noFullRotation': 'クランクが一回転できません',
+  'analysis.noFullRotation': 'クランクが一回転できません({from}°〜{to}° でリンクが届きません)',
+  'analysis.deadPoint':
+    'クランク {angle}° 付近で死点に近づきます(リンクが一直線に並び、動きが不安定になります)',
   'analysis.issue.unknown-joint': '存在しないジョイントを参照しています',
   'analysis.issue.link-too-few-joints': 'つながっていないリンクがあります',
   'analysis.issue.crank-pivot-not-fixed': 'クランクの軸は固定点に置いてください',

@@ -19,6 +19,11 @@ export interface SolveResult {
   minSlackJoint: number;
   /** ニュートン法の最終残差(最大絶対値、cm)。ニュートン法を使わなければ 0 */
   residual: number;
+  /**
+   * 組立不能の原因になった点(届かない 2 円の交点、解けないニュートン法の点、余分な拘束が守れない点)。
+   * failedJoints から、上流の失敗に引きずられただけの点を除いたもの。
+   */
+  causeJoints?: number[];
 }
 
 export interface SolveOptions {
@@ -31,6 +36,11 @@ export interface SolveOptions {
 }
 
 const NEWTON_TOL = 1e-7;
+/** ニュートン法の残差がこれを超えたら組立不能(cm) */
+const NEWTON_FAIL = 1e-4;
+/** 解いた後のリンク長の検査で許す誤差(cm):絶対 + 相対 */
+const CHECK_TOL_ABS = 1e-3;
+const CHECK_TOL_REL = 1e-6;
 
 /**
  * モーター角 theta(rad)での全ジョイント位置を求める(S-01, S-02)。
@@ -60,6 +70,7 @@ export function solvePose(
   const failed = new Uint8Array(n);
   const failedJoints: number[] = [];
   const failedLinks: number[] = [];
+  const causeJoints: number[] = [];
   let minSlack = 1;
   let minSlackJoint = -1;
   let residual = 0;
@@ -77,10 +88,14 @@ export function solvePose(
         break;
       }
       case 'dyad': {
-        if (failed[step.a] || failed[step.b]) markFailed(step.j);
+        // 親の点が失敗していれば、この点は引きずられただけ(原因には数えない)
+        const cascaded = failed[step.a] || failed[step.b];
+        if (cascaded) markFailed(step.j);
         const res = runDyad(step, pos, prev);
+        if (cascaded) break;
         if (res < 0) {
-          if (!failed[step.j]) markFailed(step.j);
+          markFailed(step.j);
+          causeJoints.push(step.j);
           failedLinks.push(step.linkA, step.linkB);
           minSlack = 0;
           minSlackJoint = step.j;
@@ -92,12 +107,32 @@ export function solvePose(
       }
       case 'newton': {
         residual = runNewton(step, pos, options.maxIterations ?? 40);
-        if (residual > 1e-4) {
-          step.unknowns.forEach((j) => markFailed(j));
+        if (residual > NEWTON_FAIL) {
+          for (const j of step.unknowns) {
+            if (!failed[j]) causeJoints.push(j);
+            markFailed(j);
+          }
           const worst = worstConstraintLinks(step.constraints, pos);
           failedLinks.push(...worst);
         }
         break;
+      }
+    }
+  }
+
+  // 解法プランが使わなかった拘束(余分なリンク)が守られているか確かめる
+  const checks = mech.checks;
+  if (checks) {
+    for (let c = 0; c < checks.length; c++) {
+      const { i, j, d, link } = checks[c]!;
+      if (failed[i] || failed[j]) continue;
+      const len = Math.hypot(pos[i * 2]! - pos[j * 2]!, pos[i * 2 + 1]! - pos[j * 2 + 1]!);
+      if (Math.abs(len - d) <= CHECK_TOL_ABS + CHECK_TOL_REL * d) continue;
+      failedLinks.push(link);
+      for (const k of [i, j]) {
+        if (mech.fixed[k] || failed[k]) continue;
+        markFailed(k);
+        causeJoints.push(k);
       }
     }
   }
@@ -110,6 +145,7 @@ export function solvePose(
     minSlack,
     minSlackJoint,
     residual,
+    causeJoints,
   };
 
   function markFailed(j: number) {
@@ -343,6 +379,14 @@ export interface CycleSample {
   fullRotation: boolean;
   /** 全ステップの最小 slack(死点への近さ) */
   minSlack: number;
+  /** 各ステップの minSlack(solvePose と同じ。組立不能なステップは 0) */
+  slack?: Float64Array;
+  /** 各ステップの minSlackJoint(-1:dyad がない) */
+  slackJoint?: Int32Array;
+  /** 1 回転のどこかで組立不能の原因になったリンク index(昇順) */
+  failedLinks?: number[];
+  /** 1 回転のどこかで組立不能の原因になった点 index(昇順) */
+  causeJoints?: number[];
 }
 
 /**
@@ -359,6 +403,10 @@ export function sampleCycle(
   const thetas = new Float64Array(steps);
   const positions: Float64Array[] = [];
   const ok: boolean[] = [];
+  const slack = new Float64Array(steps);
+  const slackJoint = new Int32Array(steps);
+  const failedLinks = new Set<number>();
+  const causeJoints = new Set<number>();
   let prev: Float64Array | null = null;
   let minSlack = 1;
   for (let s = 0; s < steps; s++) {
@@ -367,10 +415,26 @@ export function sampleCycle(
     const res = solvePose(mech, th, { prev });
     positions.push(res.positions);
     ok.push(res.ok);
+    slack[s] = res.minSlack;
+    slackJoint[s] = res.minSlackJoint;
+    for (const l of res.failedLinks) failedLinks.add(l);
+    if (res.causeJoints) for (const j of res.causeJoints) causeJoints.add(j);
     minSlack = Math.min(minSlack, res.minSlack);
     prev = res.positions;
   }
-  return { steps, thetas, positions, ok, fullRotation: ok.every(Boolean), minSlack };
+  const asc = (a: number, b: number) => a - b;
+  return {
+    steps,
+    thetas,
+    positions,
+    ok,
+    fullRotation: ok.every(Boolean),
+    minSlack,
+    slack,
+    slackJoint,
+    failedLinks: [...failedLinks].sort(asc),
+    causeJoints: [...causeJoints].sort(asc),
+  };
 }
 
 /** 解いた位置から joint の座標を取り出す */

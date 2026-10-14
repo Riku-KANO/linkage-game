@@ -31,12 +31,29 @@ export interface MechanismAnalysis {
   /** 1 回転分のサンプル(軌道表示に使う) */
   cycle: CycleSample;
   compiled: CompiledMechanism;
+  /** 組立不能になる角度の範囲(サンプル点の連続区間。サンプル順に thetaStart → thetaEnd) */
+  failRanges?: AngleRange[];
 }
 
+/** モーター角の区間(rad)。サンプル順に start → end(1 周をまたぐことがある) */
+export interface AngleRange {
+  thetaStart: number;
+  thetaEnd: number;
+}
+
+/**
+ * 死点に近い姿勢。slack が閾値を下回るサンプルの連続区間ごとに 1 つ。
+ * theta・joint・slack は区間の中で最も死点に近いサンプルの値。
+ */
 export interface DeadPoint {
   theta: number;
   joint: string;
   slack: number;
+  /** 区間の最初と最後のサンプル角(rad) */
+  thetaStart?: number;
+  thetaEnd?: number;
+  /** 一直線に近づく 2 本のリンク(joint を 2 円の交点として決めるリンク) */
+  links?: string[];
 }
 
 export type GrashofType =
@@ -110,10 +127,11 @@ export function analyzeMechanism(
   cycle.ok.forEach((ok, s) => {
     if (!ok) failAngles.push(cycle.thetas[s]!);
   });
-  const deadPoints: DeadPoint[] = [];
   const messages: AnalysisMessage[] = [];
   const problemLinks = new Set<string>();
   const problemJoints = new Set<string>();
+  const linkId = (i: number) => compiled.linkIds[i]!;
+  const jointId = (i: number) => compiled.jointIds[i]!;
 
   messages.push({
     severity: dofStatus === 'ok' ? 'info' : 'error',
@@ -123,10 +141,37 @@ export function analyzeMechanism(
   if (design.cranks.length === 0 && design.joints.length > 0) {
     messages.push({ severity: 'warn', key: 'analysis.noCrank' });
   }
+
+  // E-05 組立不能:原因のリンク・点と、届かない角度の範囲
+  const failRanges = circularRuns(cycle.steps, (s) => !cycle.ok[s]).map((run) => ({
+    thetaStart: cycle.thetas[run[0]!]!,
+    thetaEnd: cycle.thetas[run[run.length - 1]!]!,
+  }));
+  for (const l of cycle.failedLinks ?? []) problemLinks.add(linkId(l));
+  for (const jt of cycle.causeJoints ?? []) problemJoints.add(jointId(jt));
   if (!cycle.ok[0]) messages.push({ severity: 'error', key: 'analysis.notAssemblable' });
-  else if (!cycle.fullRotation)
-    messages.push({ severity: 'error', key: 'analysis.noFullRotation' });
+  else if (!cycle.fullRotation) {
+    const first = failRanges[0];
+    messages.push({
+      severity: 'error',
+      key: 'analysis.noFullRotation',
+      params: first
+        ? { from: toDeg(first.thetaStart), to: toDeg(first.thetaEnd), ranges: failRanges.length }
+        : {},
+    });
+  }
   for (const issue of compiled.issues) messages.push(issueMessage(issue));
+
+  // E-05 死点:2 円の交点がほぼ接する(リンクが一直線に並ぶ)姿勢
+  const deadPoints = findDeadPoints(compiled, cycle, deadSlack);
+  for (const dp of deadPoints) {
+    problemJoints.add(dp.joint);
+    messages.push({
+      severity: 'warn',
+      key: 'analysis.deadPoint',
+      params: { angle: toDeg(dp.theta), joint: dp.joint },
+    });
+  }
 
   // E-05 グラスホフ判定(同じ判定は 1 つのメッセージにまとめる)
   const grashof = findGrashofLoops(compiled);
@@ -157,9 +202,74 @@ export function analyzeMechanism(
     messages,
     cycle,
     compiled,
+    failRanges,
   };
-  // TODO(kinematics-analysis): dead points (deadSlack), Grashof loops, problem links/joints
-  void deadSlack;
+}
+
+/** rad → 0..359 の整数の度 */
+function toDeg(theta: number): number {
+  const d = Math.round((theta * 180) / Math.PI) % 360;
+  return d < 0 ? d + 360 : d;
+}
+
+/**
+ * pred を満たすサンプルの連続区間(1 周を循環とみなす)。区間はサンプル index の配列で、
+ * 区間の並びは最初のサンプル index の昇順(0 をまたぐ区間は先頭)。
+ */
+export function circularRuns(steps: number, pred: (s: number) => boolean): number[][] {
+  if (steps <= 0) return [];
+  let start = -1;
+  for (let s = 0; s < steps; s++) {
+    if (!pred(s)) {
+      start = s;
+      break;
+    }
+  }
+  if (start < 0) return [Array.from({ length: steps }, (_, s) => s)];
+  const runs: number[][] = [];
+  let cur: number[] | null = null;
+  for (let k = 1; k <= steps; k++) {
+    const s = (start + k) % steps;
+    if (pred(s)) (cur ??= []).push(s);
+    else if (cur) {
+      runs.push(cur);
+      cur = null;
+    }
+  }
+  // start の次から 1 周したので、0 をまたぐ区間が最後に来ることがある。先頭の index で並べ直す
+  const key = (r: number[]) => (r[0]! > r[r.length - 1]! ? -1 : r[0]!);
+  return runs.sort((a, b) => key(a) - key(b));
+}
+
+function findDeadPoints(
+  mech: CompiledMechanism,
+  cycle: CycleSample,
+  threshold: number,
+): DeadPoint[] {
+  const { slack, slackJoint } = cycle;
+  if (!slack || !slackJoint) return [];
+  const runs = circularRuns(
+    cycle.steps,
+    (s) => cycle.ok[s]! && slackJoint[s]! >= 0 && slack[s]! < threshold,
+  );
+  return runs.map((run) => {
+    let rep = run[0]!;
+    for (const s of run) if (slack[s]! < slack[rep]!) rep = s;
+    const j = slackJoint[rep]!;
+    const step = mech.plan[mech.solvedBy[j]!];
+    const links =
+      step && step.kind === 'dyad'
+        ? [mech.linkIds[step.linkA]!, mech.linkIds[step.linkB]!]
+        : undefined;
+    return {
+      theta: cycle.thetas[rep]!,
+      joint: mech.jointIds[j]!,
+      slack: slack[rep]!,
+      thetaStart: cycle.thetas[run[0]!]!,
+      thetaEnd: cycle.thetas[run[run.length - 1]!]!,
+      links,
+    };
+  });
 }
 
 function issueMessage(issue: CompileIssue): AnalysisMessage {

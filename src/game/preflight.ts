@@ -86,8 +86,12 @@ export function preflight(
   // 3. 自由度(E-04)
   const { dof } = analysis;
   const maxDof = maxDofFor(stage);
-  if (dof < 1) error({ code: 'dofLocked', key: 'game.preflight.dofLocked', params: { dof } });
-  else if (dof > maxDof)
+  if (dof < 1) {
+    // 平行四辺形のような特殊な寸法で一回転できるなら止めない(KIN-7)
+    if (analysis.specialGeometry)
+      warn({ code: 'dofSpecial', key: 'analysis.specialGeometry', params: { dof } });
+    else error({ code: 'dofLocked', key: 'game.preflight.dofLocked', params: { dof } });
+  } else if (dof > maxDof)
     error({ code: 'dofLoose', key: 'game.preflight.dofLoose', params: { dof } });
 
   // 4. 組立と一回転(E-05)。自由度 1 の機構だけを見る

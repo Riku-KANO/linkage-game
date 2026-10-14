@@ -1,5 +1,5 @@
 import type { CompiledMechanism } from '@/core/kinematics/compile';
-import { solvePose } from '@/core/kinematics/solve';
+import { extrapolatePose, solvePose } from '@/core/kinematics/solve';
 import {
   compileLegSet,
   legMechanism,
@@ -93,6 +93,10 @@ export class Walker implements WalkerSim {
   /** 組ごとの姿勢(cm)と dp/dθ(cm/rad) */
   private poses: Float64Array[];
   private next: Float64Array[];
+  /** 前の 2 姿勢から外挿した予測位置(変位点を速度を保って越えるため、KIN-7) */
+  private pred: Float64Array[];
+  /** 前回のステップでクランクが回った角度(0 なら予測しない) */
+  private lastDTheta = 0;
   private rates: Float64Array[];
   /** 脚の点の |dp/dθ| の最大(cm/rad) */
   private maxRate = 0;
@@ -170,6 +174,7 @@ export class Walker implements WalkerSim {
     const n2 = this.nJ * 2;
     this.poses = this.instances.map(() => new Float64Array(n2));
     this.next = this.instances.map(() => new Float64Array(n2));
+    this.pred = this.instances.map(() => new Float64Array(n2));
     this.rates = this.instances.map(() => new Float64Array(n2));
 
     const nC = this.nC;
@@ -213,6 +218,7 @@ export class Walker implements WalkerSim {
     this.time = 0;
     this.theta = 0;
     this.thetaDot = 0;
+    this.lastDTheta = 0;
     this.tauF = 0;
     this.energy = 0;
     this.fallen = false;
@@ -684,9 +690,17 @@ export class Walker implements WalkerSim {
   private advanceCrank(h: number): void {
     if (this.jammed || this.thetaDot === 0) return;
     const th = this.theta + this.thetaDot * h;
+    const dth = th - this.theta;
+    // next には 1 つ前の姿勢が残っている(入れ替えて使っているため)。刻みの比で直線外挿する
+    const ratio = this.lastDTheta !== 0 ? dth / this.lastDTheta : 0;
+    const usePred = ratio > 0 && ratio < 4;
     for (let k = 0; k < this.instances.length; k++) {
+      const predict = usePred
+        ? extrapolatePose(this.poses[k]!, this.next[k]!, ratio, this.pred[k]!)
+        : null;
       const res = solvePose(this.mechs[k]!, th + this.instances[k]!.phase, {
         prev: this.poses[k]!,
+        predict,
         out: this.next[k]!,
       });
       if (!res.ok) {
@@ -698,6 +712,7 @@ export class Walker implements WalkerSim {
     const tmp = this.poses;
     this.poses = this.next;
     this.next = tmp;
+    this.lastDTheta = dth;
     this.theta = th;
     this.updateRates();
   }

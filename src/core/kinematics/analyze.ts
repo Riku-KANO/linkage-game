@@ -15,6 +15,11 @@ export interface MechanismAnalysis {
   grubler: { n: number; j: number };
   /** 0 以下:動かない、1:正常、2 以上:ぐらつく */
   dofStatus: 'locked' | 'ok' | 'loose';
+  /**
+   * グリューブラーの式では動かない(自由度 0 以下)のに、特殊な寸法(平行四辺形など)のおかげで
+   * クランクが一回転できる(KIN-7)。寸法が少しでもずれると動かなくなる
+   */
+  specialGeometry?: boolean;
   /** 設計姿勢(θ=0)で組み立てられるか */
   assemblable: boolean;
   /** クランクが一回転できるか */
@@ -153,6 +158,10 @@ export function analyzeMechanism(
   if (design.cranks.length === 0 && design.joints.length > 0) {
     messages.push({ severity: 'warn', key: 'analysis.noCrank' });
   }
+  const specialGeometry = dofStatus === 'locked' && design.cranks.length > 0 && cycle.fullRotation;
+  if (specialGeometry) {
+    messages.push({ severity: 'warn', key: 'analysis.specialGeometry', params: { dof } });
+  }
 
   // E-05 組立不能:原因のリンク・点と、届かない角度の範囲
   const failRanges = circularRuns(cycle.steps, (s) => !cycle.ok[s]).map((run) => ({
@@ -223,6 +232,7 @@ export function analyzeMechanism(
     dof,
     grubler: { n, j },
     dofStatus,
+    specialGeometry,
     assemblable: cycle.ok[0] ?? false,
     fullRotation: cycle.fullRotation,
     failAngles,

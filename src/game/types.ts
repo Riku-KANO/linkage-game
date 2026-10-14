@@ -160,6 +160,8 @@ export type PreflightCode =
   | 'mechanism'
   | 'noCrank'
   | 'dofLocked'
+  /** 自由度 0 以下だが特殊な寸法で一回転できる(警告。KIN-7) */
+  | 'dofSpecial'
   | 'dofLoose'
   | 'notAssemblable'
   | 'noFullRotation'

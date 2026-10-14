@@ -46,6 +46,7 @@ export const editor: Record<string, string> = {
   'editor.dof.locked': '動かない',
   'editor.dof.ok': '正常',
   'editor.dof.loose': 'ぐらつく',
+  'editor.dof.special': '特殊な寸法で動く',
   'editor.dof.formula': 'リンク {n}(地節を含む)・ピン {j}',
   'editor.status.allGood': '一回転できます',
   'editor.status.failNow': 'この角度では組み立てられません',

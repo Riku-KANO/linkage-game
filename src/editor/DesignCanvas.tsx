@@ -989,10 +989,11 @@ export function DesignCanvas(props: DesignCanvasProps) {
         <span
           key={dofPulse}
           className={`ed-badge${dofPulse > 0 ? ' is-pulse' : ''}`}
-          data-status={analysis.dofStatus}
+          data-status={analysis.specialGeometry ? 'special' : analysis.dofStatus}
           role="status"
         >
-          {t('editor.dof.badge', { dof: analysis.dof })}・{t(`editor.dof.${analysis.dofStatus}`)}
+          {t('editor.dof.badge', { dof: analysis.dof })}・
+          {t(`editor.dof.${analysis.specialGeometry ? 'special' : analysis.dofStatus}`)}
         </span>
         {grashofChip && (
           <span className="ed-chip" data-ok={grashofChip.ok ? 'true' : 'false'}>

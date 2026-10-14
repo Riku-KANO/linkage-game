@@ -4,6 +4,8 @@ export const analysis: Record<string, string> = {
   'analysis.dof.ok': '自由度 1:正常に動きます',
   'analysis.dof.loose': '自由度 {dof}:ぐらつきます',
   'analysis.noCrank': 'クランクがありません',
+  'analysis.specialGeometry':
+    'グリューブラーの式では自由度 {dof}(動かない)ですが、平行四辺形のような特殊な寸法なので動いています。寸法が少しでもずれると動かなくなります',
   'analysis.notAssemblable': 'リンクが届かず、組み立てられません',
   'analysis.noFullRotation': 'クランクが一回転できません({from}°〜{to}° でリンクが届きません)',
   'analysis.deadPoint':

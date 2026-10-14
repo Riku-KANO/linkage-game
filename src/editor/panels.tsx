@@ -123,8 +123,12 @@ export function StatusPanel({
     <section className="ed-panel" aria-labelledby={hid}>
       <h3 id={hid}>{t('editor.status.title')}</h3>
       <div className="ed-row">
-        <span className="ed-badge" data-status={analysis.dofStatus}>
-          {t('editor.dof.badge', { dof: analysis.dof })}・{t(`editor.dof.${analysis.dofStatus}`)}
+        <span
+          className="ed-badge"
+          data-status={analysis.specialGeometry ? 'special' : analysis.dofStatus}
+        >
+          {t('editor.dof.badge', { dof: analysis.dof })}・
+          {t(`editor.dof.${analysis.specialGeometry ? 'special' : analysis.dofStatus}`)}
         </span>
       </div>
       <div className="ed-muted">

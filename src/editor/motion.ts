@@ -1,5 +1,5 @@
 import type { CompiledMechanism, CycleSample, SolveResult } from '@/core/kinematics';
-import { solvePose } from '@/core/kinematics';
+import { extrapolatePose, solvePose } from '@/core/kinematics';
 import { EASINGS } from '@/ui/tokens';
 
 /**
@@ -50,6 +50,10 @@ export class MotionEngine {
   private which = 0;
   private current: SolveResult | null = null;
   private solvedTheta = 0;
+  /** 前回の解の角度の刻み(連続して解いたときだけ。0 なら予測しない) */
+  private lastStep = 0;
+  /** 前の 2 姿勢から外挿した予測位置の作業用(変位点を速度を保って越えるため、KIN-7) */
+  private pred = new Float64Array(0);
   private trial: Trial | null = null;
   private frameListeners = new Set<FrameListener>();
   private stateListeners = new Set<() => void>();
@@ -214,20 +218,27 @@ export class MotionEngine {
     // 角度が大きく飛んだとき(スライダ操作)も前フレームは当てにならない
     const jump = Math.abs(this.theta - this.solvedTheta) > MAX_CONTINUOUS_STEP;
     let prev: Float64Array | null = null;
-    if (
-      !reset &&
-      !jump &&
-      this.current?.ok &&
-      this.current.positions.length === mech.jointIds.length * 2
-    ) {
-      prev = this.current.positions;
+    let predict: Float64Array | null = null;
+    const n2 = mech.jointIds.length * 2;
+    const continuous =
+      !reset && !jump && !!this.current?.ok && this.current.positions.length === n2;
+    const step = this.theta - this.solvedTheta;
+    if (continuous) {
+      prev = this.current!.positions;
+      // もう一方のバッファには 1 つ前の姿勢が残っている。刻みの比で直線外挿する
+      const ratio = this.lastStep !== 0 ? step / this.lastStep : 0;
+      if (ratio > 0 && ratio < 4) {
+        if (this.pred.length !== n2) this.pred = new Float64Array(n2);
+        predict = extrapolatePose(prev, this.bufs[this.which === 0 ? 1 : 0], ratio, this.pred);
+      }
     } else if (this.cycle) {
       const k = nearestSample(this.cycle, this.theta);
       if (k >= 0 && this.cycle.ok[k]) prev = this.cycle.positions[k] ?? null;
     }
     this.which = 1 - this.which;
     const out = this.bufs[this.which];
-    this.current = solvePose(mech, this.theta, { prev, out });
+    this.current = solvePose(mech, this.theta, { prev, predict, out });
+    this.lastStep = continuous && this.current.ok ? step : 0;
     this.solvedTheta = this.theta;
   }
 

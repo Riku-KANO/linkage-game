@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileMechanism, sampleCycle, solvePose } from '@/core/kinematics';
 import { fourBar, jansenLeg } from '@/core/model/presets';
+import type { DesignDoc } from '@/core/model/types';
 import { MotionEngine, interpolateCycle, nearestSample, wrapAngle } from './motion';
 
 function engineFor(design = fourBar(), rpm = 60) {
@@ -149,5 +150,38 @@ describe('frame cost', () => {
     const ms = (performance.now() - t0) / frames;
     // generous bound so CI stays stable; typical is a few microseconds
     expect(ms).toBeLessThan(1);
+  });
+});
+
+describe('MotionEngine through change points (KIN-7)', () => {
+  it('keeps a parallelogram a parallelogram while animating frame by frame', () => {
+    const design: DesignDoc = {
+      ...fourBar(),
+      joints: [
+        { id: 'O2', x: 0, y: 0, fixed: true },
+        { id: 'O4', x: 40, y: 0, fixed: true },
+        { id: 'A', x: 0, y: 10, fixed: false },
+        { id: 'B', x: 40, y: 10, fixed: false },
+      ],
+      links: [
+        { id: 'crank', joints: ['O2', 'A'] },
+        { id: 'coupler', joints: ['A', 'B'] },
+        { id: 'rocker', joints: ['O4', 'B'] },
+      ],
+      foot: 'B',
+    };
+    const { e, mech } = engineFor(design, 90);
+    const A = mech.jointIndex.get('A')!;
+    const B = mech.jointIndex.get('B')!;
+    let t = 0;
+    e.tick(t);
+    // 2 turns at 90 rpm = 80 frames at 60 fps; crosses the change points 4 times
+    for (let i = 0; i < 90; i++) {
+      t += 1000 / 60;
+      e.tick(t);
+      const p = e.pose!.positions;
+      expect(p[B * 2]! - p[A * 2]!, `frame ${i}`).toBeCloseTo(40, 4);
+      expect(p[B * 2 + 1]! - p[A * 2 + 1]!, `frame ${i}`).toBeCloseTo(0, 4);
+    }
   });
 });

@@ -5,6 +5,7 @@ import { editor } from './editor';
 import { game } from './game';
 import { scene } from './scene';
 import { testrun } from './testrun';
+import { appRun } from './appRun';
 import { result } from './result';
 import { flow } from './flow';
 import { hud } from './hud';
@@ -18,6 +19,7 @@ export const ja: Record<string, string> = {
   ...game,
   ...scene,
   ...testrun,
+  ...appRun,
   ...result,
   ...flow,
   ...hud,

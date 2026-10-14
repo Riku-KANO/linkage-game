@@ -19,6 +19,26 @@ function go(to: Screen, opts?: { stageId?: StageId | null }): void {
   useApp.getState().go(to, opts);
 }
 
+/** 設計 ⇄ 試走 ⇄ 結果 の行き来(履歴に積もる画面) */
+const RUN_LOOP: ReadonlySet<Screen> = new Set<Screen>(['design', 'testRun', 'result']);
+
+/**
+ * 試走の行き来を終えて設計・ステージ選択に出たら、履歴の末尾から行き来の分を除く。
+ * 「戻る」(Esc・右クリック)が結果や試走へ逆戻りせず、試走の前にいた画面(ホーム・ステージ選択)へ戻るように。
+ */
+export function trimRunHistory(): void {
+  const { history } = useApp.getState();
+  let n = history.length;
+  while (n > 0 && RUN_LOOP.has(history[n - 1]!)) n--;
+  if (n !== history.length) useApp.setState({ history: history.slice(0, n) });
+}
+
+/** 試走の行き来から設計画面へ */
+function goDesign(): void {
+  go('design');
+  trimRunHistory();
+}
+
 /**
  * 開いている設計のスロットを用意する。ステージを開いていなければ、選んであるステージ
  * (useApp.stageId)を開き、それもなければエディタの今の設計をサンドボックスに入れる
@@ -70,7 +90,7 @@ export async function startRunHere(store: SessionStore = useSession): Promise<bo
   if (phase === 'loading' || phase === 'running') return true;
   const pending = kickRun(store);
   if (!pending) {
-    go('design');
+    goDesign();
     return false;
   }
   return (await pending) !== null;
@@ -82,7 +102,7 @@ export async function restartRun(store: SessionStore = useSession): Promise<bool
   if (s.run.phase === 'running' || s.run.phase === 'loading') s.abortRun();
   const pending = kickRun(store);
   if (!pending) {
-    go('design');
+    goDesign();
     return false;
   }
   go('testRun');
@@ -108,7 +128,7 @@ export function backToDesign(store: SessionStore = useSession): void {
   const s = store.getState();
   if (s.run.phase === 'running' || s.run.phase === 'loading') s.abortRun();
   else if (s.run.phase === 'finished') s.dismissResult();
-  go('design');
+  goDesign();
 }
 
 /**
@@ -120,6 +140,7 @@ export function goNextStage(next: StageId, store: SessionStore = useSession): vo
   if (s.run.phase === 'finished') s.dismissResult();
   s.startStage(next);
   go('stageSelect', { stageId: next });
+  trimRunHistory();
 }
 
 /** 転倒の瞬間を見る:終わりの少し前から ×0.5 で再生し(試走画面)、終わったら結果へ戻る */

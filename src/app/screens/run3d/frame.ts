@@ -19,6 +19,12 @@ import type { RunView } from './runView';
 /** 試走が終わってから結果へ移るまでの間(s、最後の姿勢を見せる) */
 export const END_PAUSE = 0.8;
 
+/**
+ * 追従カメラの距離の倍率(機械の大きさに掛ける)。testrun の既定より引いて、上の帯・トルク計・
+ * 設計図の縮小版・操作盤に囲まれても機械の全体と足元のコースが見えるようにする
+ */
+export const FOLLOW_DISTANCE = 1.6;
+
 export interface FrameEnv {
   screen: Screen;
   /** パネルを出してよい画面(useSceneUi.revealed) */
@@ -73,7 +79,7 @@ export function runFrame(view: RunView, dt: number, env: FrameEnv, hooks: FrameH
     focus,
     velocity: snap.body.velocity,
     time: snap.time,
-    scale: view.machineScale,
+    scale: view.machineScale * FOLLOW_DISTANCE,
     heightAt: (x, z) => terrainHeightAt(terrain, x - ox, z - oz) + oy,
     dt,
   });

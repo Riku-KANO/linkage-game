@@ -180,6 +180,8 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     expect(store.getState().run.phase).toBe('idle');
     expect(useApp.getState().screen).toBe('design');
     expect(useApp.getState().transition?.id).toBe('T-05');
+    // 「戻る」は結果・試走へ逆戻りせず、試走の前にいた画面へ
+    expect(useApp.getState().history).toEqual(['home']);
     // 戻る途中はまだコースにいる
     expect(getRunView()).not.toBeNull();
     arrive();
@@ -255,6 +257,7 @@ describe('test run → result → design (INT-2 / INT-3)', () => {
     expect(useApp.getState().screen).toBe('stageSelect');
     expect(useApp.getState().transition?.id).toBe('T-06');
     expect(useApp.getState().stageId).toBe(next);
+    expect(useApp.getState().history).toEqual(['home']);
     expect(store.getState().stageId).toBe(next);
     expect(store.getState().run.phase).toBe('idle');
   });

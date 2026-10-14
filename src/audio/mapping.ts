@@ -98,13 +98,32 @@ export function motorParams(rpm: number, load: number): MotorParams {
  * 0 から滑らかに立ち上がり、peakAt(0..1)で 1 になり、滑らかに 0 へ戻る曲線(n 点)。
  * 両側とも sin² なので、つなぎ目で傾きが 0 になる(プツッと鳴らない)。
  */
-export function sweepEnvelope(peakAt: number, n = 32): Float32Array {
+export function sweepEnvelope(peakAt: number, n = 32): Float32Array<ArrayBuffer> {
   const peak = clamp(finiteOr(peakAt, 0.5), 0.05, 0.95);
   const out = new Float32Array(Math.max(2, n));
   for (let i = 0; i < out.length; i++) {
     const x = i / (out.length - 1);
     const u = x < peak ? x / peak : 1 - (x - peak) / (1 - peak);
     out[i] = Math.sin((Math.PI / 2) * u) ** 2;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// 最終段の安全弁(WaveShaper のソフトクリップ曲線)
+
+/**
+ * 入力 -1..1 を n 点で写す曲線。|x| ≤ knee はそのまま(素通し)、それより上は tanh で
+ * なめらかに頭打ちにして |y| < 1 に収める。コンプレッサーと違って遅延が無い。
+ */
+export function softClipCurve(n = 1025, knee = 0.6): Float32Array<ArrayBuffer> {
+  const k = clamp(knee, 0.1, 0.95);
+  const out = new Float32Array(Math.max(3, n));
+  for (let i = 0; i < out.length; i++) {
+    const x = (i / (out.length - 1)) * 2 - 1;
+    const a = Math.abs(x);
+    const y = a <= k ? a : k + (1 - k) * Math.tanh((a - k) / (1 - k));
+    out[i] = Math.sign(x) * y;
   }
   return out;
 }

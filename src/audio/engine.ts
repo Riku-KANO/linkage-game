@@ -2,14 +2,16 @@
  * 効果音のエンジン(AU-1)。AudioContext を 1 つだけ、最初のユーザー操作で作って起こす。
  *
  *   声(効果音)─→ sfx バス ─┐
- *                            ├→ まとめ用コンプレッサー → 主音量(音量・ミュート)→ リミッター → 出力
+ *                            ├→ まとめ用コンプレッサー → 主音量(音量・ミュート)→ ソフトクリップ → 出力
  *   モーターのうなり ─→ motor バス ┘
+ *
+ * コンプレッサーは 1 段だけ(DynamicsCompressorNode は 6ms ほど遅れるので、動きとの同期のため重ねない)。
  *
  * - モジュールを読み込んだだけでは何も作らない(Node・テストで安全)
  * - Web Audio が無い・作れない環境では、すべての呼び出しが黙って何もしない
  * - コンテキストが止まっている間(起こす前・タブが裏)の効果音は捨てる(再開時にまとめて鳴らない)
  */
-import { normalizeOptions, volumeToGain } from './mapping';
+import { normalizeOptions, softClipCurve, volumeToGain } from './mapping';
 import { MotorHum, type MotorDeps } from './motor';
 import { PITCH_FOLLOW, applyRate, buildSfx, layersDuration } from './recipes';
 import { renderVoice, type NoiseBank, type RenderedVoice } from './render';
@@ -48,6 +50,8 @@ const NOISE_SEEDS: Record<NoiseKind, number> = { white: 0x5eed01, crackle: 0x5ee
 const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'keydown', 'touchend'] as const;
 /** 主音量の変化の時定数(秒) */
 const MASTER_TC = 0.03;
+/** バスの下げ幅。まとめ用コンプレッサーのメイクアップゲインと相殺して、譜面の音量をほぼそのまま出す */
+const BUS_GAIN = 0.75;
 
 interface Graph {
   sfx: GainNode;
@@ -305,28 +309,26 @@ export class AudioEngine {
 
   private buildGraph(ctx: AudioContext): Graph {
     const sfx = ctx.createGain();
+    sfx.gain.value = BUS_GAIN;
     const motor = ctx.createGain();
-    // まとめ用:穏やかに重なりを整える
+    motor.gain.value = BUS_GAIN;
+    // まとめ用:穏やかに重なりを整える(自動のメイクアップゲインが +2.4dB ほど乗るのでバスで下げてある)
     const glue = ctx.createDynamicsCompressor();
-    glue.threshold.value = -18;
-    glue.knee.value = 8;
+    glue.threshold.value = -12;
+    glue.knee.value = 6;
     glue.ratio.value = 3;
     glue.attack.value = 0.003;
     glue.release.value = 0.15;
     const master = ctx.createGain();
     master.gain.value = this.masterGain();
-    // リミッター:連打や重い打撃でも割れない
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -3;
-    limiter.knee.value = 0;
-    limiter.ratio.value = 20;
-    limiter.attack.value = 0.001;
-    limiter.release.value = 0.08;
+    // 安全弁:遅延の無いソフトクリップ。連打や重い打撃が重なっても割れない
+    const clip = ctx.createWaveShaper();
+    clip.curve = softClipCurve();
     sfx.connect(glue);
     motor.connect(glue);
     glue.connect(master);
-    master.connect(limiter);
-    limiter.connect(ctx.destination);
+    master.connect(clip);
+    clip.connect(ctx.destination);
 
     const noise = {} as Record<NoiseKind, AudioBuffer>;
     for (const kind of Object.keys(NOISE_SEEDS) as NoiseKind[]) {

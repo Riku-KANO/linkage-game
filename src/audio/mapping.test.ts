@@ -3,6 +3,7 @@ import {
   MOTOR_MAX_RPM,
   motorParams,
   normalizeOptions,
+  softClipCurve,
   sweepEnvelope,
   volumeToGain,
 } from './mapping';
@@ -120,5 +121,20 @@ describe('sweepEnvelope(風切りの音量の山)', () => {
     const peak = c.indexOf(Math.max(...c));
     for (let i = 1; i <= peak; i++) expect(c[i]!).toBeGreaterThanOrEqual(c[i - 1]!);
     for (let i = peak + 1; i < c.length; i++) expect(c[i]!).toBeLessThanOrEqual(c[i - 1]!);
+  });
+});
+
+describe('softClipCurve(最終段の安全弁)', () => {
+  const n = 1025;
+  const c = softClipCurve(n, 0.6);
+  const at = (x: number) => c[Math.round(((x + 1) / 2) * (n - 1))]!;
+  it('小さい音はそのまま通す', () => {
+    for (const x of [-0.5, -0.2, 0, 0.3, 0.59]) expect(at(x)).toBeCloseTo(x, 2);
+  });
+  it('大きい音は 1 未満に頭打ち、単調で原点対称', () => {
+    expect(at(1)).toBeLessThan(0.95);
+    expect(at(1)).toBeGreaterThan(0.85);
+    for (let i = 1; i < n; i++) expect(c[i]!).toBeGreaterThan(c[i - 1]!);
+    for (let i = 0; i < n; i++) expect(c[i]!).toBeCloseTo(-c[n - 1 - i]!, 6);
   });
 });

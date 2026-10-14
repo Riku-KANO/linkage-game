@@ -98,6 +98,11 @@ export class FakeCompressor extends FakeNode {
   readonly release = new FakeParam(0.25);
 }
 
+export class FakeShaper extends FakeNode {
+  curve: Float32Array | null = null;
+  oversample = 'none';
+}
+
 export class FakePanner extends FakeNode {
   readonly pan = new FakeParam(0);
 }
@@ -187,6 +192,9 @@ export class FakeAudioContext {
   }
   createDynamicsCompressor() {
     return new FakeCompressor(this, 'compressor');
+  }
+  createWaveShaper() {
+    return new FakeShaper(this, 'shaper');
   }
   createStereoPanner() {
     return new FakePanner(this, 'panner');

@@ -7,6 +7,7 @@ import {
   FakeCompressor,
   FakeGain,
   FakeOscillator,
+  FakeShaper,
   type FakeNode,
 } from './fakeAudioContext';
 import { getAudioStatus, installAudio, playSfx, setMotorHum, uninstallAudio } from './index';
@@ -73,13 +74,13 @@ function rig(extra: Partial<AudioEngineDeps> = {}): Rig {
   };
 }
 
-/** 主音量のゲイン:リミッター(出力直前のコンプレッサー)の手前のゲイン */
+/** 主音量のゲイン:出力直前のソフトクリップの手前のゲイン */
 function masterGain(ctx: FakeAudioContext): FakeGain {
-  const limiter = ctx.nodes.find(
-    (n): n is FakeCompressor => n instanceof FakeCompressor && n.outputs.includes(ctx.destination),
+  const clip = ctx.nodes.find(
+    (n): n is FakeShaper => n instanceof FakeShaper && n.outputs.includes(ctx.destination),
   );
   const master = ctx.nodes.find(
-    (n): n is FakeGain => n instanceof FakeGain && !!limiter && n.outputs.includes(limiter),
+    (n): n is FakeGain => n instanceof FakeGain && !!clip && n.outputs.includes(clip),
   );
   if (!master) throw new Error('master gain not found');
   return master;
@@ -214,7 +215,7 @@ describe('主音量・ミュート', () => {
     expect(master.gain.events.at(-1)?.type).toBe('target');
   });
 
-  it('効果音はコンプレッサーとリミッターを通って出力に届く', () => {
+  it('効果音はコンプレッサーとソフトクリップを通って出力に届く', () => {
     const r = rig();
     r.gesture();
     const before = r.ctx.nodes.length;
@@ -224,7 +225,11 @@ describe('主音量・ミュート', () => {
     );
     expect(sources.length).toBeGreaterThan(3);
     for (const s of sources) expect(r.ctx.reachesDestination(s)).toBe(true);
-    expect(r.ctx.nodes.filter((n) => n instanceof FakeCompressor)).toHaveLength(2);
+    // 遅延を増やさないよう、コンプレッサーは 1 段だけ。最後は曲線の入ったソフトクリップ
+    expect(r.ctx.nodes.filter((n) => n instanceof FakeCompressor)).toHaveLength(1);
+    const clip = r.ctx.nodes.find((n): n is FakeShaper => n instanceof FakeShaper);
+    expect(clip?.curve?.length).toBeGreaterThan(100);
+    expect(clip?.outputs).toContain(r.ctx.destination);
   });
 });
 

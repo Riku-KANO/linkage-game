@@ -98,10 +98,11 @@ test('試走前チェックに通らない設計は、設計画面のまま問�
   // 続きから(初回は 1-1:壊れた機械を直す課題。そのままでは動かない)
   await page.getByRole('menuitem', { name: /続きから/ }).click();
   await expect(html(page)).toHaveAttribute('data-screen', 'design');
-  await page.getByRole('button', { name: '試走する' }).click();
-  await expect(page.getByRole('alert', { name: '試走前チェック' })).toBeVisible({
-    timeout: 20_000,
-  });
+  // 試走ボタン(HUD の TestRunButton、INT-7a)は直すところがあると押せない(aria-disabled)。
+  // 押すと試走せず、ボタンの上に試走前チェックの一覧が開く
+  const run = page.getByRole('group', { name: '試走', exact: true });
+  await run.getByRole('button', { name: /試走する/ }).click({ force: true });
+  await expect(run.locator('.hud-problems')).toContainText('自由度', { timeout: 20_000 });
   await expect(html(page)).toHaveAttribute('data-screen', 'design');
   await expect(page.getByRole('region', { name: '試走の状況' })).toHaveCount(0);
   w.expectClean();

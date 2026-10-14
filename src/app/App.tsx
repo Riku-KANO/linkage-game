@@ -1,10 +1,9 @@
-import { t } from '@/i18n';
+import { GameShell } from '@/scene/GameShell';
 
-/** ゲーム本体。工房(3D 空間)の中に全画面を置く。担当:scene → app 統合 */
+/**
+ * ゲーム本体。工房(1 つの 3D 空間)の中に全画面を置き、画面の切り替えはカメラの移動で表す。
+ * 画面ごとの DOM(設計ビュー・結果パネルなど)は GameShell の overlays で差し込む。
+ */
 export default function App() {
-  return (
-    <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-      <h1>{t('app.title')}</h1>
-    </div>
-  );
+  return <GameShell />;
 }

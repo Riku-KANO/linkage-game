@@ -68,12 +68,21 @@ export const PAPER_DESIGN = (() => {
 
 /** 作業台の上で見本機が行き来する範囲(紙の右側) */
 export const BENCH_WALK = {
-  xMin: 0.2,
-  xMax: 0.95,
-  z: -0.95,
-  /** 見本機の縮尺(m / 設計 cm)。実寸の 1/8 */
-  scale: 0.01 / 8,
+  xMin: 0.3,
+  xMax: 0.8,
+  z: -0.92,
+  /** 見本機の縮尺(m / 設計 cm)。実寸の 1/5(机の上のおもちゃ) */
+  scale: 0.01 / 5,
 } as const;
+
+/** 卓上ライト(作業台の右奥。腕もリンク機構) */
+export const DESK_LAMP = {
+  base: [1.0, BENCH.top, -1.3] as P3,
+  head: [0.55, 1.48, -1.08] as P3,
+} as const;
+
+/** 製図機械(ドラフター)の付け根:紙の左奥の角の外 */
+export const DRAFTER_BASE: P3 = [-1.0, BENCH.top, -1.3];
 
 /** 壁のコース模型(ステージ選択)。奥の壁に棚受けで取り付けた板 */
 export const COURSE_MODEL = {

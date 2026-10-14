@@ -237,6 +237,48 @@ function runDyad(
   return Math.min(1, h / Math.max(1e-9, Math.min(step.ra, step.rb)));
 }
 
+/** ニュートン法のステップごとの作業用バッファ(毎フレームの確保を避ける) */
+interface NewtonScratch {
+  /** ジョイント index → 変数の列(-1:既知の点) */
+  col: Int32Array;
+  r: Float64Array;
+  JtJ: Float64Array;
+  Jtr: Float64Array;
+  delta: Float64Array;
+  backup: Float64Array;
+  L: Float64Array;
+  y: Float64Array;
+  idx: Int32Array;
+  g: Float64Array;
+}
+
+const newtonScratch = new WeakMap<object, NewtonScratch>();
+
+function scratchFor(step: Extract<SolveStep, { kind: 'newton' }>): NewtonScratch {
+  let sc = newtonScratch.get(step);
+  if (sc) return sc;
+  const dim = step.unknowns.length * 2;
+  let maxJoint = 0;
+  for (const c of step.constraints) maxJoint = Math.max(maxJoint, c.i, c.j);
+  for (const j of step.unknowns) maxJoint = Math.max(maxJoint, j);
+  const col = new Int32Array(maxJoint + 1).fill(-1);
+  step.unknowns.forEach((j, k) => (col[j] = k * 2));
+  sc = {
+    col,
+    r: new Float64Array(step.constraints.length),
+    JtJ: new Float64Array(dim * dim),
+    Jtr: new Float64Array(dim),
+    delta: new Float64Array(dim),
+    backup: new Float64Array(dim),
+    L: new Float64Array(dim * dim),
+    y: new Float64Array(dim),
+    idx: new Int32Array(4),
+    g: new Float64Array(4),
+  };
+  newtonScratch.set(step, sc);
+  return sc;
+}
+
 /**
  * レーベンバーグ・マルカート法で距離拘束を満たす。
  * 戻り値:最大残差(cm)
@@ -246,15 +288,12 @@ function runNewton(
   pos: Float64Array,
   maxIter: number,
 ): number {
-  const m = step.unknowns.length;
+  const unknowns = step.unknowns;
+  const m = unknowns.length;
   const dim = m * 2;
-  const col = new Map<number, number>();
-  step.unknowns.forEach((j, k) => col.set(j, k * 2));
+  const sc = scratchFor(step);
+  const { col, r, JtJ, Jtr, delta, backup, idx, g } = sc;
   const cs = step.constraints;
-  const r = new Float64Array(cs.length);
-  const JtJ = new Float64Array(dim * dim);
-  const Jtr = new Float64Array(dim);
-  const delta = new Float64Array(dim);
   let lambda = 1e-3;
   let err = evalResiduals(cs, pos, r);
   for (let it = 0; it < maxIter && err > NEWTON_TOL; it++) {
@@ -268,28 +307,42 @@ function runNewton(
       const L = Math.hypot(dx, dy) || 1e-9;
       const ux = dx / L;
       const uy = dy / L;
-      const ci = col.get(i);
-      const cj = col.get(j);
-      const entries: [number, number][] = [];
-      if (ci !== undefined) entries.push([ci, ux], [ci + 1, uy]);
-      if (cj !== undefined) entries.push([cj, -ux], [cj + 1, -uy]);
-      for (const [a, ga] of entries) {
+      const ci = col[i]!;
+      const cj = col[j]!;
+      let cnt = 0;
+      if (ci >= 0) {
+        idx[cnt] = ci;
+        g[cnt++] = ux;
+        idx[cnt] = ci + 1;
+        g[cnt++] = uy;
+      }
+      if (cj >= 0) {
+        idx[cnt] = cj;
+        g[cnt++] = -ux;
+        idx[cnt] = cj + 1;
+        g[cnt++] = -uy;
+      }
+      for (let p = 0; p < cnt; p++) {
+        const a = idx[p]!;
+        const ga = g[p]!;
         Jtr[a]! += ga * r[c]!;
-        for (const [b, gb] of entries) JtJ[a * dim + b]! += ga * gb;
+        for (let q = 0; q < cnt; q++) JtJ[a * dim + idx[q]!]! += ga * g[q]!;
       }
     }
     // try steps with increasing damping until the error decreases
     let improved = false;
     for (let tries = 0; tries < 8; tries++) {
-      if (!solveDamped(JtJ, Jtr, lambda, dim, delta)) {
+      if (!solveDamped(JtJ, Jtr, lambda, dim, delta, sc.L, sc.y)) {
         lambda *= 10;
         continue;
       }
-      const backup = step.unknowns.map((j) => [pos[j * 2]!, pos[j * 2 + 1]!] as const);
-      step.unknowns.forEach((j, k) => {
+      for (let k = 0; k < m; k++) {
+        const j = unknowns[k]!;
+        backup[k * 2] = pos[j * 2]!;
+        backup[k * 2 + 1] = pos[j * 2 + 1]!;
         pos[j * 2]! -= delta[k * 2]!;
         pos[j * 2 + 1]! -= delta[k * 2 + 1]!;
-      });
+      }
       const e2 = evalResiduals(cs, pos, r);
       if (e2 < err) {
         err = e2;
@@ -297,10 +350,11 @@ function runNewton(
         improved = true;
         break;
       }
-      step.unknowns.forEach((j, k) => {
-        pos[j * 2] = backup[k]![0];
-        pos[j * 2 + 1] = backup[k]![1];
-      });
+      for (let k = 0; k < m; k++) {
+        const j = unknowns[k]!;
+        pos[j * 2] = backup[k * 2]!;
+        pos[j * 2 + 1] = backup[k * 2 + 1]!;
+      }
       evalResiduals(cs, pos, r);
       lambda *= 10;
     }
@@ -330,15 +384,16 @@ function worstConstraintLinks(cs: DistanceConstraint[], pos: Float64Array): numb
   return out;
 }
 
-/** (JtJ + λ diag) x = Jtr をコレスキー分解で解く */
+/** (JtJ + λ diag) x = Jtr をコレスキー分解で解く。L(n×n)と y(n)は作業用 */
 function solveDamped(
   A: Float64Array,
   b: Float64Array,
   lambda: number,
   n: number,
   x: Float64Array,
+  L: Float64Array,
+  y: Float64Array,
 ): boolean {
-  const L = new Float64Array(n * n);
   for (let i = 0; i < n; i++) {
     for (let j = 0; j <= i; j++) {
       let sum = A[i * n + j]!;
@@ -352,7 +407,6 @@ function solveDamped(
       }
     }
   }
-  const y = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     let sum = b[i]!;
     for (let k = 0; k < i; k++) sum -= L[i * n + k]! * y[k]!;

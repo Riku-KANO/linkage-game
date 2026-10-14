@@ -17,6 +17,7 @@ import { useSceneUi } from '../store';
 import { damp } from '../rig/spring';
 import { barBetween, box, cylinder, jitterColor, mergeParts, seeded, type Part } from './geometry';
 import { PALETTE, darkMetal, vcMatte, vcMetal } from './materials';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * 窓の外の荒野:起伏のある地面、遠くの台地(メサ)、岩、試走コース、風車。
@@ -26,8 +27,10 @@ export function Wasteland() {
   const { ground, mesas, track } = useMemo(buildWasteland, []);
   return (
     <group>
-      <mesh geometry={ground} material={vcMatte} receiveShadow />
-      <mesh geometry={mesas} material={vcMatte} />
+      <ModelSlot id="wasteland">
+        <mesh geometry={ground} material={vcMatte} receiveShadow />
+        <mesh geometry={mesas} material={vcMatte} />
+      </ModelSlot>
       <mesh geometry={track} material={vcMatte} receiveShadow castShadow />
       <Rocks />
       <Windmill />

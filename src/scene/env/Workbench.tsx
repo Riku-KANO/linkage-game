@@ -5,6 +5,7 @@ import { BENCH, DESK_LAMP, DRAFTER_BASE, PAPER_WORLD } from '../layout';
 import { useActivity } from '../home/activity';
 import { barBetween, box, cylinder, jitterColor, mergeParts, seeded, type Part } from './geometry';
 import { PALETTE, brass, bulb, darkMetal, steel, vcMatte, vcMetal } from './materials';
+import { ModelSlot } from './ModelSlot';
 import { createPaperTexture } from './paperTexture';
 
 /**
@@ -24,9 +25,11 @@ export function Workbench() {
   }, []);
   return (
     <group>
-      <mesh geometry={body} material={vcMatte} castShadow receiveShadow />
-      <mesh geometry={props} material={vcMatte} castShadow receiveShadow />
-      <mesh geometry={metal} material={vcMetal} castShadow receiveShadow />
+      <ModelSlot id="workbench">
+        <mesh geometry={body} material={vcMatte} castShadow receiveShadow />
+        <mesh geometry={props} material={vcMatte} castShadow receiveShadow />
+        <mesh geometry={metal} material={vcMetal} castShadow receiveShadow />
+      </ModelSlot>
       <mesh
         position={PAPER_WORLD.center}
         rotation={[-Math.PI / 2, 0, 0]}

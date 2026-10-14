@@ -5,6 +5,7 @@ import { TOOLBOX } from '../layout';
 import { useActivity } from '../home/activity';
 import { box, cylinder, mergeParts, type Part } from './geometry';
 import { PALETTE, steel, vcMatte, vcMetal } from './materials';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * 工具箱(設定)。上段の 2 つのトレイが平行リンク(両てこの平行四辺形)で前後へ開く
@@ -68,7 +69,9 @@ export function Toolbox() {
 
   return (
     <group position={TOOLBOX.center} rotation={[0, TOOLBOX.rotationY, 0]}>
-      <mesh geometry={base} material={vcMetal} castShadow receiveShadow />
+      <ModelSlot id="toolbox">
+        <mesh geometry={base} material={vcMetal} castShadow receiveShadow />
+      </ModelSlot>
       {trays.map((r, i) => (
         <group key={i} ref={r}>
           <mesh geometry={tray} material={vcMetal} castShadow receiveShadow />

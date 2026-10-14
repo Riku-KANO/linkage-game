@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { ROOM, WINDOW } from '../layout';
 import { box, cylinder, jitterColor, mergeParts, seeded, type Part } from './geometry';
 import { PALETTE, bulb, darkMetal, glass, vcMatte, vcMetal } from './materials';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * 工房の建物:床板・奥と左右の壁・天井と梁・窓枠(開き窓)・壁の小物。
@@ -11,11 +12,13 @@ export function Room() {
   const { shell, floor, frame, metal } = useMemo(buildRoom, []);
   return (
     <group>
-      <mesh geometry={floor} material={vcMatte} receiveShadow />
-      <mesh geometry={shell} material={vcMatte} castShadow receiveShadow />
-      <mesh geometry={frame} material={vcMatte} castShadow receiveShadow />
-      <mesh geometry={metal} material={vcMetal} castShadow />
-      <WindowPanes />
+      <ModelSlot id="room">
+        <mesh geometry={floor} material={vcMatte} receiveShadow />
+        <mesh geometry={shell} material={vcMatte} castShadow receiveShadow />
+        <mesh geometry={frame} material={vcMatte} castShadow receiveShadow />
+        <mesh geometry={metal} material={vcMetal} castShadow />
+        <WindowPanes />
+      </ModelSlot>
       <HangingBulb />
     </group>
   );

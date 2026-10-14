@@ -4,6 +4,8 @@
  * 置いた素材は present: true にする(assets.test.ts が実在を確かめる)。present: false の間は
  * 手続き生成のジオメトリを使い、ネットワークには取りに行かない(実行時に 404 を出さない)。
  * GLB は Draco 圧縮なしで書き出す(デコーダーを外部から読まないため)。
+ * 置き換わるのは動かない部分だけ(env/ModelSlot.tsx)。原点と向きは各コンポーネントのローカル座標
+ * (Room・Wasteland はワールド、他は layout.ts の位置を原点に、単位 m、+y 上)に合わせる。
  */
 
 export interface ModelEntry {
@@ -16,21 +18,37 @@ export interface ModelEntry {
 }
 
 export const MODEL_MANIFEST = {
-  room: { file: 'workshop-room.glb', present: false, note: '工房の床・壁・天井・窓枠(Room)' },
+  room: {
+    file: 'workshop-room.glb',
+    present: false,
+    note: '工房の床・壁・天井・梁・窓の戸・有孔ボード(Room)。窓枠はメニュー物体なので別',
+  },
   workbench: {
     file: 'workbench.glb',
     present: false,
-    note: '作業台と製図台・卓上ライト(Workbench)',
+    note: '作業台の本体と小物(Workbench)。製図用紙・ドラフター・卓上ライトは手続き生成のまま',
   },
   courseModel: {
     file: 'course-model.glb',
     present: false,
-    note: '壁のコース模型と章ごとの台地(CourseModel)',
+    note: 'コース模型の上の章ごとの台地(CourseModel)。板と棚受けは手続き生成のまま',
   },
-  shelf: { file: 'shelf.glb', present: false, note: '棚と本・模型(Shelf)' },
-  toolbox: { file: 'toolbox.glb', present: false, note: '工具箱(Toolbox)' },
-  wasteland: { file: 'wasteland.glb', present: false, note: '窓の外の荒野・台地・岩(Wasteland)' },
-  logo: { file: 'logo.glb', present: false, note: 'タイトルの看板(BootLogo)' },
+  shelf: {
+    file: 'shelf.glb',
+    present: false,
+    note: '棚の枠と本(Shelf)。引き出しと模型は手続き生成',
+  },
+  toolbox: {
+    file: 'toolbox.glb',
+    present: false,
+    note: '工具箱の本体(Toolbox)。トレイとリンクは手続き生成',
+  },
+  wasteland: { file: 'wasteland.glb', present: false, note: '窓の外の地面と台地(Wasteland)' },
+  logo: {
+    file: 'logo.glb',
+    present: false,
+    note: 'タイトルの看板の板(BootLogo)。ロゴの棒は手続き生成',
+  },
 } as const satisfies Record<string, ModelEntry>;
 
 export type ModelId = keyof typeof MODEL_MANIFEST;

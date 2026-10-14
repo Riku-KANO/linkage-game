@@ -8,6 +8,7 @@ import { useApp } from '@/app/store';
 import { KinematicWalker } from '../walker/KinematicWalker';
 import { box, cylinder, mergeParts, seeded, jitterColor, type Part } from './geometry';
 import { PALETTE, vcMatte } from './materials';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * 壁のコース模型(ステージ選択)。奥の壁に棚受けで取り付けた板の上に、章ごとの台地のジオラマ。
@@ -51,7 +52,9 @@ export function CourseModel() {
     <group position={[cx, cy, cz]}>
       <mesh geometry={board} material={vcMatte} castShadow receiveShadow />
       <group ref={grow}>
-        <mesh geometry={plateaus} material={vcMatte} castShadow receiveShadow />
+        <ModelSlot id="courseModel">
+          <mesh geometry={plateaus} material={vcMatte} castShadow receiveShadow />
+        </ModelSlot>
         {/* 章 1 の台地の上を歩く小さな機械 */}
         <KinematicWalker
           scale={0.01 / 36}

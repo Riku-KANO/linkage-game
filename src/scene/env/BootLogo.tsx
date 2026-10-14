@@ -17,6 +17,7 @@ import { rigSignals } from '../store';
 import { box, mergeParts, seeded } from './geometry';
 import { PALETTE, brass, darkMetal, steel, vcMatte } from './materials';
 import { LOGO_WIDTH, barSchedule, logoBars, logoPins } from './logoShape';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * タイトルの看板(T-00)。起動するとロゴのリンクが飛んできて組み上がり、
@@ -153,7 +154,9 @@ export function BootLogo() {
 
   return (
     <group position={LOGO_SIGN.center}>
-      <mesh geometry={sign} material={vcMatte} castShadow receiveShadow />
+      <ModelSlot id="logo">
+        <mesh geometry={sign} material={vcMatte} castShadow receiveShadow />
+      </ModelSlot>
       <instancedMesh
         ref={barRef}
         args={[barGeo, brass, bars.length]}

@@ -5,6 +5,7 @@ import { useReducedMotionSync, useTransitionInput } from './input';
 import { OverlayLayer } from './overlay/OverlayLayer';
 import { PLACEHOLDER_OVERLAYS, type ScreenOverlay } from './overlay/placeholders';
 import { applyStoredPerfDecision } from './perf/PerfProbe';
+import { preloadModels } from './env/ModelSlot';
 import './scene.css';
 
 export interface GameShellProps {
@@ -25,7 +26,11 @@ export interface GameShellProps {
  */
 export function GameShell({ overlays, scene3d, children }: GameShellProps) {
   // 保存済みの性能判定を Canvas より先に反映する(なければ起動中に測る)
-  const [measurePerf] = useState(() => !applyStoredPerfDecision());
+  const [measurePerf] = useState(() => {
+    // 置いてある GLB は最初に読み始める(カメラ移動の裏で読み終える)
+    preloadModels();
+    return !applyStoredPerfDecision();
+  });
   useReducedMotionSync();
   useTransitionInput();
   const merged = useMemo(() => ({ ...PLACEHOLDER_OVERLAYS, ...overlays }), [overlays]);

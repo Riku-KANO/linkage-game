@@ -16,6 +16,7 @@ import { useActivity } from '../home/activity';
 import { LinkageToy } from '../walker/LinkageToy';
 import { box, mergeParts, seeded, type Part } from './geometry';
 import { PALETTE, brass, steel, vcMatte } from './materials';
+import { ModelSlot } from './ModelSlot';
 
 /**
  * 右の壁際の棚(機構図鑑)。本と、小さなリンク機構の模型。下段の引き出しはシザーリンクで開く。
@@ -58,8 +59,10 @@ export function Shelf() {
 
   return (
     <group position={SHELF.center} rotation={[0, -Math.PI / 2, 0]}>
-      <mesh geometry={frame} material={vcMatte} castShadow receiveShadow />
-      <primitive object={books} />
+      <ModelSlot id="shelf">
+        <mesh geometry={frame} material={vcMatte} castShadow receiveShadow />
+        <primitive object={books} />
+      </ModelSlot>
       {/* 引き出し */}
       <group ref={drawer}>
         <mesh

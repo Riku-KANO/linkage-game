@@ -286,6 +286,10 @@ export function buildFxModel(design: DesignDoc): FxModel {
 
 export function disposeFxModel(m: FxModel): void {
   m.disposables.forEach((g) => g.dispose());
+  // インスタンスの行列・色のバッファも GPU から解放する
+  m.group.traverse((o) => {
+    if (o instanceof InstancedMesh) o.dispose();
+  });
   m.group.removeFromParent();
 }
 
@@ -467,7 +471,8 @@ export class FxMachineRenderer {
   update(level: number, track: TrackPose, visible: boolean): void {
     const m = this.model;
     this.root.visible = visible && !!m && !m.empty;
-    if (!m) return;
+    // 隠れている間は何もしない(演出のないフレームの負担を 0 にする)
+    if (!m || !this.root.visible) return;
     const P = ASSEMBLY_PHASES;
     const { layout, plan, sweeps, K } = m;
     const n2 = sweeps.n2;

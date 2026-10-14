@@ -18,11 +18,14 @@ async function fx(page: Page) {
   });
 }
 
+test.describe.configure({ timeout: 120_000 });
+
 async function openScene(page: Page) {
   await page.goto('/?dev=scene');
   // T-00 のロゴはクリックで飛ばせる
   await page.mouse.click(640, 360);
-  await expect(page.getByRole('menuitem', { name: /続きから/ })).toBeVisible();
+  // 起動は重い環境(ソフトウェア描画・並列実行)では時間がかかる
+  await expect(page.getByRole('menuitem', { name: /続きから/ })).toBeVisible({ timeout: 45_000 });
   // 12 脚の見本機で組み上げる(脚列の複製まで通る)
   await page.getByLabel('機械').selectOption('jansenWalker');
 }

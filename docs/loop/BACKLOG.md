@@ -171,7 +171,7 @@
 | INT-3 | 結果画面:ResultPanel、T-04、やり直し・設計へ・次へ | result, flow | todo |
 | INT-4 | ステージ選択:StageSelectPanel とコース模型のジオラマ、ステージ開始 | hud, flow | todo |
 | INT-5 | ホーム:続きから=最後のステージ、作業台の見本機を自分の機械に、設定(保存つき)、図鑑の枠、サンドボックス | flow, hud | todo |
-| INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | doing(stream `int-fx`) |
+| INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | done(`src/scene/fx`)— 図面の部品がクランクから順に立ち上がって厚みを持ち、脚は z = 0 から各組の位相までクランクを回しながら複製、胴体がはまり、手続き生成のクレーンが窓を抜けてコースのスタートへ降ろす。MachineModel と同じ配置・形・色・θ = 0 の姿勢に着地して引き継ぐ(行列の一致をテスト)。T-05・T-03 の逆再生は試走の今の姿勢から逆にたどる(割り込みは途中から)。T-04 は時間の倍率 1 → 0.2 → 0 と機械の周りの半周。スキップ・reduced-motion・音(はまる・クレーン・着地)。GPU で 16.7ms/フレーム。統合の約束は `src/scene/fx/index.ts`(registerTrackMachine・useFx の machineInFx・getFxTimeScale・onFxHandover・setPaperMapping)。統合前は代わりの機体(運動学の簡易 sim)がコースを歩く。`e2e/fx.spec.ts` |
 | WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | doing(stream `world`) |
 | WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | doing(stream `world`) |
 | INT-7 | チュートリアルの吹き出し・ヒントの影・通知・遊び方と用語解説・状況の一言を設計画面とホームに | flow, hud, guide | todo |

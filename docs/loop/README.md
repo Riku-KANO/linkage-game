@@ -9,7 +9,7 @@
  │   1. 計画   BACKLOG.md から依存関係のないタスクを選び、ストリームに分ける
  │   2. 分岐   ストリームごとに scripts/wt.sh new <name>(.worktrees/<name>, feat/<name>)
  │   3. 並行   各ワークツリーでエージェントが内側ループを回す ───────────┐
- │   4. 合流   scripts/wt.sh gate <name>(worktree で verify → main にマージ → main で verify) │
+ │   4. 合流   scripts/wt.sh gate <name>(worktree で verify → main にマージ → main で verify + E2E) │
  │   5. 観測   ブラウザで実機確認、性能計測、LOG.md に記録                    │
  └── 6. 更新   BACKLOG.md を更新し、見つかった問題を次のタスクにする           │
                                                                            │

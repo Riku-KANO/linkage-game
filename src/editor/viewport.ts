@@ -54,23 +54,54 @@ export function panBy(cam: Camera, dx: number, dy: number): Camera {
   return { ...cam, ox: cam.ox + dx, oy: cam.oy + dy };
 }
 
-/** 矩形をビューにぴったり収める(縦横比が違えば中央寄せ、はみ出さない側に余白) */
-export function cameraForRect(rect: WorldRect, size: Size, marginPx = 0): Camera {
+/** 画面の端からの余白(px)。数値なら 4 辺同じ */
+export interface Insets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+const toInsets = (m: number | Insets): Insets =>
+  typeof m === 'number' ? { top: m, right: m, bottom: m, left: m } : m;
+
+/**
+ * 全体表示の余白。上はバッジの列、脚先の寸法線を描くときは下(歩幅・進む向き)と右(足上げ)を広く取る。
+ * 数値は FootGuides の描画位置(DesignCanvas)に合わせてある。
+ */
+export function fitInsets(footGuides: boolean): Insets {
+  const base = 40;
+  return {
+    top: base + 32,
+    left: base,
+    bottom: base + (footGuides ? 64 : 0),
+    right: base + (footGuides ? 96 : 0),
+  };
+}
+
+/**
+ * 矩形をビューにぴったり収める(縦横比が違えば余白の内側で中央寄せ、はみ出さない側に余白)。
+ * margin は 4 辺同じ px、または辺ごとの Insets。
+ */
+export function cameraForRect(rect: WorldRect, size: Size, margin: number | Insets = 0): Camera {
+  const m = toInsets(margin);
   const w = Math.max(1e-6, rect.maxX - rect.minX);
   const h = Math.max(1e-6, rect.maxY - rect.minY);
-  const availW = Math.max(1, size.width - 2 * marginPx);
-  const availH = Math.max(1, size.height - 2 * marginPx);
+  const availW = Math.max(1, size.width - m.left - m.right);
+  const availH = Math.max(1, size.height - m.top - m.bottom);
   const scale = Math.min(availW / w, availH / h);
   const cx = (rect.minX + rect.maxX) / 2;
   const cy = (rect.minY + rect.maxY) / 2;
-  return { scale, ox: size.width / 2 - scale * cx, oy: size.height / 2 + scale * cy };
+  const sx = m.left + availW / 2;
+  const sy = m.top + availH / 2;
+  return { scale, ox: sx - scale * cx, oy: sy + scale * cy };
 }
 
 /** 点群を余白つきで収めるカメラ(点がなければ原点まわり 100cm 四方) */
 export function fitPoints(
   points: readonly { x: number; y: number }[],
   size: Size,
-  marginPx = 48,
+  margin: number | Insets = 48,
 ): Camera {
   const rect = boundsOf(points) ?? { minX: -50, minY: -50, maxX: 50, maxY: 50 };
   // 小さすぎる機構は最低 40cm 四方として扱う(ズームしすぎない)
@@ -83,7 +114,7 @@ export function fitPoints(
   };
   const [minX, maxX] = pad(rect.minX, rect.maxX);
   const [minY, maxY] = pad(rect.minY, rect.maxY);
-  const cam = cameraForRect({ minX, minY, maxX, maxY }, size, marginPx);
+  const cam = cameraForRect({ minX, minY, maxX, maxY }, size, margin);
   return { ...cam, scale: clampScale(cam.scale) };
 }
 

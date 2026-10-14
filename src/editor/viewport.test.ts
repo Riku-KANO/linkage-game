@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cameraForRect,
+  fitInsets,
   fitPoints,
   gridSteps,
   panBy,
@@ -84,6 +85,37 @@ describe('viewport transforms', () => {
     expect(a.y).toBeGreaterThanOrEqual(39.9);
     expect(b.x).toBeLessThanOrEqual(760.1);
     expect(b.y).toBeLessThanOrEqual(560.1);
+  });
+
+  it('keeps points inside asymmetric insets (room for badges and dimension labels)', () => {
+    const size = { width: 1000, height: 700 };
+    const insets = { top: 70, right: 160, bottom: 120, left: 48 };
+    const pts = [
+      { x: -70, y: -92 },
+      { x: 20, y: 35 },
+      { x: -3, y: -69 },
+    ];
+    const c = fitPoints(pts, size, insets);
+    for (const p of pts) {
+      const q = toScreen(c, p.x, p.y);
+      expect(q.x).toBeGreaterThanOrEqual(insets.left - 0.1);
+      expect(q.x).toBeLessThanOrEqual(size.width - insets.right + 0.1);
+      expect(q.y).toBeGreaterThanOrEqual(insets.top - 0.1);
+      expect(q.y).toBeLessThanOrEqual(size.height - insets.bottom + 0.1);
+    }
+    // the tighter axis touches both of its insets (the region is used fully)
+    const top = toScreen(c, 0, 35).y;
+    const bottom = toScreen(c, 0, -92).y;
+    expect(top).toBeCloseTo(insets.top, 5);
+    expect(bottom).toBeCloseTo(size.height - insets.bottom, 5);
+  });
+
+  it('reserves extra room below and to the right when foot guides are drawn', () => {
+    const plain = fitInsets(false);
+    const guided = fitInsets(true);
+    expect(guided.bottom).toBeGreaterThan(plain.bottom + 40);
+    expect(guided.right).toBeGreaterThan(plain.right + 60);
+    expect(guided.top).toBe(plain.top);
   });
 
   it('adapts grid density to the zoom level', () => {

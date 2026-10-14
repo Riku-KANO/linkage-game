@@ -41,6 +41,7 @@ import {
 import { hitTest, selectInRect, snapPoint, snapToGrid, type Hit, type SnapResult } from './snap';
 import {
   cameraForRect,
+  fitInsets,
   fitPoints,
   gridSteps,
   panBy,
@@ -197,20 +198,27 @@ export function DesignCanvas(props: DesignCanvasProps) {
   const gesture = useRef<Gesture | null>(null);
 
   const sz = size && size.width > 0 && size.height > 0 ? size : FALLBACK_SIZE;
+  // 脚先の寸法(歩幅・足上げ)と進む向き(E-03)
+  const guide = useMemo(() => footGuide(analysis, design.motor.rpm), [analysis, design.motor.rpm]);
+  // 全体表示の対象:設計姿勢の全点と、1 回転ぶんの全ジョイントの軌道(組み立てられた姿勢だけ)
   const fitTargets = useCallback((): Pt[] => {
     const pts: Pt[] = design.joints.map((j) => ({ x: j.x, y: j.y }));
-    const f = analysis.compiled.footIndex;
-    if (f >= 0) {
-      for (const p of analysis.cycle.positions) pts.push({ x: p[f * 2]!, y: p[f * 2 + 1]! });
-    }
+    const { cycle } = analysis;
+    const n = analysis.compiled.jointIds.length;
+    cycle.positions.forEach((p, s) => {
+      if (!cycle.ok[s]) return;
+      for (let i = 0; i < n; i++) pts.push({ x: p[i * 2]!, y: p[i * 2 + 1]! });
+    });
     if (ghost) for (const j of ghost.joints) pts.push({ x: j.x, y: j.y });
     return pts;
   }, [design, analysis, ghost]);
+  // 脚先の寸法線(歩幅・進む向き・足上げ)を描くぶんの余白
+  const insets = useMemo(() => fitInsets(guide !== null), [guide]);
 
   const cam: Camera = useMemo(() => {
     if (view) return cameraForRect(view, sz);
-    return camState ?? fitPoints(fitTargets(), sz);
-  }, [view, sz, camState, fitTargets]);
+    return camState ?? fitPoints(fitTargets(), sz, insets);
+  }, [view, sz, camState, fitTargets, insets]);
   const camRef = useRef(cam);
   camRef.current = cam;
   const sizeRef = useRef(sz);
@@ -255,8 +263,8 @@ export function DesignCanvas(props: DesignCanvasProps) {
 
   const fit = useCallback(() => {
     if (view) return;
-    setCamState(fitPoints(fitTargets(), sizeRef.current));
-  }, [view, fitTargets]);
+    setCamState(fitPoints(fitTargets(), sizeRef.current, insets));
+  }, [view, fitTargets, insets]);
 
   // 読み込み(replaceDesign)のたびに全体表示
   const fitRef = useRef(fit);
@@ -765,9 +773,6 @@ export function DesignCanvas(props: DesignCanvasProps) {
     }
     return { marks, ranges };
   }, [analysis, cam]);
-
-  // 脚先の寸法(歩幅・足上げ)と進む向き(E-03)
-  const guide = useMemo(() => footGuide(analysis, design.motor.rpm), [analysis, design.motor.rpm]);
 
   // グラスホフ判定(クランクで駆動する最初の四節ループ)
   const grashofChip = useMemo(() => {

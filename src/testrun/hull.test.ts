@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { convexHull, insideConvex, roundedOutline, signedArea, type P2 } from './hull';
+import {
+  convexHull,
+  convexHullInto,
+  insideConvex,
+  insideHull,
+  roundedOutline,
+  signedArea,
+  type P2,
+} from './hull';
 
 const hullOf = (pts: [number, number][]) =>
   convexHull(
@@ -103,3 +111,49 @@ function distToTriangle(p: P2, tri: P2[]): number {
   }
   return best;
 }
+
+describe('convexHullInto / insideHull (allocation-free)', () => {
+  function lcg(seed: number) {
+    let s = seed >>> 0;
+    return () => {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 2 ** 32;
+    };
+  }
+
+  it('matches convexHull on random point sets', () => {
+    const rnd = lcg(9);
+    const work = new Int32Array(64);
+    const out = new Int32Array(65);
+    for (let trial = 0; trial < 200; trial++) {
+      const n = 1 + Math.floor(rnd() * 30);
+      const xs = Array.from({ length: n }, () => Math.round(rnd() * 20) / 4);
+      const ys = Array.from({ length: n }, () => Math.round(rnd() * 20) / 4);
+      const ref = convexHull(xs, ys);
+      const m = convexHullInto(xs, ys, n, work, out);
+      const got = Array.from(out.slice(0, m));
+      // 始点が違っても同じ順の巡回なら同じ
+      const pts = (ids: number[]) => ids.map((i) => `${xs[i]},${ys[i]}`);
+      const a = pts(ref);
+      const b = pts(got);
+      expect(b.length).toBe(a.length);
+      if (a.length > 0) {
+        const shift = b.indexOf(a[0]!);
+        expect(shift).toBeGreaterThanOrEqual(0);
+        expect([...b.slice(shift), ...b.slice(0, shift)]).toEqual(a);
+      }
+    }
+  });
+
+  it('tests containment against the index hull', () => {
+    const xs = [0, 1, 1, 0, 0.5];
+    const ys = [0, 0, 1, 1, 0.5];
+    const work = new Int32Array(8);
+    const out = new Int32Array(9);
+    const m = convexHullInto(xs, ys, 5, work, out);
+    expect(m).toBe(4);
+    expect(insideHull(xs, ys, out, m, 0.5, 0.5)).toBe(true);
+    expect(insideHull(xs, ys, out, m, 1.5, 0.5)).toBe(false);
+    expect(insideHull(xs, ys, out, 2, 0.5, 0.5)).toBe(false);
+  });
+});

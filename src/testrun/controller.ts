@@ -5,7 +5,7 @@ import {
   type Ghost,
   type GhostRecorder,
 } from '@/core/model/ghost';
-import type { SimSnapshot, WalkerSim } from '@/core/sim/types';
+import type { SimSnapshot, Vec3, WalkerSim } from '@/core/sim/types';
 import { createSimClock, type SimClock, type SimClockOptions, type SimSpeed } from './clock';
 import {
   createSlowMoState,
@@ -66,6 +66,8 @@ export interface TestRunUiState {
   status: RunStatus;
   /** 自動スロー中 */
   slowMo: boolean;
+  /** リセットのたびに 1 増える(前回のゴーストを取り直す合図) */
+  runId: number;
 }
 
 export interface TestRunControllerOptions {
@@ -94,6 +96,8 @@ export interface TestRunController {
   getSnapshot(): SimSnapshot;
   /** 最新の固定ステップ時点のスナップショット(補間なし) */
   getLatest(): SimSnapshot;
+  /** リセット時の重心(進んだ距離の基準) */
+  getOrigin(): Vec3;
   /** 今の時間の倍率(速度 × 自動スロー。一時停止中は 0) */
   readonly timeScale: number;
   /** 描画ループから毎フレーム呼ぶ(realDt は実時間の秒) */
@@ -134,6 +138,7 @@ export function createTestRunController(options: TestRunControllerOptions): Test
     show: { ...DEFAULT_TOGGLES, ...options.show },
     status: 'running',
     slowMo: false,
+    runId: 0,
   }));
   clock.setPaused(store.getState().paused);
 
@@ -146,6 +151,7 @@ export function createTestRunController(options: TestRunControllerOptions): Test
   let lastTiltTime = 0;
   let scale = 1;
   const listeners = new Set<FrameListener>();
+  const origin: Vec3 = { x: 0, y: 0, z: 0 };
 
   const recordGhost = () => {
     if (!recorder) return;
@@ -198,6 +204,9 @@ export function createTestRunController(options: TestRunControllerOptions): Test
     copySnapshot(sim.snapshot(), curr);
     copySnapshot(curr, prev);
     copySnapshot(curr, render);
+    origin.x = curr.com.x;
+    origin.y = curr.com.y;
+    origin.z = curr.com.z;
     lastTilt = tiltFromQuat(curr.body.quaternion);
     lastTiltTime = curr.time;
     signal.tilt = lastTilt;
@@ -212,6 +221,7 @@ export function createTestRunController(options: TestRunControllerOptions): Test
     goalX,
     getSnapshot: () => render,
     getLatest: () => curr,
+    getOrigin: () => origin,
     get timeScale() {
       return clock.paused ? 0 : clock.speed * scale;
     },
@@ -265,7 +275,7 @@ export function createTestRunController(options: TestRunControllerOptions): Test
       ghostFrame = 0;
       recordGhost();
       captureInitial();
-      store.setState({ status: 'running', slowMo: false });
+      store.setState({ status: 'running', slowMo: false, runId: store.getState().runId + 1 });
       notify();
     },
     setFollow(on) {

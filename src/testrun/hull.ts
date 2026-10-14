@@ -117,3 +117,81 @@ export function signedArea(poly: readonly P2[]): number {
   }
   return s / 2;
 }
+
+/**
+ * convexHull の割り当てなし版(毎フレーム使う支持多角形用)。
+ * work は n 以上、out は n + 1 以上の長さ。凸包の頂点 index を反時計回りに out に書き、数を返す。
+ */
+export function convexHullInto(
+  xs: ArrayLike<number>,
+  ys: ArrayLike<number>,
+  n: number,
+  work: Int32Array,
+  out: Int32Array,
+): number {
+  // 挿入ソート(点は数十個まで)
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    let k = m;
+    while (k > 0) {
+      const p = work[k - 1]!;
+      if (xs[p]! > xs[i]! || (xs[p]! === xs[i]! && ys[p]! > ys[i]!)) {
+        work[k] = p;
+        k--;
+      } else break;
+    }
+    work[k] = i;
+    m++;
+  }
+  // 重複を除く
+  let u = 0;
+  for (let i = 0; i < m; i++) {
+    const p = work[i]!;
+    if (u > 0) {
+      const q = work[u - 1]!;
+      if (Math.abs(xs[q]! - xs[p]!) < 1e-12 && Math.abs(ys[q]! - ys[p]!) < 1e-12) continue;
+    }
+    work[u++] = p;
+  }
+  if (u <= 2) {
+    for (let i = 0; i < u; i++) out[i] = work[i]!;
+    return u;
+  }
+  let h = 0;
+  for (let i = 0; i < u; i++) {
+    const p = work[i]!;
+    while (h >= 2 && cross3(xs, ys, out[h - 2]!, out[h - 1]!, p) <= 1e-12) h--;
+    out[h++] = p;
+  }
+  const lowerEnd = h + 1;
+  for (let i = u - 2; i >= 0; i--) {
+    const p = work[i]!;
+    while (h >= lowerEnd && cross3(xs, ys, out[h - 2]!, out[h - 1]!, p) <= 1e-12) h--;
+    out[h++] = p;
+  }
+  h--; // 最後の点は最初の点と同じ
+  return h >= 2 ? h : 2;
+}
+
+function cross3(xs: ArrayLike<number>, ys: ArrayLike<number>, o: number, a: number, b: number) {
+  return (xs[a]! - xs[o]!) * (ys[b]! - ys[o]!) - (ys[a]! - ys[o]!) * (xs[b]! - xs[o]!);
+}
+
+/** 点が凸包(index 列、反時計回り、3 点以上)の内側(境界を含む)にあるか。割り当てなし */
+export function insideHull(
+  xs: ArrayLike<number>,
+  ys: ArrayLike<number>,
+  hull: ArrayLike<number>,
+  m: number,
+  x: number,
+  y: number,
+  eps = 1e-9,
+): boolean {
+  if (m < 3) return false;
+  for (let i = 0; i < m; i++) {
+    const a = hull[i]!;
+    const b = hull[(i + 1) % m]!;
+    if ((xs[b]! - xs[a]!) * (y - ys[a]!) - (ys[b]! - ys[a]!) * (x - xs[a]!) < -eps) return false;
+  }
+  return true;
+}

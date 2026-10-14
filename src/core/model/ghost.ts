@@ -65,11 +65,9 @@ function frameAt(f: number[], i: number, j: number, s: number): GhostSample {
   const at = (k: number) => f[k] ?? 0;
   const lerp = (c: number) => at(a + c) + (at(b + c) - at(a + c)) * s;
   // q と -q は同じ回転なので、近い側を選んでから補間する
-  const sign =
-    at(a + 3) * at(b + 3) + at(a + 4) * at(b + 4) + at(a + 5) * at(b + 5) + at(a + 6) * at(b + 6) <
-    0
-      ? -1
-      : 1;
+  let dot = 0;
+  for (let c = 3; c < 7; c++) dot += at(a + c) * at(b + c);
+  const sign = dot < 0 ? -1 : 1;
   const q = [3, 4, 5, 6].map((c) => at(a + c) + (sign * at(b + c) - at(a + c)) * s);
   const len = Math.hypot(q[0]!, q[1]!, q[2]!, q[3]!) || 1;
   return {

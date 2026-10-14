@@ -255,10 +255,9 @@ function decodeDesignV1(
       if (isInteger(k) && k >= 0 && k < ids.length) fixedSet.add(k);
       else errors.push(`design.fixed[${i}]: 添字が範囲外です`);
     });
-  const coord = (k: number): unknown => {
-    const c: unknown = coords[k];
-    return isInteger(c) ? c / 100 : c;
-  };
+  /** 量子化した整数を戻す。整数でなければ NaN にして validateDesign に拒否させる */
+  const scaled = (x: unknown, s: number) => (isInteger(x) ? x / s : Number.NaN);
+  const coord = (k: number) => scaled(coords[k], 100);
   const joints = ids.map((id: unknown, i) => ({
     id,
     x: coord(i * 2),
@@ -300,14 +299,13 @@ function decodeDesignV1(
         id,
         link: idAt(linkIds, link, `design.cranks[${i}].link`),
         pivot: idAt(ids, pivot, `design.cranks[${i}].pivot`),
-        phase: isInteger(phase) ? phase / 1e4 : phase,
+        phase: scaled(phase, 1e4),
       });
     });
   const footId = foot === -1 ? null : idAt(ids, foot, 'design.foot');
   if (!Array.isArray(legs) || legs.length !== 4) errors.push('design.legs: 形式が違います');
   const [count, step, spacing, mirror] = Array.isArray(legs) ? (legs as unknown[]) : [];
   if (mirror !== 0 && mirror !== 1) errors.push('design.legs.mirrorX: 0 か 1 ではありません');
-  const scaled = (x: unknown, s: number) => (isInteger(x) ? x / s : x);
   if (errors.length > 0) return { ok: false, errors };
   return {
     ok: true,

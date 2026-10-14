@@ -194,6 +194,9 @@ describe('share links (MOD-3, U-02)', () => {
       (p) => ((p[1] as unknown[])[4] = [['l', 0, 77]]), // リンクの添字が範囲外
       (p) => ((p[1] as unknown[])[2] = [1, 2, 3]), // 座標の数が合わない
       (p) => ((p[1] as unknown[])[1] = [1, 2, 3, 4, 5]), // id が文字列でない
+      (p) => ((p[1] as unknown[])[2] = new Array(10).fill(12.5)), // 座標が整数でない
+      (p) => ((p[1] as unknown[])[7] = '40'), // rpm が整数でない
+      (p) => ((p[1] as unknown[])[3] = [0, 42]), // 固定点の添字が範囲外
     ];
     for (const m of mutations) {
       const p = structuredClone(good);

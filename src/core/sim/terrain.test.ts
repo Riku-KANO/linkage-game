@@ -91,6 +91,56 @@ describe('rapier terrain (SIM-1)', () => {
     expect(rapier.heightAt(7, 0)).toBeCloseTo(0.5, 4);
   });
 
+  it('ramp contacts are exact even when the sphere centre is on the slope', async () => {
+    // 45° の坂:球の中心から斜面までの垂直距離と鉛直距離が大きく違う
+    const t = await createRapierTerrain({
+      ground: null,
+      shapes: [{ kind: 'ramp', x0: 0, x1: 2, y0: 0, y1: 2, z0: -1, z1: 1, bottom: -1 }],
+    });
+    const r = 0.02;
+    const n = { x: -Math.SQRT1_2, y: Math.SQRT1_2 };
+    // 1e-5 以下は Rapier の凸包(float32 の GJK)だと法線が乱れていた帯
+    for (const d of [0.019, 0.015, 0.01, 1e-4, 1e-5, 1e-6, 0.0, -1e-6, -1e-5, -0.01]) {
+      for (const sx of [0.3, 1, 1.7]) {
+        const p = { x: sx + n.x * d, y: sx + n.y * d, z: 0 };
+        const c = t.query(p, r);
+        expect(c).not.toBeNull();
+        expect(c!.depth).toBeCloseTo(r - d, 4);
+        expect(c!.normal.x).toBeCloseTo(n.x, 4);
+        expect(c!.normal.y).toBeCloseTo(n.y, 4);
+      }
+    }
+    expect(t.query({ x: 1 + n.x * 0.021, y: 1 + n.y * 0.021, z: 0 }, r)).toBeNull();
+    t.dispose?.();
+  });
+
+  it('ramp: vertical end face, side face and the top edge', async () => {
+    const t = await createRapierTerrain({
+      ground: null,
+      shapes: [{ kind: 'ramp', x0: 0, x1: 2, y0: 0.5, y1: 1, z0: -1, z1: 1, bottom: 0 }],
+    });
+    // the high end (x = 2) is a vertical wall
+    const end = t.query({ x: 2.01, y: 0.5, z: 0 }, 0.02)!;
+    expect(end.depth).toBeCloseTo(0.01, 9);
+    expect(end.normal).toEqual({ x: 1, y: 0, z: 0 });
+    // side face (z = 1)
+    const side = t.query({ x: 1, y: 0.3, z: 1.005 }, 0.02)!;
+    expect(side.depth).toBeCloseTo(0.015, 9);
+    expect(side.normal).toEqual({ x: 0, y: 0, z: 1 });
+    // diagonal outside the top-right edge
+    const e = 0.01 / Math.SQRT2;
+    const edge = t.query({ x: 2 + e, y: 1 + e, z: 0 }, 0.02)!;
+    expect(edge.depth).toBeCloseTo(0.01, 9);
+    expect(edge.normal.x).toBeCloseTo(Math.SQRT1_2, 9);
+    expect(edge.normal.y).toBeCloseTo(Math.SQRT1_2, 9);
+    // deep inside: nearest face wins
+    const inside = t.query({ x: 1, y: 0.7, z: 0 }, 0.02)!;
+    expect(inside.normal.y).toBeGreaterThan(0.9);
+    expect(t.heightAt(1, 0)).toBeCloseTo(0.75, 12);
+    expect(t.heightAt(3, 0)).toBe(-Infinity);
+    t.dispose?.();
+  });
+
   it('combines simultaneous contacts (ground and a wall)', () => {
     // at the foot of the box: touching both the ground and the side face
     const c = rapier.query({ x: 1.99, y: 0.01, z: 0 }, 0.02)!;

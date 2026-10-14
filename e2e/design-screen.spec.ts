@@ -4,11 +4,15 @@ import { watchErrors } from './helpers';
 /** ホームから「続きから」で設計画面へ(T-07)。エディタが紙の上に出るまで待つ */
 async function openDesign(page: Page) {
   await page.goto('/');
-  // T-00 のロゴはクリックで飛ばせる
-  await page.mouse.click(640, 360);
   const cont = page.getByRole('menuitem', { name: /続きから/ });
-  await expect(cont).toBeVisible();
+  // T-00 のロゴは任意のキーで飛ばせる。読み込み中に押すと効かないことがあるので、メニューが出るまで
+  // 害のない Shift を繰り返す(scene.spec・home.spec と同じ)
+  await expect(async () => {
+    await page.keyboard.press('Shift');
+    await expect(cont).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 40_000 });
   await cont.click();
+  await expect(page.locator('html')).toHaveAttribute('data-screen', 'design');
   const root = page.locator('.ds-root[data-live="true"]');
   await expect(root).toBeVisible();
   return { cont, root };
@@ -71,6 +75,8 @@ async function expectPaperPixelsAt(page: Page, r: { x: number; y: number; height
 test('the editor lies exactly on the drafting paper; panels leave the paper free', async ({
   page,
 }) => {
+  // 3D の工房の起動と設計画面への遷移(並行実行のソフトウェア描画では時間がかかる)
+  test.slow();
   const w = watchErrors(page);
   const { root } = await openDesign(page);
   await expectOnPaper(page, root);
@@ -92,6 +98,8 @@ test('the editor lies exactly on the drafting paper; panels leave the paper free
 test('drag a joint on the paper, then Esc clears the selection and Esc again goes home', async ({
   page,
 }) => {
+  // 3D の工房の起動と設計画面への遷移(並行実行のソフトウェア描画では時間がかかる)
+  test.slow();
   const w = watchErrors(page);
   const { cont, root } = await openDesign(page);
   const badge = page.locator('.ed-canvas .ed-chips .ed-badge');
@@ -123,6 +131,7 @@ test('drag a joint on the paper, then Esc clears the selection and Esc again goe
   await expect(root).toBeVisible();
   // 取り消すものがなければ Esc は「戻る」:ホームへ
   await page.keyboard.press('Escape');
+  await expect(page.locator('html')).toHaveAttribute('data-screen', 'home');
   await expect(cont).toBeVisible();
   await expect(page.locator('.ds-root')).toHaveCount(0);
   w.expectClean();
@@ -131,6 +140,8 @@ test('drag a joint on the paper, then Esc clears the selection and Esc again goe
 test('resizing the window keeps the editor aligned with the paper (also the narrow layout)', async ({
   page,
 }) => {
+  // 3D の工房の起動と設計画面への遷移(並行実行のソフトウェア描画では時間がかかる)
+  test.slow();
   const w = watchErrors(page);
   const { root } = await openDesign(page);
   const r0 = await paperRect(root);

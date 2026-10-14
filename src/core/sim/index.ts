@@ -8,3 +8,4 @@ export { createFlatTerrain, createRapierTerrain, initRapier } from './terrain';
 export { runHeadless } from './headless';
 export { computeMassModel, jointMasses, type MassModel } from './mass';
 export { DEFAULT_FRICTION, SIM_TUNING } from './constants';
+export { awkwardFourBar, chebyshevWalker, jammingFourBar, jansenTwoSided } from './fixtures';

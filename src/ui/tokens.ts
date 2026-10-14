@@ -94,3 +94,45 @@ export function findTransition(from: Screen, to: Screen): TransitionToken | null
     return TRANSITIONS.find((t) => t.id === 'T-08')!;
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// 以下は scene ストリームでの追加(後方互換な追加のみ)
+// ---------------------------------------------------------------------------
+
+/**
+ * T-00(起動 → ホーム)の初回の実値。表では「読み込み次第」(first: null)。
+ * ロゴのリンクが組み上がり(logoAssemble)、クランクが一回転して一歩踏み出し(logoFlourish)、
+ * そのあとカメラが引く(pullBack)。読み込みがロゴより遅いときはロゴの最後の姿勢で待つ。
+ */
+export const BOOT = {
+  logoAssemble: 1.6,
+  logoFlourish: 0.9,
+  pullBack: 1.6,
+} as const;
+
+/** 表にない遷移(試走 → 設計 のワンキー切り替えなど)の既定 */
+export const DEFAULT_TRANSITION: { duration: number; easing: EasingName } = {
+  duration: 0.6,
+  easing: 'glide',
+};
+
+/**
+ * 遷移の進行度がいくつになったら行き先の画面の UI パネルを出すか(0..1)。
+ * T-08 は「扉が開くのと同時にパネルが出る」ので早め。
+ */
+export const PANEL_REVEAL_AT: { default: number } & Partial<Record<TransitionId, number>> = {
+  default: 0.8,
+  'T-08': 0.55,
+};
+
+/** ホームのカメラ:ゆっくり呼吸する揺れと、マウス位置による視差(m・s) */
+export const HOME_CAMERA = {
+  /** 呼吸の振幅(m) */
+  breathAmplitude: 0.025,
+  /** 呼吸の周期(s) */
+  breathPeriod: 7.5,
+  /** 画面端までマウスを動かしたときのずれ(m) */
+  parallax: 0.07,
+  /** 到着してから揺れが最大になるまで(s) */
+  swayFadeIn: 1.2,
+} as const;

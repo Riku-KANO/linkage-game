@@ -1,0 +1,511 @@
+/* 工房の外枠と DOM オーバーレイ層(scene モジュール) */
+
+.ak-shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ak-canvas {
+  position: absolute !important;
+  inset: 0;
+}
+
+.ak-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.ak-overlay > * {
+  pointer-events: auto;
+}
+
+.ak-overlay .ak-hint,
+.ak-overlay .ak-paper-svg {
+  pointer-events: none;
+}
+
+/* 空間に浮かぶ名前のラベル(drei Html) */
+.ak-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px 7px;
+  border-radius: 999px;
+  background: rgba(27, 19, 14, 0.78);
+  border: 1px solid rgba(242, 166, 90, 0.75);
+  box-shadow: 0 0 18px rgba(242, 166, 90, 0.35);
+  color: var(--text);
+  white-space: nowrap;
+  animation: ak-label-in 0.18s ease-out both;
+}
+
+.ak-label__name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.ak-label__sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+@keyframes ak-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 画面端のテキストメニュー */
+.ak-menu {
+  position: absolute;
+  left: 28px;
+  top: 28px;
+  padding: 14px 10px 10px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(43, 30, 22, 0.82), rgba(27, 19, 14, 0.82));
+  border: 1px solid rgba(201, 162, 74, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  min-width: 200px;
+}
+
+.ak-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ak-menu__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.12s,
+    transform 0.08s;
+}
+
+.ak-menu__item:hover,
+.ak-menu__item:focus-visible,
+.ak-menu__item.is-hot {
+  background: rgba(242, 166, 90, 0.2);
+  outline: none;
+}
+
+.ak-menu__item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.ak-menu__item:active {
+  transform: translateY(1px);
+}
+
+.ak-menu__name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ak-menu__sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ak-menu__hint {
+  margin: 8px 12px 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* パネル */
+.ak-panel {
+  position: absolute;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(43, 30, 22, 0.88), rgba(27, 19, 14, 0.88));
+  border: 1px solid rgba(201, 162, 74, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  max-height: calc(100% - 48px);
+  overflow: auto;
+}
+
+.ak-panel--left {
+  left: 24px;
+  top: 24px;
+  width: min(340px, calc(100% - 48px));
+}
+
+.ak-panel--right {
+  right: 24px;
+  top: 24px;
+  width: min(360px, calc(100% - 48px));
+}
+
+.ak-panel--bottom {
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ak-panel--top {
+  left: 40px;
+  right: 40px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.ak-panel__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+}
+
+.ak-panel--bottom .ak-panel__title {
+  margin: 0;
+}
+
+.ak-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.ak-panel--bottom .ak-row,
+.ak-panel--top .ak-row {
+  margin-top: 0;
+}
+
+.ak-grow {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ak-muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ak-chapter {
+  margin-bottom: 12px;
+}
+
+.ak-chapter h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.ak-chapter__name {
+  margin-left: 8px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.ak-chapter.is-locked {
+  opacity: 0.55;
+}
+
+.ak-stages {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ボタン:押すと沈む(マイクロインタラクション) */
+.ak-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 74, 0.6);
+  background: rgba(239, 230, 210, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s,
+    background 0.12s;
+}
+
+.ak-btn:hover,
+.ak-btn:focus-visible {
+  background: rgba(242, 166, 90, 0.22);
+  outline: none;
+}
+
+.ak-btn:focus-visible {
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    0 0 0 2px var(--accent);
+}
+
+.ak-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.45);
+}
+
+.ak-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.ak-btn--primary:hover,
+.ak-btn--primary:focus-visible {
+  background: #f7b878;
+}
+
+.ak-btn--ghost {
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+}
+
+.ak-field {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.ak-field small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ak-field--range {
+  flex-direction: column;
+}
+
+.ak-field--range input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.ak-field input[type='checkbox'] {
+  accent-color: var(--accent);
+  margin-top: 4px;
+}
+
+/* 製図用紙に重ねる SVG(設計画面の仮) */
+.ak-paper-svg {
+  position: absolute;
+  overflow: visible;
+}
+
+.ak-paper-svg line,
+.ak-paper-svg rect,
+.ak-paper-svg circle {
+  vector-effect: non-scaling-stroke;
+}
+
+.ak-paper-svg__edge {
+  fill: none;
+  stroke: rgba(224, 83, 61, 0.9);
+  stroke-width: 1.5;
+}
+
+.ak-paper-svg__grid {
+  stroke: rgba(224, 83, 61, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+
+.ak-paper-svg__origin {
+  fill: none;
+  stroke: rgba(224, 83, 61, 0.9);
+  stroke-width: 1.5;
+}
+
+.ak-paper-svg__link {
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.ak-paper-svg__pin {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.ak-paper-svg__fixed {
+  fill: var(--ink);
+}
+
+/* ヒント */
+.ak-hint {
+  position: absolute;
+  margin: 0;
+  font-size: 12px;
+  color: rgba(246, 234, 219, 0.7);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.ak-hint--boot {
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  animation: ak-fade-in 0.6s 0.8s ease-out both;
+}
+
+.ak-hint--back {
+  right: 24px;
+  bottom: 14px;
+}
+
+/* 出てくる動き(短く) */
+.ak-enter-left {
+  animation: ak-in-left 0.22s ease-out both;
+}
+.ak-enter-right {
+  animation: ak-in-right 0.22s ease-out both;
+}
+.ak-enter-top {
+  animation: ak-in-top 0.22s ease-out both;
+}
+.ak-enter-bottom {
+  animation: ak-in-bottom 0.22s ease-out both;
+}
+
+@keyframes ak-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ak-in-left {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+}
+@keyframes ak-in-right {
+  from {
+    opacity: 0;
+    translate: 16px 0;
+  }
+}
+@keyframes ak-in-top {
+  from {
+    opacity: 0;
+    translate: 0 -12px;
+  }
+}
+@keyframes ak-in-bottom {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-label,
+  .ak-enter-left,
+  .ak-enter-right,
+  .ak-enter-top,
+  .ak-enter-bottom,
+  .ak-hint--boot {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}
+
+/* 開発用パネル(?dev=scene) */
+.ak-debug {
+  position: absolute;
+  right: 12px;
+  bottom: 40px;
+  width: 300px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(10, 10, 14, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e8e8f0;
+  font:
+    12px/1.5 ui-monospace,
+    'SFMono-Regular',
+    Menlo,
+    monospace;
+  z-index: 40;
+}
+
+.ak-debug h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
+.ak-debug dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 0 0 8px;
+}
+
+.ak-debug dt {
+  color: #9aa0b0;
+}
+
+.ak-debug dd {
+  margin: 0;
+}
+
+.ak-debug__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.ak-debug button {
+  font: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+.ak-debug button:hover {
+  background: rgba(242, 166, 90, 0.3);
+}
+
+.ak-debug label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}

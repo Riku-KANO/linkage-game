@@ -6,6 +6,8 @@ import { game } from './game';
 import { scene } from './scene';
 import { testrun } from './testrun';
 import { result } from './result';
+import { flow } from './flow';
+import { hud } from './hud';
 
 export const ja: Record<string, string> = {
   ...common,
@@ -16,4 +18,6 @@ export const ja: Record<string, string> = {
   ...scene,
   ...testrun,
   ...result,
+  ...flow,
+  ...hud,
 };

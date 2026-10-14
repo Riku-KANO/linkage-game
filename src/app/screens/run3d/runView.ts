@@ -49,9 +49,12 @@ export const runViewStore = createStore<RunViewState>(() => ({ view: null, prefl
 /**
  * 演出(int-fx)との受け渡し。React を通さない合図(毎フレーム読む)。
  *  - hold:true の間は試走を進めない(T-03 の組み上げで、機体がコースに降りるまで待つ)
+ *  - hideMachine:true の間はコースの機体(と脚先の軌跡・接地・重心)を描かない
+ *    (T-03 の組み上げ・T-05 の分解を演出側が自分の機体で描くあいだ)
  */
 export const run3dSignals = {
   hold: false,
+  hideMachine: false,
 };
 
 /** 試走の追従カメラ(1 つだけ。新しい試走で合わせ直す) */

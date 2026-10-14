@@ -83,6 +83,7 @@ afterEach(() => {
   uninstall();
   store.getState().dispose();
   run3dSignals.hold = false;
+  run3dSignals.hideMachine = false;
 });
 
 describe('beginTestRun (the design screen’s test-run button)', () => {

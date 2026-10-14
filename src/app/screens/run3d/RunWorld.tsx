@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
-import { useCallback, useEffect, useMemo } from 'react';
-import { Object3D } from 'three';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Object3D, type Group } from 'three';
 import { useStore } from 'zustand';
 import { useSession } from '@/app/flow';
 import { useApp } from '@/app/store';
@@ -49,6 +49,7 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
   const getTime = useCallback(() => controller.getSnapshot().time, [controller]);
   const footRadius = live.sim.params.footRadius;
   const fillTarget = useMemo(() => new Object3D(), []);
+  const machine = useRef<Group>(null);
 
   // 描画部品・カメラリグ(優先度 −1)より先に進める
   useFrame((_, dt) => {
@@ -63,6 +64,7 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
       },
       { follow: followRig, hum: setMotorHum },
     );
+    if (machine.current) machine.current.visible = !run3dSignals.hideMachine;
     if (r.finish) {
       const run = useSession.getState().run;
       if (run.phase === 'running' && run.live === live) finishToResult();
@@ -87,12 +89,14 @@ function RunCourse({ view, shadows }: { view: RunView; shadows: boolean }) {
         gateHeight={Math.max(1.2, view.machineScale * 1.2)}
         shadows={shadows}
       />
-      <MachineModel design={live.design} getSnapshot={getSnapshot} shadows={shadows} />
-      {show.trails && <FootTrails design={live.design} getSnapshot={getSnapshot} seconds={3} />}
-      {show.contacts && <ContactMarkers getSnapshot={getSnapshot} footRadius={footRadius} />}
-      {show.com && (
-        <ComMarker getSnapshot={getSnapshot} terrain={stage.terrain} footRadius={footRadius} />
-      )}
+      <group ref={machine}>
+        <MachineModel design={live.design} getSnapshot={getSnapshot} shadows={shadows} />
+        {show.trails && <FootTrails design={live.design} getSnapshot={getSnapshot} seconds={3} />}
+        {show.contacts && <ContactMarkers getSnapshot={getSnapshot} footRadius={footRadius} />}
+        {show.com && (
+          <ComMarker getSnapshot={getSnapshot} terrain={stage.terrain} footRadius={footRadius} />
+        )}
+      </group>
       {show.ghost && view.previousGhost && (
         <GhostMachine
           design={view.previousDesign ?? live.design}

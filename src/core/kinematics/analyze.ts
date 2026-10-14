@@ -1,6 +1,7 @@
 import type { DesignDoc } from '@/core/model/types';
 import { compileMechanism, type CompiledMechanism, type CompileIssue } from './compile';
 import { sampleCycle, type CycleSample } from './solve';
+import { findGrashofLoops, grashofVariant } from './grashof';
 
 /**
  * 機構の静的・動的な解析結果(E-04 自由度、E-05 不正状態の警告)。
@@ -41,6 +42,9 @@ export interface DeadPoint {
 export type GrashofType =
   'crank-rocker' | 'double-crank' | 'double-rocker' | 'change-point' | 'triple-rocker';
 
+/** 四節ループの各節 */
+export type FourBarMember = 'ground' | 'input' | 'coupler' | 'output';
+
 export interface GrashofResult {
   /** [地節, 入力節(クランク), 中間節(カップラー), 出力節(揺動節)] のリンク id。地節は固定点同士なので null */
   links: [string | null, string, string, string];
@@ -48,6 +52,17 @@ export interface GrashofResult {
   /** s + l <= p + q */
   grashof: boolean;
   type: GrashofType;
+  /** ループのジョイント id [クランク軸 O, クランクピン A, 中間節と出力節の結合点 J, 出力節の固定点 Q] */
+  joints?: [string, string, string, string];
+  /** このループを駆動するクランクの id */
+  crank?: string;
+  /** 最短の節 */
+  shortest?: FourBarMember;
+  /**
+   * 入力節(クランク)が一回転できるか。最短が地節か入力節のグラスホフ機構(変位点を含む)なら true。
+   * 最短が出力節のとき type は 'crank-rocker' だが、回るのは出力側なので false。
+   */
+  inputCanRotate?: boolean;
 }
 
 export type AnalysisSeverity = 'info' | 'warn' | 'error';
@@ -113,6 +128,21 @@ export function analyzeMechanism(
     messages.push({ severity: 'error', key: 'analysis.noFullRotation' });
   for (const issue of compiled.issues) messages.push(issueMessage(issue));
 
+  // E-05 グラスホフ判定(同じ判定は 1 つのメッセージにまとめる)
+  const grashof = findGrashofLoops(compiled);
+  const grashofCounts = new Map<string, number>();
+  for (const g of grashof) {
+    const v = grashofVariant(g);
+    grashofCounts.set(v, (grashofCounts.get(v) ?? 0) + 1);
+  }
+  for (const [variant, count] of grashofCounts) {
+    messages.push({
+      severity: variant === 'crank-rocker' || variant === 'double-crank' ? 'info' : 'warn',
+      key: `analysis.grashof.${variant}`,
+      params: { count },
+    });
+  }
+
   return {
     dof,
     grubler: { n, j },
@@ -121,7 +151,7 @@ export function analyzeMechanism(
     fullRotation: cycle.fullRotation,
     failAngles,
     deadPoints,
-    grashof: [],
+    grashof,
     problemLinks: [...problemLinks],
     problemJoints: [...problemJoints],
     messages,

@@ -14,4 +14,14 @@ export const analysis: Record<string, string> = {
   'analysis.issue.crank-link-has-other-fixed': 'クランクが別の固定点に留められています',
   'analysis.issue.link-all-fixed': '両端が固定点のリンクは動きません',
   'analysis.issue.floating-joint': 'どこにもつながっていない部品があります',
+  'analysis.grashof.crank-rocker': 'グラスホフ判定:てこクランク(クランクは一回転できます)',
+  'analysis.grashof.double-crank': 'グラスホフ判定:両クランク(クランクも出力側も一回転できます)',
+  'analysis.grashof.double-rocker':
+    'グラスホフ判定:両てこ(中間のリンクが最短なので、クランクは一回転できません)',
+  'analysis.grashof.rocker-crank':
+    'グラスホフ判定:回るのは出力側だけです(出力側のリンクが最短なので、クランクは一回転できません)',
+  'analysis.grashof.change-point':
+    'グラスホフ判定:変位点(リンクが一直線に並ぶ瞬間があり、動く向きが定まりません)',
+  'analysis.grashof.triple-rocker':
+    'グラスホフの条件を満たしません(最短と最長のリンクの和が長すぎて、クランクは一回転できません)',
 };

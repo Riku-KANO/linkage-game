@@ -1,0 +1,118 @@
+/*
+ * ホーム側の画面(stream int-home)の置き場。HUD の部品(src/hud)を画面の端に寄せ、
+ * 中央の工房(3D)を見えるままにする(設計原則 2)。オーバーレイ層(.ak-overlay)の直下に置く。
+ */
+
+/* ---- ホームのテキストメニュー(左上) ---- */
+.app-home {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: calc(100% - 48px);
+}
+.app-home__hint {
+  margin: 0;
+  padding: 0 6px;
+  color: var(--muted, #b9a68f);
+  font: 500 11.5px/1.4 var(--font, sans-serif);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+
+/* ---- 画面の端のパネル(ステージ選択・設定・図鑑) ---- */
+.app-dock {
+  position: absolute;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100% - 48px);
+}
+.app-dock--left {
+  left: 24px;
+  align-items: flex-start;
+}
+/* ステージ選択:右に寄せ、左のジオラマ(3D)を空ける。通知(右上)とは高さをずらす */
+.app-dock--stage {
+  right: 24px;
+  top: 24px;
+  align-items: flex-end;
+}
+.app-dock--stage .hud-select {
+  width: min(600px, calc(100vw - 48px));
+}
+
+/* 設定パネルの下の小さな添え書き(自動で選んだ値の理由など) */
+.app-note {
+  max-width: 430px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(27, 19, 14, 0.78);
+  border: 1px solid rgba(201, 154, 91, 0.28);
+  color: var(--muted, #b9a68f);
+  font: 500 12px/1.5 var(--font, sans-serif);
+}
+
+/* ---- 小さなパネル(図鑑の「準備中」、サンドボックス) ---- */
+.app-card {
+  width: min(360px, calc(100vw - 48px));
+  color: var(--text, #f6eadb);
+  font-family: var(--font, sans-serif);
+}
+.app-card .mech-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px calc(var(--mech-gutter) + 10px) 14px;
+}
+.app-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-card__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.app-card__tag {
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 154, 91, 0.55);
+  color: #ecca92;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.app-card__body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.app-card__meta {
+  margin: 0;
+  color: var(--muted, #b9a68f);
+  font-size: 12px;
+}
+.app-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---- 全画面共通の通知(右上)。札だけがマウスを受け取る ---- */
+.ak-overlay > .app-notices {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  pointer-events: none;
+}
+.app-notices .hud-notice {
+  pointer-events: auto;
+}

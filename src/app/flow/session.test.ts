@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '@/app/store';
 import { syntheticWalkGhost } from '@/core/model/ghostFixture';
+import { designToJSONText } from '@/core/model/file';
 import { decodeShare, encodeShare, type SharePayload } from '@/core/model/share';
 import { createEmptyDesign, type DesignDoc } from '@/core/model/types';
 import {
@@ -501,6 +502,22 @@ describe('JSON export and import (FLOW-5)', () => {
     expect(S().slot).toBe(SANDBOX_SLOT);
     S().flush();
     expect(savedDesign(SANDBOX_SLOT)).toEqual(design);
+  });
+
+  it('reads a given file without opening the picker (settings panel, int-home)', async () => {
+    const pick = vi.fn(async () => null);
+    boot({ pickDesignFile: pick });
+    const design = { ...c1s1.reference!, name: 'ファイルの脚' };
+    const file = new Blob([designToJSONText(design)], { type: 'application/json' });
+    expect(await S().importDesign(file)).toBe(true);
+    expect(pick).not.toHaveBeenCalled();
+    expect(S().slot).toBe(SANDBOX_SLOT);
+    expect(editor().design.name).toBe('ファイルの脚');
+    S().flush();
+    expect(savedDesign(SANDBOX_SLOT)?.name).toBe('ファイルの脚');
+    // 壊れたファイルは通知して読まない
+    expect(await S().importDesign(new Blob(['{oops']))).toBe(false);
+    expect(S().notices.at(-1)).toMatchObject({ kind: 'file', severity: 'error' });
   });
 });
 

@@ -26,6 +26,25 @@ export interface AppSettings {
   /** 低性能モード:影・被写界深度・ブルームを切り、ホームの揺れを止める */
   lowPerf: boolean;
   volume: number;
+  /**
+   * (int-home で追加)ミュート。音量の値は保ったまま無音にする。省略は false。
+   * 保存と音のエンジンへの反映は src/app/settings.ts(installSettingsSync)が受け持つ。
+   */
+  muted?: boolean;
+  /**
+   * (int-home で追加)動きの軽減・低性能モードの値の出どころ。省略・'auto' は自動判定
+   * (OS の prefers-reduced-motion、GPU の測定)、'user' は設定画面で選んだ値。
+   * 自動判定の値は「利用者の選択」として保存しない。
+   */
+  sources?: SettingSources;
+}
+
+/** (int-home で追加)設定の値の出どころ */
+export type SettingSource = 'user' | 'auto';
+/** (int-home で追加)自動判定のある設定項目ごとの出どころ */
+export interface SettingSources {
+  reducedMotion?: SettingSource;
+  lowPerf?: SettingSource;
 }
 
 export interface AppState {

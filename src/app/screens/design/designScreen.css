@@ -36,24 +36,37 @@
   animation: ak-in-top 0.22s ease-out both;
 }
 
+/* 見出しの差し込み口。HUD の部品が開いたときは帯から下へはみ出してよい(紙の上に重なる) */
 .ds-slot--stage {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  overflow: hidden;
-  white-space: nowrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .ds-title {
+  flex: none;
   font-size: 16px;
   letter-spacing: 0.08em;
+}
+
+.ds-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(242, 166, 90, 0.2);
+  border: 1px solid rgba(242, 166, 90, 0.55);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .ds-sub {
   min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   color: var(--muted);
   font-size: 13px;

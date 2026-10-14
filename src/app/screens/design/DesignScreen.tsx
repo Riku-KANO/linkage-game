@@ -7,8 +7,17 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import {
+  isSandboxStage,
+  selectHintGhost,
+  selectLockedJoints,
+  selectStage,
+  useSession,
+} from '@/app/flow';
 import { useApp } from '@/app/store';
 import { MechanismEditor, type MechanismEditorProps } from '@/editor';
+import { stageNumber } from '@/hud/stageSelect';
+import { stageTextParams } from '@/game';
 import { t } from '@/i18n';
 import { BackButton, Button } from '@/scene/overlay/Panel';
 import type { ScreenOverlayProps } from '@/scene/overlay/placeholders';
@@ -32,13 +41,16 @@ import './designScreen.css';
  *   紙の外の右クリックは「戻る」
  *
  * HUD などの差し込み口(後のストリーム用。props で渡す):
- * - stageHeader:上の帯の左(戻るの右)。ステージ名・課題・制限(HUD-1)
- * - hints:上の帯の右(試走の左)。ヒント 3 段階のボタン(HUD-1 / INT-7)
- * - tutorial:画面全体に重なる層。チュートリアルの吹き出し・状況の一言(INT-7)。
- *   紙の上の点を指すときは usePaperViewport() と designToScreen() で位置を求める
+ * - stageHeader:上の帯の左(戻るの右)の 1 行(高さ 48px)。既定は「1-1 こわれた機械」と課題の文。
+ *   HUD の StageHeader(HUD-1)はたたんだ 1 行で置き、開いた中身は帯から下へ紙の上に重なってよい
+ * - hints:上の帯の右(試走の左)。ヒント 3 段階のボタン(HintPanel、HUD-1 / INT-7)。開いた中身は同上
+ * - tutorial:画面全体に重なる層(中身だけがマウスを受け取る)。チュートリアルの吹き出し・状況の一言
+ *   (INT-7)。紙の上の点を指すときは usePaperViewport() と designToScreen() で位置を求める
  * - onTestRun:試走ボタン。既定は useApp.go('testRun')。flow の試走前チェック(FLOW-2)がここに入る
- * - editor:ステージの制約(使える部品・動かせない点・ヒントの影・予算)
- * 例:overlays={{ design: () => <DesignScreen screen="design" stageHeader={<StageHeader />} /> }}
+ * - editor:エディタの制約の上書き。既定は flow のセッションの今のステージから:使える部品は
+ *   ステージの部品(チュートリアルで絞るのは吹き出しと一緒に INT-7 で渡す)、動かせない点、
+ *   開いたヒントの影、予算
+ * 例:overlays={{ design: () => <DesignScreen screen="design" stageHeader={<StageHeader … collapsed />} /> }}
  */
 export interface DesignScreenProps extends ScreenOverlayProps {
   stageHeader?: ReactNode;
@@ -56,6 +68,9 @@ export function DesignScreen({
   editor,
 }: DesignScreenProps) {
   const reduced = useApp((s) => s.settings.reducedMotion);
+  const stage = useSession(selectStage);
+  const lockedJoints = useSession(selectLockedJoints);
+  const ghost = useSession(selectHintGhost);
   const vp = usePaperViewport();
   const size = useViewportSize();
   const lay = useMemo(() => designLayout(size.width, size.height), [size.width, size.height]);
@@ -123,7 +138,15 @@ export function DesignScreen({
           {t('app.design.testRun')}
         </Button>
       </header>
-      <MechanismEditor className="ds-editor" view={view} {...editor} />
+      <MechanismEditor
+        className="ds-editor"
+        view={view}
+        allowedParts={stage?.parts}
+        lockedJoints={lockedJoints}
+        ghost={ghost}
+        budget={stage?.budget ?? null}
+        {...editor}
+      />
       <div className="ds-slot ds-slot--float" data-slot="tutorial">
         {tutorial}
       </div>
@@ -135,14 +158,24 @@ function goTestRun() {
   useApp.getState().go('testRun');
 }
 
-/** HUD の見出しが入るまでの既定:「設計」とステージ番号 */
+/** HUD の見出しが入るまでの既定:ステージの番号と名前、課題の文(サンドボックスなら「自由に設計」) */
 function DefaultStageHeader() {
-  const stageId = useApp((s) => s.stageId);
+  const stage = useSession(selectStage);
+  if (!stage || isSandboxStage(stage)) {
+    return (
+      <>
+        <strong className="ds-title">{t('app.design.title')}</strong>
+        <span className="ds-sub">{t('app.design.free')}</span>
+      </>
+    );
+  }
+  const desc = t(stage.descKey, stageTextParams(stage));
   return (
     <>
-      <strong className="ds-title">{t('app.design.title')}</strong>
-      <span className="ds-sub">
-        {stageId ? t('app.design.stage', { id: stageId }) : t('app.design.free')}
+      <span className="ds-tag">{stageNumber(stage)}</span>
+      <strong className="ds-title">{t(stage.titleKey)}</strong>
+      <span className="ds-sub" title={desc}>
+        {desc}
       </span>
     </>
   );

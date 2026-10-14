@@ -105,18 +105,32 @@ test('drag a joint on the paper, then Esc clears the selection and Esc again goe
   const badge = page.locator('.ed-canvas .ed-chips .ed-badge');
   await expect(badge).toContainText('自由度');
 
-  // 固定点でないピンをつかんで動かす
-  const pin = page.locator('.ed-joint:not(:has(.ed-ground)) .ed-pin').first();
+  // 続きからの 1-1(こわれた機械)の点はどれも動かせないので、空いた所に棒を 1 本引いてから、その端を動かす
+  const r = await paperRect(root);
+  const a = { x: r.x + r.width * 0.15, y: r.y + r.height * 0.78 };
+  const b = { x: r.x + r.width * 0.3, y: r.y + r.height * 0.86 };
+  const drag = async (p: { x: number; y: number }, q: { x: number; y: number }) => {
+    await page.mouse.move(p.x, p.y);
+    await page.mouse.down();
+    await page.mouse.move(q.x, q.y, { steps: 10 });
+    await page.mouse.up();
+  };
+  const joints = page.locator('.ed-joint');
+  const n0 = await joints.count();
+  await page.getByRole('button', { name: 'リンク', exact: true }).click();
+  await drag(a, b);
+  await expect(joints).toHaveCount(n0 + 2);
+  await page.getByRole('button', { name: '選択', exact: true }).click();
+  // 引いた棒の端(一番新しい点)をつかんで動かす
+  const pin = joints.last().locator('.ed-pin');
   const before = Number(await pin.getAttribute('cx'));
-  const b = (await pin.boundingBox())!;
-  const x = b.x + b.width / 2;
-  const y = b.y + b.height / 2;
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move(x + 24, y - 16, { steps: 10 });
-  await page.mouse.up();
-  await expect.poll(async () => Number(await pin.getAttribute('cx'))).not.toBe(before);
+  const pb = (await pin.boundingBox())!;
+  const x = pb.x + pb.width / 2;
+  const y = pb.y + pb.height / 2;
+  await drag({ x, y }, { x: x + 24, y: y - 16 });
+  await expect.poll(async () => Number(await pin.getAttribute('cx'))).toBeGreaterThan(before + 10);
   await expect(badge).toBeVisible();
+  await expect(badge).toContainText('自由度');
   await expect(page.locator('.ed-joint.is-selected')).toHaveCount(1);
 
   // 紙の上の右クリックはエディタのもの(戻らない)

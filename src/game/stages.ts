@@ -46,6 +46,14 @@ const keys = (id: StageId) => ({
   descKey: `game.stage.${id}.desc`,
 });
 
+/**
+ * 四節リンクの脚のヒント 3:揺れる棒(rocker)以外のすべて(クランク・脚先まで伸びた連結棒・右の固定点)。
+ * 点の位置が全部見えるので、残りは 1-1 で覚えた「固定点と点をつなぐ」だけになる(PLAY-3)。
+ * ヒント 2(固定点とクランク)の点もすべて含む(影は開いた中でいちばん進んだものだけ表示される)。
+ */
+const allButRocker = (ref: DesignDoc) =>
+  subDesign(ref, { links: ['crank', 'coupler'], joints: ['O4'] });
+
 // ---- 章 1:はじめの一歩(平地。四節リンクと、クランクが一回転する条件) ----
 
 const c1s1 = (): StageDef => {
@@ -156,20 +164,22 @@ const c1s3 = (): StageDef => {
       cost: [1250, 1500, 1900],
       energy: [74, 105, 150],
     },
-    hints: [
-      text(id, 1),
-      ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'rocker'] })),
-    ],
+    hints: [text(id, 1), ghost(id, 2, frameGhost(ref)), ghost(id, 3, allButRocker(ref))],
+    // 組み方(PLAY-1):クランクの先から脚先まで長い棒を引き、その途中に足した点と右の固定点をつなぐ。
+    // クランクの道具はリンクがないと使えないので、先に短い棒を引いてからクランクにする。
+    // 吹き出しの寸法(固定点は 40cm 右・20cm 上、クランク 10cm、脚先は右下)で組めば、
+    // 既定の回転数(+30rpm)のまま前へ歩いてクリアできる(e2e/playtest で確かめる)
     tutorial: [
       { key: tut(id, 1), until: { kind: 'click' } },
       { key: tut(id, 2), give: ['fixed'], until: { kind: 'place', part: 'fixed', count: 2 } },
-      { key: tut(id, 3), give: ['crank'], until: { kind: 'place', part: 'crank', count: 1 } },
-      { key: tut(id, 4), give: ['link', 'pin'], until: { kind: 'place', part: 'link', count: 2 } },
-      { key: tut(id, 5), until: { kind: 'dof', value: 1 } },
-      { key: tut(id, 6), until: { kind: 'fullRotation' } },
-      { key: tut(id, 7), until: { kind: 'click' } },
-      { key: tut(id, 8), until: { kind: 'testRun' } },
+      { key: tut(id, 3), give: ['link', 'pin'], until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 4), give: ['crank'], until: { kind: 'place', part: 'crank', count: 1 } },
+      { key: tut(id, 5), until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 6), until: { kind: 'place', part: 'link', count: 1 } },
+      { key: tut(id, 7), until: { kind: 'dof', value: 1 } },
+      { key: tut(id, 8), until: { kind: 'fullRotation' } },
+      { key: tut(id, 9), until: { kind: 'click' } },
+      { key: tut(id, 10), until: { kind: 'testRun' } },
     ],
   };
 };
@@ -199,11 +209,7 @@ const c1s4 = (): StageDef => {
       cost: [1250, 1500, 1900],
       energy: [150, 200, 300],
     },
-    hints: [
-      text(id, 1),
-      ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'coupler'] })),
-    ],
+    hints: [text(id, 1), ghost(id, 2, frameGhost(ref)), ghost(id, 3, allButRocker(ref))],
   };
 };
 
@@ -232,11 +238,7 @@ const c1s5 = (): StageDef => {
       cost: [1500, 1800, 2300],
       energy: [540, 720, 1050],
     },
-    hints: [
-      text(id, 1),
-      ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'rocker'] })),
-    ],
+    hints: [text(id, 1), ghost(id, 2, frameGhost(ref)), ghost(id, 3, allButRocker(ref))],
   };
 };
 
@@ -268,11 +270,7 @@ const c2s1 = (): StageDef => {
       cost: [1500, 1800, 2300],
       energy: [280, 370, 560],
     },
-    hints: [
-      text(id, 1),
-      ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'coupler'] })),
-    ],
+    hints: [text(id, 1), ghost(id, 2, frameGhost(ref)), ghost(id, 3, allButRocker(ref))],
   };
 };
 
@@ -424,11 +422,7 @@ const c2s5 = (): StageDef => {
       cost: [1500, 1800, 1900],
       energy: [460, 620, 920],
     },
-    hints: [
-      text(id, 1),
-      ghost(id, 2, frameGhost(ref)),
-      ghost(id, 3, subDesign(ref, { links: ['crank', 'rocker'] })),
-    ],
+    hints: [text(id, 1), ghost(id, 2, frameGhost(ref)), ghost(id, 3, allButRocker(ref))],
   };
 };
 

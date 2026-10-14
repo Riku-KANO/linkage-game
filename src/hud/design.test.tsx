@@ -214,7 +214,7 @@ describe('HintPanel', () => {
       />,
     );
     expect(screen.getByText('ヒント 1:方針')).toBeTruthy();
-    expect(screen.getByText(/右上の固定点と脚をつなごう/)).toBeTruthy();
+    expect(screen.getByText(/右上の固定点と、三角の板の右の角を棒でつなごう/)).toBeTruthy();
     expect(screen.getByText('影の 2 つの点を、リンクでつなぎます')).toBeTruthy();
     const sw = screen.getByRole('switch', { name: 'ヒント 2:部品の配置を図面に重ねる' });
     expect(sw.getAttribute('aria-checked')).toBe('false');
@@ -306,7 +306,7 @@ describe('TutorialBubble', () => {
   it('partsGivenUpTo:前のステップの分と合わせ、表示順', () => {
     const c1s3 = getStage('c1-s3')!.tutorial!;
     expect(partsGivenUpTo(c1s3, 0)).toEqual([]);
-    expect(partsGivenUpTo(c1s3, 2)).toEqual(['fixed', 'crank']);
+    expect(partsGivenUpTo(c1s3, 2)).toEqual(['link', 'pin', 'fixed']);
     expect(partsGivenUpTo(c1s3, 7)).toEqual(['link', 'pin', 'fixed', 'crank']);
   });
 });

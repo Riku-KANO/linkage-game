@@ -1,2 +1,99 @@
 /** result モジュールの文言。担当モジュールだけがこのファイルを編集する */
-export const result: Record<string, string> = {};
+export const result: Record<string, string> = {
+  'result.region': '試走の結果',
+  'result.headline.cleared': 'クリア!',
+  'result.headline.failed': '失敗',
+  'result.stage': 'ステージ {chapter}-{order} {title}',
+  'result.skipHint': 'クリックかキーでスキップ',
+
+  // 失敗理由(game が理由のキーを渡さなかったときの既定)
+  'result.reasonLabel': '原因',
+  'result.reason.fallen': '転倒した',
+  'result.reason.timeout': '時間切れ',
+  'result.reason.stalled': 'トルク不足',
+  'result.reason.jammed': '機構が詰まった',
+  'result.reason.overBudget': '予算オーバー',
+  'result.reason.invalid': '機構が組み立てられない',
+  'result.reason.unknown': 'ゴールに届かなかった',
+  'result.distance': '進んだ距離 {distance} / {total} m',
+  'result.replayFall': '転倒の瞬間を見る',
+
+  // スコア 4 軸
+  'result.axis.time': '到達時間',
+  'result.axis.parts': '部品数',
+  'result.axis.cost': 'コスト',
+  'result.axis.energy': '消費エネルギー',
+  'result.unit.time': '秒',
+  'result.unit.parts': '個',
+  'result.unit.cost': '',
+  'result.unit.energy': 'J',
+
+  // メダル
+  'result.medal.gold': '金',
+  'result.medal.silver': '銀',
+  'result.medal.bronze': '銅',
+  'result.medal.none': 'なし',
+  'result.medalName.gold': '金メダル',
+  'result.medalName.silver': '銀メダル',
+  'result.medalName.bronze': '銅メダル',
+  'result.medalName.none': 'メダルなし',
+  'result.thresholds': '{gold}・{silver}・{bronze} 以下でそれぞれ金・銀・銅',
+  'result.meterAria': '{axis} {value}{unit}',
+
+  // 相手の記録との比較
+  'result.opponent': '相手',
+  'result.opponentValue': '相手 {value}{unit}',
+  'result.win': '勝ち',
+  'result.lose': '負け',
+  'result.tie': '引き分け',
+  'result.versus.title': '相手の記録と比べて',
+  'result.versus.score': '{wins}勝 {losses}敗 {ties}分',
+  'result.versus.otherStage': '別のステージの記録です',
+  'result.versus.youNotCleared': 'クリアした相手の勝ち',
+  'result.versus.themNotCleared': '相手は未クリア',
+
+  // 共有
+  'result.share.copy': '共有リンクをコピー',
+  'result.share.copying': 'リンクを作っています…',
+  'result.share.copied': 'コピーしました。相手はあなたのゴーストと競えます',
+  'result.share.manual': 'コピーできませんでした。選んでコピーしてください',
+  'result.share.error': '共有リンクを作れませんでした',
+  'result.share.urlLabel': '共有リンク',
+
+  // 行動
+  'result.action.back': '設計に戻る',
+  'result.action.next': '次のステージ',
+  'result.action.retry': 'もう一度',
+
+  // 開発用プレイグラウンド(?dev=result)
+  'result.dev.title': '結果画面プレイグラウンド',
+  'result.dev.view.result': '結果画面',
+  'result.dev.view.kit': '機構 UI 部品',
+  'result.dev.case': '見本',
+  'result.dev.case.clearedMixed': 'クリア(金・銀・銅・なし)',
+  'result.dev.case.clearedGold': 'クリア(すべて金)',
+  'result.dev.case.failedFall': '失敗:転倒',
+  'result.dev.case.failedTorque': '失敗:トルク不足',
+  'result.dev.case.versus': '対戦:相手の記録あり',
+  'result.dev.case.versusUncleared': '対戦:相手が未クリア',
+  'result.dev.reducedMotion': '動きを減らす',
+  'result.dev.short': '短縮版(2 回目以降)',
+  'result.dev.replay': '最初から再生',
+  'result.dev.log': '呼ばれたコールバック',
+  'result.dev.logEmpty': '(まだありません)',
+  'result.dev.stageTitle': '段差をまたぐ',
+  'result.dev.kit.buttons': 'LinkButton',
+  'result.dev.kit.meter': 'GearMeter',
+  'result.dev.kit.press': 'PressStamp',
+  'result.dev.kit.panel': 'LinkagePanel',
+  'result.dev.kit.value': '値',
+  'result.dev.kit.spin': '回す',
+  'result.dev.kit.stamp': '打つ',
+  'result.dev.kit.toggle': '開く/閉じる',
+  'result.dev.kit.panelBody':
+    '伸縮リンクで開くパネル。中身の配置は最初から決まっていて、動くのは clip-path と transform だけです。',
+  'result.dev.kit.primary': '主ボタン',
+  'result.dev.kit.secondary': '木の板',
+  'result.dev.kit.quiet': '控えめ',
+  'result.dev.kit.disabled': '押せない',
+};

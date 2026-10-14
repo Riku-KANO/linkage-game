@@ -1,0 +1,462 @@
+/*
+ * 機構で動く UI 部品(RS-4)。色は夕暮れの工房:木・真鍮・紙・鋼。
+ * 動かすのは transform・clip-path・SVG の属性だけにして、レイアウトをずらさない。
+ */
+:root {
+  --mech-wood-0: #1d140d;
+  --mech-wood-1: #2a1c13;
+  --mech-wood-2: #35251a;
+  --mech-wood-3: #46321f;
+  --mech-brass: #c99a5b;
+  --mech-brass-hi: #e8c287;
+  --mech-brass-lo: #7d5a32;
+  --mech-steel: #9a9da2;
+  --mech-steel-lo: #5d6166;
+  --mech-paper: var(--paper, #efe6d2);
+  --mech-ink: var(--ink, #2b2118);
+  --mech-gold: #e9b748;
+  --mech-gold-lo: #9a7015;
+  --mech-silver: #d3d8de;
+  --mech-silver-lo: #848b94;
+  --mech-bronze: #c9844d;
+  --mech-bronze-lo: #7a4822;
+  --mech-ghost: #8cc3d6;
+  --mech-ghost-ink: #2f7591;
+  --mech-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ---- LinkButton ---- */
+
+.mech-btn {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 0;
+  padding: 0 0 12px; /* 天板と台の隙間 8px + 台 4px */
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.mech-btn:focus-visible {
+  outline: none;
+}
+.mech-btn__base {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #6b4c2c 0%, #3a2817 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 194, 135, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.mech-btn__jack {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  overflow: visible;
+  pointer-events: none;
+}
+.mech-btn__bars {
+  fill: none;
+  stroke: var(--mech-brass-lo);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.mech-btn__pins {
+  fill: var(--mech-brass-hi);
+}
+.mech-btn__cap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 18px;
+  border-radius: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  will-change: transform;
+  transition:
+    box-shadow 0.12s,
+    filter 0.12s;
+}
+.mech-btn--sm {
+  padding-bottom: 12px;
+}
+.mech-btn--sm .mech-btn__cap {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+.mech-btn--primary .mech-btn__cap {
+  background: linear-gradient(180deg, #f7c886 0%, #e9a457 55%, #d98d41 100%);
+  color: #2a1808;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(122, 64, 18, 0.35),
+    0 3px 7px rgba(0, 0, 0, 0.4);
+}
+.mech-btn--secondary .mech-btn__cap {
+  background: linear-gradient(180deg, #5e4331 0%, #4b3424 100%);
+  color: var(--text, #f6eadb);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 233, 200, 0.16),
+    inset 0 0 0 1px rgba(201, 154, 91, 0.32),
+    0 3px 7px rgba(0, 0, 0, 0.4);
+}
+.mech-btn--quiet .mech-btn__cap {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted, #b9a68f);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.mech-btn:hover:not(:disabled) .mech-btn__cap {
+  filter: brightness(1.08);
+}
+.mech-btn[data-pressed] .mech-btn__cap {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.45);
+}
+.mech-btn:focus-visible .mech-btn__cap {
+  outline: 2px solid var(--accent, #f2a65a);
+  outline-offset: 3px;
+}
+.mech-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ---- GearMeter ---- */
+
+.mech-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.mech-meter__dial {
+  display: block;
+  width: 150px;
+  height: 86px;
+  overflow: hidden;
+}
+.mech-gear {
+  stroke-linejoin: round;
+}
+.mech-gear--big {
+  fill: var(--mech-brass-lo);
+  stroke: #5a3f20;
+  stroke-width: 0.8;
+}
+.mech-gear--pinion {
+  fill: var(--mech-brass);
+  stroke: var(--mech-brass-lo);
+  stroke-width: 0.8;
+}
+.mech-gear__hub {
+  fill: var(--mech-brass-lo);
+}
+.mech-gear__hole {
+  fill: var(--mech-wood-1);
+}
+.mech-gear__axle {
+  fill: var(--mech-wood-0);
+}
+.mech-meter__face {
+  fill: var(--mech-paper);
+  stroke: var(--mech-brass);
+  stroke-width: 2;
+}
+.mech-meter__band {
+  fill: none;
+  stroke-width: 6;
+}
+.mech-meter__band.mech-tone--gold {
+  stroke: var(--mech-gold);
+}
+.mech-meter__band.mech-tone--silver {
+  stroke: var(--mech-silver-lo);
+}
+.mech-meter__band.mech-tone--bronze {
+  stroke: var(--mech-bronze);
+}
+.mech-meter__band.mech-tone--none {
+  stroke: rgba(43, 33, 24, 0.14);
+}
+.mech-meter__ticks {
+  fill: none;
+  stroke: var(--mech-ink);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.mech-meter__scale {
+  font:
+    600 7.5px var(--mech-mono),
+    monospace;
+  fill: var(--mech-ink);
+  opacity: 0.55;
+}
+.mech-meter__needle {
+  stroke: #b33a22;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.mech-meter__ghost {
+  stroke: var(--mech-ghost-ink);
+  stroke-width: 2;
+  stroke-dasharray: 3 2.2;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.mech-meter__hub {
+  fill: var(--mech-brass);
+  stroke: var(--mech-brass-lo);
+  stroke-width: 1;
+}
+.mech-meter__plate {
+  fill: var(--mech-wood-0);
+}
+.mech-meter__plate-edge {
+  stroke: var(--mech-brass-lo);
+  stroke-width: 1;
+}
+
+/* 数字ドラム(オドメーター) */
+.mech-odo {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 24px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: #120c08;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(201, 154, 91, 0.35);
+  font-family: var(--mech-mono);
+  font-size: 15px;
+  line-height: 1;
+}
+.mech-odo__cell {
+  display: inline-flex;
+  align-items: center;
+}
+.mech-odo__drum {
+  position: relative;
+  display: inline-block;
+  width: 0.74em;
+  height: 1.25em;
+  overflow: hidden;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #241b15 0%, #43372b 50%, #241b15 100%);
+}
+.mech-odo__strip {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+.mech-odo__digit {
+  display: block;
+  height: 1.25em;
+  line-height: 1.25em;
+  text-align: center;
+  color: #f6eadb;
+  font-variant-numeric: tabular-nums;
+}
+.mech-odo__drum--dim .mech-odo__digit {
+  color: rgba(246, 234, 219, 0.3);
+}
+.mech-odo__dot {
+  width: 0.32em;
+  color: #f6eadb;
+  text-align: center;
+}
+.mech-odo__unit {
+  margin-left: 5px;
+  font-family: var(--font, sans-serif);
+  font-size: 12px;
+  color: var(--muted, #b9a68f);
+}
+
+/* ---- PressStamp ---- */
+
+.mech-press svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.mech-press__post {
+  fill: var(--mech-steel-lo);
+}
+.mech-press__beam {
+  fill: var(--mech-steel);
+}
+.mech-press__guide {
+  fill: rgba(0, 0, 0, 0.35);
+}
+.mech-press__anvil {
+  fill: var(--mech-steel-lo);
+}
+.mech-press__ram {
+  fill: var(--mech-steel);
+  stroke: var(--mech-steel-lo);
+  stroke-width: 1;
+}
+.mech-press__die {
+  fill: var(--mech-brass-lo);
+}
+.mech-press__wheel {
+  fill: var(--mech-wood-3);
+  stroke: var(--mech-brass);
+  stroke-width: 1.4;
+}
+.mech-press__rod {
+  stroke: var(--mech-brass);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+.mech-press__pin {
+  fill: var(--mech-brass-hi);
+  stroke: var(--mech-brass-lo);
+  stroke-width: 0.8;
+}
+.mech-press__axle {
+  fill: var(--mech-wood-0);
+}
+.mech-press__medal {
+  stroke-width: 1.5;
+}
+.mech-press__medal--blank {
+  fill: #3e3027;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-dasharray: 2.5 2;
+}
+.mech-press__medal.mech-tone--gold {
+  fill: var(--mech-gold);
+  stroke: var(--mech-gold-lo);
+}
+.mech-press__medal.mech-tone--silver {
+  fill: var(--mech-silver);
+  stroke: var(--mech-silver-lo);
+}
+.mech-press__medal.mech-tone--bronze {
+  fill: var(--mech-bronze);
+  stroke: var(--mech-bronze-lo);
+}
+.mech-press__medal.mech-tone--none {
+  fill: #3e3027;
+  stroke: rgba(255, 255, 255, 0.16);
+}
+.mech-press__medal-rim {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.22);
+  stroke-width: 1;
+}
+.mech-press__glyph {
+  font:
+    800 16px var(--font, sans-serif),
+    sans-serif;
+  fill: rgba(43, 26, 10, 0.8);
+}
+.mech-press__glyph--none {
+  font-weight: 600;
+  fill: rgba(246, 234, 219, 0.4);
+}
+.mech-press__ring {
+  fill: none;
+  stroke-width: 2;
+}
+.mech-press__ring.mech-tone--gold {
+  stroke: var(--mech-gold);
+}
+.mech-press__ring.mech-tone--silver {
+  stroke: var(--mech-silver);
+}
+.mech-press__ring.mech-tone--bronze {
+  stroke: var(--mech-bronze);
+}
+
+/* ---- LinkagePanel ---- */
+
+.mech-panel {
+  position: relative;
+}
+.mech-panel__shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  transform-origin: top;
+  pointer-events: none;
+}
+.mech-panel__body {
+  position: relative;
+  padding: 16px calc(var(--mech-gutter) + 8px);
+  border-radius: 10px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(242, 166, 90, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--mech-wood-1) 0%, var(--mech-wood-0) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 154, 91, 0.22),
+    inset 0 1px 0 rgba(255, 233, 200, 0.06);
+}
+.mech-panel__tongs {
+  position: absolute;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.mech-panel__tongs--left {
+  left: 1px;
+}
+.mech-panel__tongs--right {
+  right: 1px;
+}
+.mech-panel__bars {
+  fill: none;
+  stroke: var(--mech-brass);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+.mech-panel__pins {
+  fill: var(--mech-brass-hi);
+}
+.mech-panel__beam {
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  right: -4px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--mech-brass-hi), var(--mech-brass-lo));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.mech-panel__beam--bottom {
+  will-change: transform;
+}
+.mech-panel--fade {
+  animation: mech-fade-in 0.3s ease-out both;
+}
+@keyframes mech-fade-in {
+  from {
+    opacity: 0;
+  }
+}

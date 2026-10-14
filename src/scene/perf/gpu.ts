@@ -36,15 +36,16 @@ export function median(xs: readonly number[]): number {
 
 /**
  * GPU の名前と、起動直後に測ったフレーム時間(ms)から低性能モードを選ぶ。
- * サンプルが足りなければ名前だけで決める。
+ * サンプルが minSamples に足りなければ名前だけで決める。
  */
 export function classifyGpu(
   renderer: string | null,
   frameTimesMs: readonly number[],
+  minSamples = MIN_SAMPLES,
 ): PerfDecision {
   if (renderer && SOFTWARE_RENDERERS.test(renderer)) return { lowPerf: true, reason: 'software' };
   const valid = frameTimesMs.filter((x) => Number.isFinite(x) && x > 0 && x < 1000);
-  if (valid.length >= MIN_SAMPLES) {
+  if (valid.length >= Math.max(1, minSamples)) {
     const m = median(valid);
     return m > SLOW_FRAME_MS
       ? { lowPerf: true, reason: 'slow', medianMs: m }

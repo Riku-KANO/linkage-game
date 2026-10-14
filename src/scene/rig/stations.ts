@@ -48,14 +48,15 @@ const STATIC: Record<Exclude<Screen, 'design' | 'testRun' | 'result'>, StationSp
   },
   home: { position: [0.55, 2.45, 4.3], target: [0.15, 1.05, -1.0], fov: 42, minHFov: 70 },
   stageSelect: {
-    position: [COURSE_MODEL.center[0], 2.08, COURSE_MODEL.center[2] + 1.5],
-    target: [COURSE_MODEL.center[0], COURSE_MODEL.center[1] + 0.02, COURSE_MODEL.center[2] + 0.05],
+    position: [COURSE_MODEL.center[0], 2.3, COURSE_MODEL.center[2] + 1.95],
+    target: [COURSE_MODEL.center[0], COURSE_MODEL.center[1] + 0.02, COURSE_MODEL.center[2]],
     fov: 40,
     minHFov: 66,
   },
+  // 棚を画面の右寄りに置き、左のパネルと重ならないようにする
   zukan: {
-    position: [SHELF.center[0] - 1.55, 1.3, SHELF.center[2] + 0.1],
-    target: [SHELF.center[0] - 0.1, 1.05, SHELF.center[2] + 0.1],
+    position: [SHELF.center[0] - 1.95, 1.3, SHELF.center[2] - 0.35],
+    target: [SHELF.center[0] - 0.1, 0.98, SHELF.center[2] - 0.35],
     fov: 46,
     minHFov: 60,
   },

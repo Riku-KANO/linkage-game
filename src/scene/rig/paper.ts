@@ -14,7 +14,7 @@ export interface Insets {
 }
 
 /** 設計画面で紙の周りに空ける余白(CSS px)。道具パネルの置き場所 */
-export const DEFAULT_PAPER_INSETS: Insets = { top: 64, right: 40, bottom: 40, left: 40 };
+export const DEFAULT_PAPER_INSETS: Insets = { top: 80, right: 40, bottom: 40, left: 40 };
 
 /** 設計画面のカメラの紙からの高さ(m)。平行投影なので見え方には影響せず、near/far だけに効く */
 export const DESIGN_CAMERA_HEIGHT = 1.1;

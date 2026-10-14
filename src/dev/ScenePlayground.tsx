@@ -11,11 +11,30 @@ import { setLowPerfManually } from '@/scene/perf/PerfProbe';
  * 今の画面、遷移の進行、fps、低性能モード・reduced-motion の切り替え、各遷移を試すボタン。
  */
 export default function ScenePlayground() {
+  // 自動確認・コンソール操作用の入口(開発用のページだけ)
+  useEffect(() => {
+    window.__sceneDev = { useApp, useSceneUi, rigDebug, rigSignals, trigger, jump };
+    return () => {
+      delete window.__sceneDev;
+    };
+  }, []);
   return (
     <GameShell>
       <DebugPanel />
     </GameShell>
   );
+}
+
+declare global {
+  interface Window {
+    __sceneDev?: Record<string, unknown>;
+  }
+}
+
+/** 遷移なしでその画面へ瞬間移動する(履歴はホームから来たことにする) */
+function jump(screen: Screen) {
+  const history: Screen[] = screen === 'home' || screen === 'boot' ? [] : ['home'];
+  useApp.setState({ screen, transition: null, history });
 }
 
 /** 遷移 id の出発点へ瞬間移動してから、その遷移を始める */

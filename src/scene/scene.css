@@ -72,7 +72,7 @@
 .ak-menu {
   position: absolute;
   left: 28px;
-  bottom: 32px;
+  top: 28px;
   padding: 14px 10px 10px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(43, 30, 22, 0.82), rgba(27, 19, 14, 0.82));

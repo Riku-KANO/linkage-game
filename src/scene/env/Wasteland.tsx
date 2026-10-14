@@ -249,8 +249,6 @@ function Windmill() {
     parts.push(box([0.18, 0.18, 0.9], [0, h + 0.2, -0.1], PALETTE.metalDark));
     // 尾翼
     parts.push(box([0.03, 0.7, 1.0], [0, h + 0.25, -0.95], PALETTE.red));
-    // 水槽
-    parts.push(cylinder(0.9, 0.9, 0.8, [2.0, 0.4, 0.6], PALETTE.woodDark, 10));
     const bladeParts: Part[] = [];
     const n = 14;
     for (let i = 0; i < n; i++) {

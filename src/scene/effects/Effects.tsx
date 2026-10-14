@@ -44,9 +44,9 @@ function Composer() {
     e.cocMaterial.focusRange = 2.6;
   });
   return (
-    <EffectComposer multisampling={4} enableNormalPass={false}>
+    <EffectComposer multisampling={4} enableNormalPass={false} autoClear={false}>
       <DepthOfField ref={dof} resolutionScale={0.5} />
-      <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.85} luminanceSmoothing={0.25} />
+      <Bloom mipmapBlur intensity={0.7} luminanceThreshold={1.0} luminanceSmoothing={0.3} />
       <Outline
         visibleEdgeColor={0xffb35c}
         hiddenEdgeColor={0x8a5226}

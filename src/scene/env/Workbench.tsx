@@ -105,8 +105,8 @@ function buildBench() {
     );
   }
   props.push(box([0.05, 0.015, 0.025], [-0.08, y + 0.0075, -0.62], '#d98e9a', [0, 0.4, 0]));
-  props.push(cylinder(0.045, 0.04, 0.1, [-1.02, y + 0.05, -0.55], '#d8cdb8', 10));
-  props.push(cylinder(0.038, 0.038, 0.004, [-1.02, y + 0.1, -0.55], '#3a2416', 10));
+  props.push(cylinder(0.045, 0.04, 0.1, [-0.05, y + 0.05, -1.3], '#d8cdb8', 10));
+  props.push(cylinder(0.038, 0.038, 0.004, [-0.05, y + 0.1, -1.3], '#3a2416', 10));
   // 用紙の四隅のマスキングテープ
   const [px, , pz] = PAPER_WORLD.center;
   for (const sx of [-1, 1]) {
@@ -160,7 +160,8 @@ function Drafter() {
   const L = 0.45;
   const Y = BENCH.top + 0.03;
   const [bx, , bz] = DRAFTER_BASE;
-  const rest = { x: -1.02, z: -0.74 };
+  // 休ませる位置:紙の左下の外(定規も紙に掛からない)
+  const rest = { x: -1.06, z: -0.5 };
 
   useFrame((_, dt) => {
     const a = activity.current ?? 0;

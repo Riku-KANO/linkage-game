@@ -48,6 +48,11 @@ describe('classifyGpu', () => {
     expect(classifyGpu(null, xs).lowPerf).toBe(false);
   });
 
+  it('測る時間を打ち切ったとき:少ないサンプルでもとても遅ければ低性能', () => {
+    expect(classifyGpu(null, frames(120, 8), 8).lowPerf).toBe(true);
+    expect(classifyGpu(null, frames(16, 8), 8).lowPerf).toBe(false);
+  });
+
   it('サンプルが少なければ名前だけで決める', () => {
     expect(classifyGpu(null, frames(40, MIN_SAMPLES - 1)).lowPerf).toBe(false);
   });

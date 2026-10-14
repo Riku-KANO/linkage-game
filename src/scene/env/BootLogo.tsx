@@ -41,8 +41,9 @@ export function BootLogo() {
   const barRef = useRef<InstancedMesh>(null);
   const pinRef = useRef<InstancedMesh>(null);
   const crank = useRef<Group>(null);
-  // start は最初の描画フレームで決める(シェーダーのコンパイル待ちで演出が欠けないように)
-  const clock = useRef({ start: NaN, done: false });
+  // 経過時間はフレームごとに(上限つきで)足す。最初のフレームのシェーダーのコンパイル待ちなどで
+  // 演出が飛ばないように。skipped は飛ばされた(または起動以外で始まった)とき
+  const clock = useRef({ t: 0, skipped: false, done: false });
   const { barGeo, pinGeo, sign } = useMemo(() => {
     const pinGeo = new CylinderGeometry(1, 1, 1, 10);
     pinGeo.rotateX(Math.PI / 2);
@@ -67,7 +68,7 @@ export function BootLogo() {
     () =>
       useApp.subscribe((s, prev) => {
         if (s.screen === 'boot' && prev.screen !== 'boot') {
-          clock.current = { start: NaN, done: false };
+          clock.current = { t: 0, skipped: false, done: false };
         }
       }),
     [],
@@ -76,24 +77,23 @@ export function BootLogo() {
   const ox = -(LOGO_WIDTH * U + 0.22) / 2;
   const oy = -U / 2;
 
-  useFrame(() => {
+  useFrame((_, dt) => {
     const app = useApp.getState();
     const c = clock.current;
-    if (Number.isNaN(c.start)) c.start = performance.now();
     if (app.screen === 'boot') {
       if (rigSignals.skipBoot) {
         rigSignals.skipBoot = false;
-        c.start = -Infinity;
+        c.skipped = true;
       }
-    } else if (!c.done && c.start !== -Infinity) {
+    } else if (!c.done && c.t < TOTAL) {
       // 起動以外の画面で始まった(開発用に直接開いたなど)ときは完成形で表示
-      c.start = -Infinity;
+      c.skipped = true;
     }
-    const t = (performance.now() - c.start) / 1000;
+    c.t = c.skipped ? Infinity : c.t + Math.min(dt, 1 / 20);
+    const t = c.t;
     if (app.screen === 'boot' && t >= TOTAL && !app.transition) {
-      const skipped = c.start === -Infinity;
       app.go('home');
-      if (skipped) rigSignals.skip = true;
+      if (c.skipped) rigSignals.skip = true;
     }
     if (c.done && t > TOTAL + 0.5) return;
     c.done = t > TOTAL + 0.5;

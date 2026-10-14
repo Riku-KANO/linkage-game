@@ -5,7 +5,6 @@ export const world: Record<string, string> = {
   'world.marker.locked': 'まだ遊べません',
   'world.marker.playable': '挑戦できます',
   'world.marker.cleared': 'クリア',
-  'world.marker.here': 'ここにいます',
   'world.marker.medal': '{axis}:{medal}',
 
   // 棚の模型・図鑑の額

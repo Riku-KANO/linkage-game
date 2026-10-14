@@ -239,12 +239,13 @@ export function buildDioramaTerrain(layout: DioramaLayout): BufferGeometry {
     const z = (rnd() - 0.5) * 0.55;
     if (layout.plateaus.some((p) => Math.hypot(p.x - x, p.z - z) < p.r * 1.12 + 0.02)) continue;
     if (nearRoute(route, x, z, 0.03)) continue;
+    const h = 0.012 + rnd() * 0.015;
     parts.push(
       cylinder(
         0.008,
         0.015,
-        0.012 + rnd() * 0.015,
-        [x, 0.012, z],
+        h,
+        [x, SAND_TOP + h / 2 - 0.002, z],
         rnd() > 0.5 ? PALETTE.rust : PALETTE.green,
         5,
       ),

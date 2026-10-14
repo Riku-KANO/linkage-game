@@ -22,7 +22,7 @@ import { textTexture } from './textures';
  */
 export const ZUKAN_FRAMES = {
   columns: [2.45, 2.95, 3.45],
-  rows: [2.24, 1.86],
+  rows: [2.62, 2.25],
   width: 0.34,
   height: 0.28,
   z: ROOM.zBack + ROOM.wallThickness / 2,

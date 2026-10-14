@@ -65,6 +65,14 @@ describe('LinkButton', () => {
     expect(sounds).toEqual(['press', 'release']);
   });
 
+  it('押したまま押せなくなったら戻る', () => {
+    const { rerender } = render(<LinkButton>押す</LinkButton>);
+    fireEvent.keyDown(screen.getByRole('button'), { key: 'Enter' });
+    expect(screen.getByRole('button').hasAttribute('data-pressed')).toBe(true);
+    rerender(<LinkButton disabled>押す</LinkButton>);
+    expect(screen.getByRole('button').hasAttribute('data-pressed')).toBe(false);
+  });
+
   it('押せないときは沈まず鳴らない', () => {
     render(<LinkButton disabled>押す</LinkButton>);
     fireEvent.pointerDown(screen.getByRole('button'), { button: 0 });
@@ -193,6 +201,22 @@ describe('LinkagePanel', () => {
     expect(body.style.clipPath).toBe('');
     expect(onOpened).toHaveBeenCalledTimes(1);
     expect(container.querySelector('[data-opened]')).not.toBeNull();
+  });
+
+  it('開ききったあとにスキップしても onOpened は 1 回だけ', () => {
+    const onOpened = vi.fn();
+    const { rerender } = render(
+      <LinkagePanel duration={0.2} onOpened={onOpened}>
+        <p>中身</p>
+      </LinkagePanel>,
+    );
+    advance(400);
+    rerender(
+      <LinkagePanel duration={0.2} onOpened={onOpened} skip>
+        <p>中身</p>
+      </LinkagePanel>,
+    );
+    expect(onOpened).toHaveBeenCalledTimes(1);
   });
 
   it('動きの軽減ではフェードだけで、最初から開いている', () => {

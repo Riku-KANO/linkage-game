@@ -192,8 +192,8 @@ export function GearMeter({
         <line className="mech-meter__needle" x1={CX} y1={CY} x2={f2(nx)} y2={f2(ny)} />
         <circle className="mech-meter__hub" cx={CX} cy={CY} r={4.5} />
         <circle className="mech-gear__axle" cx={CX} cy={CY} r={1.6} />
-        <rect className="mech-meter__plate" x={0} y={H - 9} width={W} height={9} />
-        <line className="mech-meter__plate-edge" x1={0} y1={H - 8.5} x2={W} y2={H - 8.5} />
+        <rect className="mech-meter__plate" x={4} y={H - 9} width={W - 8} height={9} rx={2.5} />
+        <line className="mech-meter__plate-edge" x1={6.5} y1={H - 8.5} x2={W - 6.5} y2={H - 8.5} />
       </svg>
       <div className="mech-odo" aria-hidden>
         {drums.map((p, i) => (

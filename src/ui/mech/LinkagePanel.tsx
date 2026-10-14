@@ -61,13 +61,19 @@ export function LinkagePanel({
   const [p, setP] = useState(() => (open && jump ? 1 : 0));
   const pRef = useRef(p);
   const cbs = useRef({ onOpened, onClosed, delay, duration });
+  /** 最後に知らせた状態(開ききった・閉じきったを 1 回だけ知らせる) */
+  const notified = useRef<number | null>(null);
   useLayoutEffect(() => {
     cbs.current = { onOpened, onClosed, delay, duration };
   });
 
   useEffect(() => {
     const target = open ? 1 : 0;
-    const done = () => (open ? cbs.current.onOpened : cbs.current.onClosed)?.();
+    const done = () => {
+      if (notified.current === target) return;
+      notified.current = target;
+      (open ? cbs.current.onOpened : cbs.current.onClosed)?.();
+    };
     if (jump) {
       pRef.current = target;
       setP(target);

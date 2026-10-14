@@ -72,6 +72,14 @@ export function LinkButton({
   const pressedRef = useRef(false);
   const x = usePressMotion(pressed, instant);
 
+  // 押したまま押せなくなったとき(押した結果で disabled になるなど)は黙って戻す
+  useEffect(() => {
+    if (disabled && pressedRef.current) {
+      pressedRef.current = false;
+      setPressed(false);
+    }
+  }, [disabled]);
+
   const press = () => {
     if (disabled || pressedRef.current) return;
     pressedRef.current = true;

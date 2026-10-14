@@ -257,3 +257,24 @@ export function stepSpring(
 export function springAtRest(s: SpringState, target: number, eps = 1e-3): boolean {
   return Math.abs(s.x - target) < eps && Math.abs(s.v) < eps * 10;
 }
+
+/**
+ * ボタンの天板と台をつなぐ横向きの伸縮リンク。隙間 gap が狭まる(押し込む)ほど横に伸びる。
+ * 座標は x の中心 0、y = 0 が天板の下面、y = gap が台の上面。scissorGeometry を横に倒したもの。
+ */
+export function buttonJack(
+  gap: number,
+  cells: number,
+  bar: number,
+): { length: number; bars: ScissorGeometry['bars']; pins: ScissorGeometry['pins'] } {
+  const g = clamp(gap, 0, bar);
+  const step = Math.sqrt(Math.max(0, bar * bar - g * g));
+  const s = scissorGeometry(step * cells, cells, bar, g / 2);
+  const length = s.cellHeight * Math.max(1, Math.round(cells));
+  const swap = (x: number, y: number): [number, number] => [y - length / 2, x];
+  return {
+    length,
+    bars: s.bars.map(([x1, y1, x2, y2]) => [...swap(x1, y1), ...swap(x2, y2)]),
+    pins: s.pins.map(([x, y]) => swap(x, y)),
+  };
+}

@@ -3,6 +3,7 @@ import { SPRINGS } from '@/ui/tokens';
 import {
   PRESS_IMPACT,
   buttonGap,
+  buttonJack,
   dialAngle,
   digitCount,
   gearPath,
@@ -256,5 +257,29 @@ describe('buttonGap', () => {
     expect(buttonGap(1)).toBeLessThan(buttonGap(0));
     expect(buttonGap(5)).toBe(buttonGap(1.2));
     expect(buttonGap(-5)).toBe(buttonGap(-0.3));
+  });
+});
+
+describe('buttonJack(ボタンの下の伸縮リンク)', () => {
+  it('棒の長さは一定で、天板(y = 0)から台(y = gap)までをつなぐ', () => {
+    const j = buttonJack(8, 3, 12);
+    for (const [x1, y1, x2, y2] of j.bars) {
+      expect(Math.hypot(x2 - x1, y2 - y1)).toBeCloseTo(12);
+      expect(Math.min(y1, y2)).toBeCloseTo(0);
+      expect(Math.max(y1, y2)).toBeCloseTo(8);
+    }
+    const xs = j.pins.map((p) => p[0]);
+    expect(Math.min(...xs)).toBeCloseTo(-j.length / 2);
+    expect(Math.max(...xs)).toBeCloseTo(j.length / 2);
+  });
+  it('押し込む(隙間が狭まる)ほど横に伸びる', () => {
+    expect(buttonJack(3.5, 3, 12).length).toBeGreaterThan(buttonJack(8, 3, 12).length);
+  });
+});
+
+describe('niceCeil(細かい刻み)', () => {
+  it('刻みを指定できる', () => {
+    expect(niceCeil(11.2, [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8])).toBeCloseTo(12);
+    expect(niceCeil(85, [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8])).toBe(100);
   });
 });

@@ -82,8 +82,6 @@ export class Walker implements WalkerSim {
   private poses: Float64Array[];
   private next: Float64Array[];
   private rates: Float64Array[];
-  private readonly scratchA: Float64Array;
-  private readonly scratchB: Float64Array;
   /** 脚の点の |dp/dθ| の最大(cm/rad) */
   private maxRate = 0;
 
@@ -163,8 +161,6 @@ export class Walker implements WalkerSim {
     this.poses = this.instances.map(() => new Float64Array(n2));
     this.next = this.instances.map(() => new Float64Array(n2));
     this.rates = this.instances.map(() => new Float64Array(n2));
-    this.scratchA = new Float64Array(n2);
-    this.scratchB = new Float64Array(n2);
 
     const nC = this.nC;
     this.cPos = new Float64Array(nC * 3);
@@ -292,14 +288,7 @@ export class Walker implements WalkerSim {
   private updateRates(): void {
     let max = 0;
     this.instances.forEach((inst, k) => {
-      const m = poseRate(
-        this.mechs[k]!,
-        this.theta + inst.phase,
-        this.poses[k]!,
-        this.rates[k]!,
-        this.scratchA,
-        this.scratchB,
-      );
+      const m = poseRate(this.mechs[k]!, this.theta + inst.phase, this.poses[k]!, this.rates[k]!);
       if (m > max) max = m;
     });
     this.maxRate = max;

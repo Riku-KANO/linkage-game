@@ -45,6 +45,8 @@ describe('ghost (MOD-3)', () => {
     expect(ghostFrameCount(rec.ghost())).toBe(4);
     rec.add(0.4, { x: 2, y: 0, z: 0 }, ident, 0);
     expect(ghostFrameCount(rec.ghost())).toBe(5);
+    rec.add(Number.NaN, { x: 2, y: 0, z: 0 }, ident, 0);
+    expect(ghostFrameCount(rec.ghost())).toBe(5);
   });
 
   it('interpolates poses between frames and clamps outside the trace', () => {

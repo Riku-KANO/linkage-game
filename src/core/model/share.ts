@@ -2,7 +2,7 @@ import LZString from 'lz-string';
 import type { DesignDoc } from './types';
 import { isBoolean, isFiniteNumber, isInteger, isRecord, isString, safeJsonParse } from './guards';
 import type { Ghost } from './ghost';
-import { decodeGhostCompact, encodeGhostCompact, ghostFrameCount, validateGhost } from './ghost';
+import { decodeGhostCompact, encodeGhostCompact, validateGhost } from './ghost';
 import { validateDesign } from './validate';
 import { readDesign } from './migrate';
 import type { LoadFailure } from './migrate';
@@ -53,14 +53,16 @@ const MAX_RUN_VALUE = 1e7;
 
 /**
  * 共有用のフラグメント `#s=...` を作る。設計は validateDesign で正規化してから書く。
- * 設計が壊れているとき(エディタのバグ)は例外を投げる。
+ * 設計が壊れているとき(エディタのバグ)は例外を投げる。スコアやゴーストが壊れているときは
+ * それだけを省く。RunResult をそのまま run に渡してよい(必要な項目だけ書く)。
  */
 export function encodeShare(payload: SharePayload): string {
   const v = validateDesign(payload.design);
   if (!v.ok) throw new Error(`encodeShare: invalid design: ${v.errors.join('; ')}`);
   const out: unknown[] = [SHARE_FORMAT, encodeDesignV1(v.design)];
+  // スコア・ゴーストが壊れていれば(NaN など)書かない。機械の共有を優先する
   const run = payload.run ? validateRun(payload.run) : null;
-  const ghost = payload.ghost && ghostFrameCount(payload.ghost) > 0 ? payload.ghost : null;
+  const ghost = payload.ghost ? validateGhost(payload.ghost) : null;
   if (run || ghost) out.push(run ? encodeRunV1(run) : 0);
   if (ghost) out.push(encodeGhostCompact(ghost));
   return `#${SHARE_PARAM}=${LZString.compressToEncodedURIComponent(JSON.stringify(out))}`;

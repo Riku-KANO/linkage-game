@@ -255,6 +255,19 @@ describe('share links (MOD-3, U-02)', () => {
     ).toBe(true);
   });
 
+  it('omits a broken score or ghost when encoding', () => {
+    const r = decodeOk(
+      encodeShare({
+        design: fourBar(),
+        run: { ...RUN, energy: Number.NaN },
+        ghost: { hz: 10, frames: [1, 2, 3] },
+      }),
+    );
+    expect(r.payload.run).toBeUndefined();
+    expect(r.payload.ghost).toBeUndefined();
+    expect(r.warnings).toEqual([]);
+  });
+
   it('refuses to encode an invalid design', () => {
     const d = jansenLeg();
     d.foot = 'nope';

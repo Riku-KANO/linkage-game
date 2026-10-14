@@ -18,6 +18,11 @@ export const GHOST_DEFAULT_HZ = 10;
 export const GHOST_MAX_HZ = 60;
 /** フレーム数の上限(10Hz で 10 分) */
 export const MAX_GHOST_FRAMES = 6000;
+/**
+ * 四元数の長さの許容誤差。量子化した四元数の誤差はこれより小さいので、この範囲なら正規化せず
+ * 冪等に保つ(sampleGhost は常に正規化して返す)
+ */
+const QUAT_TOL = 5e-3;
 
 export interface Ghost {
   /** 記録の頻度(Hz)。フレーム k は時刻 k / hz */
@@ -101,6 +106,7 @@ export function createGhostRecorder(hz: number = GHOST_DEFAULT_HZ): GhostRecorde
   let frames: number[] = [];
   const EPS = 1e-6;
   const add = (time: number, p: Vec3, q: Quat, motorAngle: number) => {
+    if (!Number.isFinite(time)) return;
     while (frames.length / GHOST_STRIDE < MAX_GHOST_FRAMES) {
       const k = frames.length / GHOST_STRIDE;
       if (time + EPS < k / hz) break;
@@ -118,7 +124,7 @@ export function createGhostRecorder(hz: number = GHOST_DEFAULT_HZ): GhostRecorde
   };
 }
 
-/** 外から来たゴーストの検査。だめなら null。四元数は正規化して返す */
+/** 外から来たゴーストの検査。だめなら null。長さのずれた四元数は正規化して返す */
 export function validateGhost(input: unknown): Ghost | null {
   try {
     if (!isRecord(input)) return null;
@@ -134,7 +140,7 @@ export function validateGhost(input: unknown): Ghost | null {
       if (!isFiniteNumber(v) || Math.abs(v) > MAX_GHOST_VALUE) return null;
       out[k] = v;
     }
-    normalizeQuats(out);
+    normalizeQuats(out, QUAT_TOL);
     return { hz, frames: out };
   } catch {
     return null;
@@ -170,8 +176,6 @@ function normalizeQuats(f: number[], tol = 0) {
  * 1m 先で約 1mm。位置の精度とつり合う)、モーター角 1mrad
  */
 const QUANT = [1e3, 1e3, 1e3, 1e3, 1e3, 1e3, 1e3, 1e3] as const;
-/** 量子化した四元数の長さの誤差はこれより小さい。この範囲なら正規化しない(sampleGhost が正規化する) */
-const QUAT_TOL = 5e-3;
 
 /**
  * 短縮形式:[hz, orders, data]。

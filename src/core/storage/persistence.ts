@@ -10,7 +10,7 @@ import { debounce } from './debounce';
  *
  * 方針:決して例外を投げない。
  *  - localStorage が使えない(null を渡す) → メモリに保存(再読み込みで消える。persistent = false)
- *  - 読み込みの例外・壊れた JSON・形の崩れ → 既定値(設計なら null)
+ *  - 読み込みの例外・壊れた JSON・形の崩れ・大きすぎる値 → 既定値(設計なら null)
  *  - 書き込みの例外(容量超過など) → { ok: false, reason } を返し、この画面の間はメモリの値を読む
  *  - このアプリより新しい版が書いたデータ → 読まず、上書きもしない(reason: 'newer')
  *
@@ -28,8 +28,20 @@ export const SANDBOX_SLOT = 'sandbox';
 /** 設計のスロット:ステージ id(StageId)か SANDBOX_SLOT */
 export type DesignSlot = string;
 
+/**
+ * 1 つのキーの値の長さの上限(文字数)。設計・進行・設定はどれも数十 KB に収まる。
+ * 改ざんされた巨大な値は JSON として読まずに壊れたデータとみなす(起動を遅くしない)
+ */
+export const MAX_STORED_ITEM_LENGTH = 1_000_000;
+
+const LONE_SURROGATE_G = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g;
+/** encodeURIComponent は対になっていないサロゲートで例外を投げるので、先に U+FFFD にする */
+function encodeSlot(slot: string): string {
+  return encodeURIComponent(slot.replace(LONE_SURROGATE_G, '\ufffd'));
+}
+
 export const storageKeys = {
-  design: (slot: DesignSlot) => `${STORAGE_PREFIX}design/${encodeURIComponent(slot)}`,
+  design: (slot: DesignSlot) => `${STORAGE_PREFIX}design/${encodeSlot(slot)}`,
   progress: `${STORAGE_PREFIX}progress`,
   settings: `${STORAGE_PREFIX}settings`,
 } as const;
@@ -87,7 +99,7 @@ export function createPersistence(
   };
   const readJson = (key: string): unknown => {
     const text = read(key);
-    if (text === null) return undefined;
+    if (typeof text !== 'string' || text.length > MAX_STORED_ITEM_LENGTH) return undefined;
     const parsed = safeJsonParse(text);
     return parsed.ok ? parsed.value : undefined;
   };

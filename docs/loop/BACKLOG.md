@@ -131,7 +131,7 @@
 | ID | 内容 | 判定基準 | 状態 |
 | --- | --- | --- | --- |
 | PERF-1 | ブラウザで計測:編集 1 回あたりの解析時間、試走 1 フレームあたりの sim 時間、描画 fps(内蔵 GPU 相当)。LOG.md に記録 | 予算:解析 < 8ms、sim < 4ms/フレーム、60fps | todo |
-| PERF-2 | stream `wasm`:Rust → WASM(wasm-pack、Rust 1.97 + wasm32 導入済み)で毎フレームの解法プラン実行(crank/rigid/dyad/newton)と接触ループを試作し、JS と同じテストを通したうえで Node とブラウザでベンチマーク | 100 ジョイントで JS の 2 倍以上速く、小さな機構で遅くならなければ同じ API の裏で採用。満たさなければ結果を記録して JS のまま | todo |
+| PERF-2 | stream `wasm`:Rust → WASM(wasm-pack、Rust 1.97 + wasm32 導入済み)で毎フレームの解法プラン実行(crank/rigid/dyad/newton)と接触ループを試作し、JS と同じテストを通したうえで Node とブラウザでベンチマーク | 100 ジョイントで JS の 2 倍以上速く、小さな機構で遅くならなければ同じ API の裏で採用。満たさなければ結果を記録して JS のまま | done — 不採用(JS のまま)。100 点のフレームで同じ API 1.5×・一括 1.9×、小さな機構 1.5×(Node)。`docs/perf/wasm-vs-js.md`。ブラウザ計測と接触ループは未実施 |
 | PERF-3 | 試走のシミュレーションを Web Worker に移す(決定論を保つ) | メインスレッドの sim 負荷 0、結果が同一 | todo |
 
 ## ウェーブ 3(予定:仕上げと公開)

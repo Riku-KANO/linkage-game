@@ -68,40 +68,49 @@ export const game: Record<string, string> = {
 
   // ---- 試走前チェック ----
   'game.preflight.empty': '部品がありません。固定点とクランクから組み始めよう',
-  'game.preflight.noCrank': 'クランクがありません。モーターで回すクランクを付けよう',
-  'game.preflight.dofLocked': '自由度が {dof} で、機構が動きません。余分なリンクを外そう',
+  'game.preflight.noCrank':
+    'クランクがありません。「クランク」を押して、固定点から伸びる棒をクリックしよう',
+  'game.preflight.dofLocked':
+    '自由度が {dof} で、機構が動きません。棒が三角形に固まっている所を探して、余分な棒を外そう',
   'game.preflight.dofLoose':
-    '自由度が {dof} で、機構がぐらつきます。リンクを足して動きを 1 通りに決めよう',
-  'game.preflight.notAssemblable': 'リンクが届かず、組み立てられません',
-  'game.preflight.noFullRotation': 'クランクが一回転できません。クランクを短くしよう',
+    '自由度が {dof} で、機構がぐらつきます。赤い点を固定点やほかの点と棒でつないで、動きを 1 通りに決めよう',
+  'game.preflight.notAssemblable':
+    '棒が届かず、組み立てられません。赤い棒の長さか、点の位置を見直そう',
+  'game.preflight.noFullRotation':
+    'クランクが一回転できません。クランクの先の点を軸に近づけて、クランクを短くしよう',
   'game.preflight.partNotAllowed': 'このステージでは「{part}」を使えません',
   'game.preflight.legArrayLocked': '脚列の複製はまだ使えません(第 2 章で解放)',
-  'game.preflight.overBudget': '予算オーバー:コスト {cost} / 予算 {budget}',
-  'game.preflight.motorStopped': 'モーターの回転数が 0 です',
-  'game.preflight.rpmTooHigh': '回転数は {max} rpm までです',
-  'game.preflight.noFoot': '脚先が決まっていません。地面をけるジョイントを脚先にしよう',
-  'game.preflight.walksBackward': 'このままだと後ろへ歩きます。モーターの回転の向きを逆にしよう',
+  'game.preflight.overBudget':
+    '予算オーバー:コスト {cost} / 予算 {budget}。棒を短くするか、部品を減らそう',
+  'game.preflight.motorStopped': 'モーターの回転数が 0 です。右の「モーター」で回転数を上げよう',
+  'game.preflight.rpmTooHigh': '回転数は {max} rpm までです。回転数を下げよう',
+  'game.preflight.noFoot':
+    '脚先が決まっていません。「脚先」を押して、地面をける点(いちばん下の点)をクリックしよう',
+  'game.preflight.walksBackward':
+    'このままだと後ろへ歩きます。右の「モーター」の「逆回転」を押そう',
 
   // ---- 失敗理由(結果画面の一言と、次に試すこと) ----
   'game.fail.invalid': '設計に問題がある',
   'game.fail.invalid.advice': '試走前のチェックに出た問題を直そう',
   'game.fail.overBudget': '予算オーバー',
-  'game.fail.overBudget.advice': '脚の数を減らすか、リンクを短くしてコストを下げよう',
+  'game.fail.overBudget.advice': '脚の組数を減らすか、棒を短くしてコストを下げよう',
   'game.fail.jammed': '機構が詰まった',
-  'game.fail.jammed.advice': 'リンクが伸びきる所で引っかかっている。長さを見直そう',
+  'game.fail.jammed.advice':
+    '棒が伸びきる所で引っかかった。赤く光る棒の長さを変えるか、クランクを短くしよう',
   'game.fail.stumbled': '段差につまずいた',
   'game.fail.stumbled.advice':
     '脚先が段差の側面に引っかかって止まった。足を段差より高く上げ、上から下ろす軌道にしよう',
   'game.fail.stalled': 'トルク不足',
   'game.fail.stalled.advice': 'モーターの力が足りない。回転数を下げるか、クランクを短くしよう',
   'game.fail.topHeavy': '重心が高い',
-  'game.fail.topHeavy.advice': '脚列を増やして足元を広げるか、脚を短くして重心を下げよう',
+  'game.fail.topHeavy.advice': '脚を短くして重心を下げるか、脚列を増やして足元を広げよう',
   'game.fail.fallen': '転倒',
-  'game.fail.fallen.advice': '脚の位相をずらして、いつも何本かの脚が地面につくようにしよう',
+  'game.fail.fallen.advice':
+    '脚先の軌道の底を平らで長くして、いつも何本かの脚が地面につくようにしよう(章 2 からは脚列の位相も変えられる)',
   'game.fail.wrongWay': '逆向きに歩いた',
-  'game.fail.wrongWay.advice': 'モーターの回転の向きを逆にしよう',
+  'game.fail.wrongWay.advice': '右の「モーター」の「逆回転」を押して、回る向きを逆にしよう',
   'game.fail.timeout': '時間切れ',
-  'game.fail.timeout.advice': '回転数を上げるか、歩幅を広げて速く歩こう',
+  'game.fail.timeout.advice': '回転数を上げるか、脚先の軌道の底を長くして歩幅を広げよう',
 
   // ---- ヒント ----
   'game.hint.level.1': 'ヒント 1:方針',
@@ -159,7 +168,7 @@ export const game: Record<string, string> = {
     '左の固定点に短いクランク(10cm ほど)。クランクの先から右下へ長い棒を伸ばし、その棒のまん中より少し下の点と、右の固定点を棒でつなごう。長い棒の下の端が脚先になる。',
   'game.stage.c1-s3.hint2': '固定点とクランクを置く場所。右の固定点は左より少し高く',
   'game.stage.c1-s3.hint3':
-    'クランクと、脚先まで伸びた連結棒の影。クランクの先から脚先の影まで長い棒を引き、その途中の点と右の固定点をつなげば歩けます',
+    'クランク・脚先・右の固定点の影。チュートリアルと同じ手順で、クランクの先から脚先の影まで長い棒を引き、その棒のまん中より少し下の点と右の固定点をつなごう',
   'game.stage.c1-s3.tut.1':
     'ここからは白紙から脚を 1 本作ります。部品を 1 つずつ渡すので、吹き出しのとおりに置いていきましょう。',
   'game.stage.c1-s3.tut.2':
@@ -184,18 +193,21 @@ export const game: Record<string, string> = {
   'game.stage.c1-s4.title': '長い道のり',
   'game.stage.c1-s4.desc':
     '{distance}m 先のゴールまで、{timeLimit} 秒以内にたどり着こう。速さは回転数と歩幅で決まる。',
-  'game.stage.c1-s4.hint1': 'モーターの回転数を上げるか、脚先の軌道の底を長くして歩幅を広げよう。',
+  'game.stage.c1-s4.hint1':
+    '1-3 と同じ形の脚で届く。速くするには、右の「モーター」で回転数を 60 くらいに上げよう。',
   'game.stage.c1-s4.hint2': '固定点とクランクの位置',
-  'game.stage.c1-s4.hint3': 'クランクと、脚先まで伸びた連結棒',
+  'game.stage.c1-s4.hint3':
+    'クランク・脚先・右の固定点の影。1-3 と同じ手順で、クランクの先から脚先の影まで長い棒を引き、そのまん中より少し下の点と右の固定点をつなごう。回転数は 60 に',
 
   // ---- 章 1 ステージ 5:大またで歩く ----
   'game.stage.c1-s5.title': '大またで歩く',
   'game.stage.c1-s5.desc':
     '{distance}m を {timeLimit} 秒で。四節リンクの形を工夫して、大きな歩幅で歩こう。',
   'game.stage.c1-s5.hint1':
-    'クランクを少し長くし、脚先を軸から遠ざけると歩幅が広がる。一回転できる範囲で試そう。',
+    'クランクを少し長くし、脚先を軸から遠ざけると歩幅が広がる(一回転できる範囲で)。回転数を 60〜80 に上げると速く歩ける。',
   'game.stage.c1-s5.hint2': '固定点とクランクの位置',
-  'game.stage.c1-s5.hint3': 'クランクと揺れる棒。残りは連結棒',
+  'game.stage.c1-s5.hint3':
+    'クランク・脚先・右の固定点の影。1-3 と同じ手順で組み(長い棒のまん中より少し下の点と右の固定点をつなぐ)、回転数を 60〜80 に上げよう',
 
   // ---- 章 2 ステージ 1:段差をのぼる ----
   'game.stage.c2-s1.title': '段差をのぼる',
@@ -204,33 +216,39 @@ export const game: Record<string, string> = {
   'game.stage.c2-s1.hint1':
     '軌道のいちばん高い所と低い所の差が、足を上げる高さ。段差より十分に高くして、前の端では脚先を上から下ろそう。',
   'game.stage.c2-s1.hint2': '固定点とクランクの位置',
-  'game.stage.c2-s1.hint3': 'クランクと、脚先まで伸びた連結棒',
+  'game.stage.c2-s1.hint3':
+    '影は完成形の点の位置。「選択」で自分の機械の点(固定点・クランクの先・三角の板の角)を 1 つずつつかんで、影の同じ点に重ねよう',
 
   // ---- 章 2 ステージ 2:脚をふやす ----
   'game.stage.c2-s2.title': '脚をふやす',
   'game.stage.c2-s2.desc':
     '脚が 1 本しかない機械は立っていられない。脚列の複製で脚を増やし、位相をずらして歩かせよう。',
   'game.stage.c2-s2.hint1':
-    '脚列の組数を 6、位相差を 120°、前後反転ありにしてみよう。同じ位相の脚が左右に分かれて並び、いつも左右と前後の脚が地面を支える。',
-  'game.stage.c2-s2.hint2': '固定点とクランクの位置',
-  'game.stage.c2-s2.hint3': 'クランクと、脚先まで伸びた連結棒',
+    '脚が 1 本では立っていられない。右の「脚列」で組数を増やし、位相差で脚の動きをずらして、いつも何本かの脚が地面につくようにしよう。',
+  'game.stage.c2-s2.hint2': '機構はこのままで大丈夫(影と同じ形)。変えるのは右の「脚列」だけ',
+  'game.stage.c2-s2.hint3':
+    '脚列を「組数 6・位相差 120°・前後反転した脚も付ける」にしよう。左右と前後の脚が、いつも地面を支える',
 
   // ---- 章 2 ステージ 3:動かない機械 ----
   'game.stage.c2-s3.title': '動かない機械',
   'game.stage.c2-s3.desc':
     'ヤンセンリンクの機械が、ぴくりとも動かない。余分なリンクを見つけて外し、段を上ろう。',
   'game.stage.c2-s3.hint1':
-    '自由度 0 は「動かない」という意味。リンクで三角形に固まっている所を探そう。',
-  'game.stage.c2-s3.hint2': 'クランクから伸びる 2 本のリンク',
-  'game.stage.c2-s3.hint3': '完成形の上半分。余分なリンクはここにない',
+    '自由度 0 は「動かない」という意味。棒が三角形に組まれると、そこはがっちり固まってしまう。クランクのまわりで三角形になっている所を探そう。',
+  'game.stage.c2-s3.hint2':
+    'クランクの先から伸びる 2 本の棒。この 2 本の先どうしを結ぶ棒があると、三角形に固まって動かない',
+  'game.stage.c2-s3.hint3':
+    '影は完成形の上半分。余分なのは、いちばん上の点からほぼ真下へ伸びる長い棒(影にはない)。「削除」を押して、その棒をクリックしよう',
 
   // ---- 章 2 ステージ 4:溝をまたぐ ----
   'game.stage.c2-s4.title': '溝をまたぐ',
   'game.stage.c2-s4.desc':
     '行く手に溝が 2 つ。歩幅の広い脚なら、落ちずにまたげる。予算は {budget}。',
-  'game.stage.c2-s4.hint1': '脚先の軌道の平らな底が長いほど、溝をまたげる。',
+  'game.stage.c2-s4.hint1':
+    '脚先の軌道の平らな底が長いほど、溝をまたげる。2-3 で直したヤンセンリンクの機械や、2-1 の足を高く上げる脚でも越えられる。',
   'game.stage.c2-s4.hint2': '固定点とクランクの位置',
-  'game.stage.c2-s4.hint3': '完成形の上半分',
+  'game.stage.c2-s4.hint3':
+    '完成形(ヤンセンリンク)の上半分。2-3 の機械と同じ形なので、2-3 で「JSON に書き出す」を押し、ここで「JSON を読み込む」と使い回せる',
 
   // ---- 章 2 ステージ 5:段差の道 ----
   'game.stage.c2-s5.title': '段差の道',
@@ -239,5 +257,6 @@ export const game: Record<string, string> = {
   'game.stage.c2-s5.hint1':
     'ヤンセンリンクは高くつく。四節リンクの脚でも、足を高く上げて歩幅を広げれば越えられる。',
   'game.stage.c2-s5.hint2': '固定点とクランクの位置',
-  'game.stage.c2-s5.hint3': 'クランクと揺れる棒。残りは連結棒',
+  'game.stage.c2-s5.hint3':
+    'クランク・脚先・右の固定点の影(2-1 の足を高く上げる脚と同じ形)。2-1 で「JSON に書き出す」を押し、ここで「JSON を読み込む」と使い回せる',
 };

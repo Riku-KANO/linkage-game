@@ -5,8 +5,7 @@ import { createEmptyDesign, type DesignDoc } from '@/core/model/types';
 import { getStage, type FailReason } from '@/game';
 import {
   candidates,
-  GlossaryPanel,
-  GuideOverlay,
+  GlossaryDialog,
   HOW_TO_PLAY_PAGES,
   HowToPlay,
   pickTip,
@@ -170,9 +169,7 @@ export default function GuidePlayground() {
         />
       )}
       {overlay === 'glossary' && (
-        <GuideOverlay onClose={closeTop} label={t('guide.glossary.title')}>
-          <GlossaryPanel onClose={closeTop} onSelect={(id) => note(`onSelect(${id})`)} />
-        </GuideOverlay>
+        <GlossaryDialog onClose={closeTop} onSelect={(id) => note(`onSelect(${id})`)} />
       )}
       {overlay === 'sheet' && <ShortcutSheet isMac={mac} onClose={closeTop} />}
     </div>

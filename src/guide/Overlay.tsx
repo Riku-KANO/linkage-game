@@ -2,6 +2,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type KeyboardEvent,
   type ReactNode,
   type RefObject,
@@ -50,24 +51,30 @@ export function trapTab(e: KeyboardEvent<HTMLElement>, root: HTMLElement): boole
 
 /**
  * マウントしたら中へフォーカスを移し(enabled のとき)、アンマウントで元へ戻す。
- * initial があればそこへ、なければ root へ。
+ * initial があればそこへ、なければ root へ。中の部品がもうフォーカスを取っていれば動かさない。
+ * 戻す先は最初の描画の時点でフォーカスがあった要素。
  */
 export function useFocusReturn(
   root: RefObject<HTMLElement | null>,
   initial?: RefObject<HTMLElement | null>,
   enabled = true,
 ) {
+  const [prev] = useState(() =>
+    typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null),
+  );
   useLayoutEffect(() => {
     if (!enabled) return;
-    const prev = document.activeElement as HTMLElement | null;
-    (initial?.current ?? root.current)?.focus({ preventScroll: true });
+    const el = root.current;
+    if (!el?.contains(document.activeElement)) {
+      (initial?.current ?? el)?.focus({ preventScroll: true });
+    }
     return () => {
       if (prev && prev.isConnected && typeof prev.focus === 'function') {
         prev.focus({ preventScroll: true });
       }
     };
     // マウント時だけ(initial・root は ref なので作り直さない)
-  }, [root, initial, enabled]);
+  }, [root, initial, enabled, prev]);
 }
 
 export interface GuideOverlayProps {

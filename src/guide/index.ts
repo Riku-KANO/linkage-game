@@ -10,7 +10,12 @@ export {
   type HowToPlayPage,
   type HowToPlayPageId,
 } from './pages';
-export { GlossaryPanel, type GlossaryPanelProps } from './GlossaryPanel';
+export {
+  GlossaryPanel,
+  GlossaryDialog,
+  type GlossaryPanelProps,
+  type GlossaryDialogProps,
+} from './GlossaryPanel';
 export { Term, RichText, type TermProps, type RichTextProps } from './Term';
 export {
   GLOSSARY,

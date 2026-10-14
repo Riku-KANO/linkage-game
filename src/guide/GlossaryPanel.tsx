@@ -1,12 +1,14 @@
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { t } from '@/i18n';
 import { LinkagePanel, LinkButton, useReducedMotion } from '@/ui/mech';
 import { TermFigure } from './figures/TermFigures';
 import { GLOSSARY, glossaryEntry, type GlossaryId } from './glossary';
+import { GuideOverlay, isTypingTarget } from './Overlay';
 import './guide.css';
 
 /**
- * 用語集(GUIDE-2)。左に用語の一覧、右に選んだ用語の説明と動く図。↑ ↓ で用語を選ぶ。
+ * 用語集(GUIDE-2)。左に用語の一覧、右に選んだ用語の説明と動く図。↑ ↓ で用語を選ぶ
+ * (パネルのどこにフォーカスがあっても効く)。
  * 埋め込み用のパネル。重ねて出すときは GuideOverlay で包む。
  */
 
@@ -21,6 +23,8 @@ export interface GlossaryPanelProps {
   className?: string;
   /** 見出しの id(GuideOverlay の labelledBy に渡す) */
   titleId?: string;
+  /** 出たときに選んでいる用語へフォーカスする(↑ ↓ がすぐ効く) */
+  autoFocus?: boolean;
 }
 
 export function GlossaryPanel({
@@ -30,6 +34,7 @@ export function GlossaryPanel({
   reducedMotion,
   className,
   titleId,
+  autoFocus = false,
 }: GlossaryPanelProps) {
   const reduced = useReducedMotion(reducedMotion);
   const [current, setCurrent] = useState<GlossaryId>(initialTerm ?? GLOSSARY[0]!.id);
@@ -38,6 +43,12 @@ export function GlossaryPanel({
   const detailId = useId();
   const items = useRef(new Map<GlossaryId, HTMLButtonElement>());
   const entry = glossaryEntry(current)!;
+  // 出たときだけ(選び直したときのフォーカスは select が動かす)
+  const focusOnMount = useRef(autoFocus);
+  useLayoutEffect(() => {
+    if (focusOnMount.current) items.current.get(current)?.focus({ preventScroll: true });
+    focusOnMount.current = false;
+  }, [current]);
 
   const select = (id: GlossaryId, focus = false) => {
     setCurrent(id);
@@ -45,7 +56,14 @@ export function GlossaryPanel({
     if (focus) items.current.get(id)?.focus();
   };
 
-  const onListKey = (e: KeyboardEvent<HTMLUListElement>) => {
+  /** ↑ ↓ Home End で用語を選ぶ(パネルのどこにフォーカスがあっても)。Esc で閉じる */
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape' && onClose) {
+      e.stopPropagation();
+      onClose();
+      return;
+    }
+    if (e.altKey || e.metaKey || e.ctrlKey || isTypingTarget(e.target)) return;
     const i = GLOSSARY.findIndex((g) => g.id === current);
     const to =
       e.key === 'ArrowDown'
@@ -67,12 +85,7 @@ export function GlossaryPanel({
     <LinkagePanel
       className={['gd-gloss', className].filter(Boolean).join(' ')}
       reducedMotion={reduced}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape' && onClose) {
-          e.stopPropagation();
-          onClose();
-        }
-      }}
+      onKeyDown={onKeyDown}
     >
       <header className="gd-head">
         <h2 id={headingId} className="gd-title">
@@ -92,7 +105,7 @@ export function GlossaryPanel({
         )}
       </header>
       <div className="gd-gloss__body">
-        <ul className="gd-gloss__list" aria-label={t('guide.glossary.list')} onKeyDown={onListKey}>
+        <ul className="gd-gloss__list" aria-label={t('guide.glossary.list')}>
           {GLOSSARY.map((g) => (
             <li key={g.id}>
               <button
@@ -145,5 +158,36 @@ export function GlossaryPanel({
         </article>
       </div>
     </LinkagePanel>
+  );
+}
+
+export interface GlossaryDialogProps {
+  onClose: () => void;
+  initialTerm?: GlossaryId;
+  onSelect?: (id: GlossaryId) => void;
+  /** 省略時はアプリと OS の設定に従う */
+  reducedMotion?: boolean;
+}
+
+/** 用語集を重ねて出す(GuideOverlay+GlossaryPanel)。開くと選んでいる用語にフォーカス */
+export function GlossaryDialog({
+  onClose,
+  initialTerm,
+  onSelect,
+  reducedMotion,
+}: GlossaryDialogProps) {
+  const reduced = useReducedMotion(reducedMotion);
+  const titleId = useId();
+  return (
+    <GuideOverlay onClose={onClose} labelledBy={titleId} reducedMotion={reduced}>
+      <GlossaryPanel
+        titleId={titleId}
+        onClose={onClose}
+        initialTerm={initialTerm}
+        onSelect={onSelect}
+        reducedMotion={reduced}
+        autoFocus
+      />
+    </GuideOverlay>
   );
 }

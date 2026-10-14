@@ -200,7 +200,12 @@ function CrankRockerFigure({ reducedMotion, label }: P) {
       <path className="gd-trace gd-trace--crank" d={pathD(jointPath(fig.cycle, a), map, true)} />
       <path className="gd-trace gd-trace--rocker" d={pathD(jointPath(fig.cycle, b), map)} />
       <MechDraw mech={fig.mech} positions={pos} map={map} foot={false} weight={0.8} />
-      <Label x={map.x(0) - 22} y={map.y(0) + 4} anchor="end" tone="crank">
+      <Label
+        x={map.x(0) - 12 * map.scale - 6}
+        y={map.y(0) - 12 * map.scale}
+        anchor="end"
+        tone="crank"
+      >
         {t('guide.fig.turns')}
       </Label>
       <Label x={map.x(bb.maxX) + 6} y={map.y(bb.maxY) - 4} anchor="start" tone="foot">

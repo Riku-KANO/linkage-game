@@ -6,7 +6,7 @@ import { SHORTCUTS } from '@/editor/keyboard';
 import { t } from '@/i18n';
 import { TermFigure } from './figures/TermFigures';
 import { GLOSSARY, GLOSSARY_IDS } from './glossary';
-import { GlossaryPanel } from './GlossaryPanel';
+import { GlossaryDialog, GlossaryPanel } from './GlossaryPanel';
 import { HowToPlay } from './HowToPlay';
 import { HOW_TO_PLAY_PAGES } from './pages';
 import { ShortcutSheet, useShortcutSheetHotkey } from './ShortcutSheet';
@@ -192,9 +192,17 @@ describe('用語の小窓と用語集(GUIDE-2)', () => {
     const items = within(list).getAllByRole('button');
     expect(items.map((b) => b.textContent)).toEqual(GLOSSARY.map((g) => t(g.nameKey)));
     expect(items[0]!.getAttribute('aria-current')).toBe('true');
-    fireEvent.keyDown(items[0]!, { key: 'ArrowDown' });
+    // フォーカスが一覧の外(パネルの見出しなど)にあっても ↓ で次の用語へ
+    fireEvent.keyDown(screen.getByRole('heading', { name: t('guide.glossary.title') }), {
+      key: 'ArrowDown',
+    });
     expect(onSelect).toHaveBeenLastCalledWith('grubler');
     expect(document.activeElement).toBe(items[1]);
+    fireEvent.keyDown(items[1]!, { key: 'End' });
+    expect(onSelect).toHaveBeenLastCalledWith('specialGeometry');
+    fireEvent.keyDown(items[8]!, { key: 'ArrowDown' });
+    expect(onSelect).toHaveBeenLastCalledWith('dof');
+    fireEvent.keyDown(items[0]!, { key: 'ArrowDown' });
     const detail = document.querySelector('[data-term="grubler"]')!;
     fireEvent.click(
       within(detail as HTMLElement).getByRole('button', { name: t('guide.term.dof.name') }),
@@ -202,6 +210,22 @@ describe('用語の小窓と用語集(GUIDE-2)', () => {
     expect(onSelect).toHaveBeenLastCalledWith('dof');
     fireEvent.keyDown(items[0]!, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('用語集のダイアログ:開くと選んでいる用語にフォーカスし、すぐ ↓ が効く。閉じたらフォーカスを戻す', () => {
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    const onSelect = vi.fn();
+    const { unmount } = render(
+      <GlossaryDialog onClose={() => {}} onSelect={onSelect} initialTerm="grashof" reducedMotion />,
+    );
+    expect(document.activeElement?.textContent).toBe(t('guide.term.grashof.name'));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
+    expect(onSelect).toHaveBeenLastCalledWith('crankRocker');
+    unmount();
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
   });
 });
 

@@ -89,6 +89,7 @@ function masterGain(ctx: FakeAudioContext): FakeGain {
 const newNodes = (ctx: FakeAudioContext, before: number): FakeNode[] => ctx.nodes.slice(before);
 
 afterEach(() => {
+  vi.restoreAllMocks();
   uninstallAudio();
   useApp.getState().setSettings({ volume: 0.8 });
 });
@@ -156,6 +157,24 @@ describe('アンロック(最初のユーザー操作)', () => {
     r.gesture('touchend');
     expect(r.factory).toHaveBeenCalledTimes(1);
     expect(r.ctx.resumeCalls).toBe(1);
+  });
+
+  it('起動が遅い(resume が返らない)環境:操作直後の音は予約し、猶予を過ぎたら捨て、次の操作でまた起こす', () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(1000);
+    const r = rig();
+    r.ctx.resumeWorks = false;
+    r.gesture();
+    expect(r.ctx.resumeCalls).toBe(1);
+    const n0 = r.ctx.nodes.length;
+    r.engine.play('press');
+    expect(r.ctx.nodes.length).toBeGreaterThan(n0);
+    clock.mockReturnValue(2000);
+    const n1 = r.ctx.nodes.length;
+    r.engine.play('snap');
+    expect(r.ctx.nodes.length).toBe(n1);
+    r.gesture('keydown');
+    expect(r.ctx.resumeCalls).toBe(2);
+    expect(r.factory).toHaveBeenCalledTimes(1);
   });
 
   it('keydown でも起きる', () => {

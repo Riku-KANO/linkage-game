@@ -50,6 +50,8 @@ const NOISE_SEEDS: Record<NoiseKind, number> = { white: 0x5eed01, crackle: 0x5ee
 const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'keydown', 'touchend'] as const;
 /** 主音量の変化の時定数(秒) */
 const MASTER_TC = 0.03;
+/** 操作で resume() を頼んでから、起動前でも音を予約してよい時間(ms) */
+const RESUME_GRACE_MS = 400;
 /** バスの下げ幅。まとめ用コンプレッサーのメイクアップゲインと相殺して、譜面の音量をほぼそのまま出す */
 const BUS_GAIN = 0.75;
 
@@ -58,6 +60,10 @@ interface Graph {
   motor: GainNode;
   master: GainNode;
   noise: NoiseBank;
+}
+
+function wallClock(): number {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
 }
 
 function defaultCreateContext(): AudioContext | null {
@@ -75,8 +81,11 @@ export class AudioEngine {
   private graph: Graph | null = null;
   private unavailable = false;
   private attached = false;
-  /** 最初の操作で resume() を呼び、まだ結果が出ていない */
-  private resumePending = false;
+  /**
+   * 操作の中で resume() を頼んだあと、この時刻(壁時計 ms)までは起動前でも音を予約してよい。
+   * 最初の操作の「押した音」を落とさないため。resume が返ってこない環境で積み上がらないよう短く区切る
+   */
+  private resumeGraceUntil = 0;
   /** タブが裏に回って自分で止めた */
   private suspendedByVisibility = false;
   private silentPrimed = false;
@@ -138,7 +147,7 @@ export class AudioEngine {
     const ctx = this.ctx;
     this.ctx = null;
     this.graph = null;
-    this.resumePending = false;
+    this.resumeGraceUntil = 0;
     this.suspendedByVisibility = false;
     this.silentPrimed = false;
     if (ctx) {
@@ -158,20 +167,16 @@ export class AudioEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     try {
-      if (ctx.state !== 'running' && !this.resumePending) {
-        this.resumePending = true;
+      if (ctx.state !== 'running') {
+        // 何度頼んでも害はない。前回の resume が返ってこなくても、次の操作でまた頼む
         this.suspendedByVisibility = false;
-        void ctx
-          .resume()
-          .catch(() => {})
-          .finally(() => {
-            this.resumePending = false;
-          });
+        this.resumeGraceUntil = wallClock() + RESUME_GRACE_MS;
+        void ctx.resume().catch(() => {});
       }
       this.primeSilent(ctx);
       this.applyMotor();
     } catch {
-      this.resumePending = false;
+      this.resumeGraceUntil = 0;
     }
   }
 
@@ -208,13 +213,17 @@ export class AudioEngine {
         this.live.get(id)?.stop(now);
         this.live.delete(id);
       }
+      let finished = false;
       const voice = renderVoice(ctx, graph.sfx, now + LOOKAHEAD, layers, {
         gain: o.volume * d.gainScale,
         pan: o.pan,
         noise: graph.noise,
-        onDone: () => this.live.delete(d.id),
+        onDone: () => {
+          finished = true;
+          this.live.delete(d.id);
+        },
       });
-      if (voice.end > now) this.live.set(d.id, voice);
+      if (!finished) this.live.set(d.id, voice);
     } catch {
       // 効果音の失敗でゲームを止めない
     }
@@ -281,10 +290,10 @@ export class AudioEngine {
     }
   };
 
-  /** 今、音を予約してよいか。起こしている最中は許す(最初の操作の「押した音」を落とさない) */
+  /** 今、音を予約してよいか。起こしている最中は少しだけ許す(最初の操作の「押した音」を落とさない) */
   private canSchedule(ctx: AudioContext): boolean {
     if (this.suspendedByVisibility) return false;
-    return ctx.state === 'running' || this.resumePending;
+    return ctx.state === 'running' || wallClock() < this.resumeGraceUntil;
   }
 
   private ensureContext(): AudioContext | null {

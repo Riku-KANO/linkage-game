@@ -38,6 +38,14 @@ const STEAL_TC = 0.006;
 
 type Source = AudioScheduledSourceNode;
 
+/** 予約した止める時刻(横取りで止めるとき、遅らせないために覚えておく) */
+const stopTimeOf = new WeakMap<Source, number>();
+
+function scheduleStop(s: Source, when: number): void {
+  s.stop(when);
+  stopTimeOf.set(s, when);
+}
+
 /** 線形の立ち上がり+指数の減衰(-60dB まで) */
 function envelope(param: AudioParam, t: number, attack: number, decay: number, peak: number) {
   param.setValueAtTime(0, t);
@@ -80,7 +88,7 @@ function renderNoise(
   f.connect(g);
   g.connect(out);
   src.start(t, l.offset * Math.max(0, buf.duration - len));
-  src.stop(t + len);
+  scheduleStop(src, t + len);
   return [src];
 }
 
@@ -105,7 +113,7 @@ function renderModal(ctx: BaseAudioContext, out: AudioNode, t0: number, l: Modal
     osc.connect(g);
     g.connect(out);
     osc.start(t);
-    osc.stop(t + l.attack + p.decay + TAIL);
+    scheduleStop(osc, t + l.attack + p.decay + TAIL);
     sources.push(osc);
   }
   return sources;
@@ -147,7 +155,7 @@ function renderSweep(
     g.connect(out);
   }
   src.start(t, l.offset * Math.max(0, buf.duration - l.duration));
-  src.stop(t + l.duration + TAIL);
+  scheduleStop(src, t + l.duration + TAIL);
   return [src];
 }
 
@@ -188,6 +196,7 @@ export function renderVoice(
     }
   }
 
+  const stopTimes = sources.map((s) => stopTimeOf.get(s) ?? Infinity);
   let pending = sources.length;
   let done = false;
   const finish = () => {
@@ -210,13 +219,16 @@ export function renderVoice(
     stop(when: number) {
       out.gain.cancelScheduledValues(when);
       out.gain.setTargetAtTime(0, when, STEAL_TC);
-      for (const s of sources) {
+      // stop() は前の予約を置き換えるので、早める場合だけ呼ぶ
+      const at = when + STEAL_TC * 8;
+      sources.forEach((s, i) => {
+        if (at >= (stopTimes[i] ?? 0)) return;
         try {
-          s.stop(when + STEAL_TC * 8);
+          s.stop(at);
         } catch {
           // 古い Safari は stop の 2 度呼びで例外を投げる。鳴り終わりを待てばよい
         }
-      }
+      });
     },
   };
 }

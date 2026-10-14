@@ -21,3 +21,8 @@
   外側ループの手順 0 と `pnpm deploy` の前提に deps:check を入れた
 - [合流] model(MOD-1〜5)→ main。86 テスト。共有 URL:見本機+スコア 334 文字、30 秒ゴースト込み 2949 文字。
   統合時の注意:LoadFailReason / SaveFailReason を i18n キーに写す、ゴーストは 8 値/フレーム(姿勢+モーター角)
+- [合流] audio(AU-1〜3)→ main。`installAudio()` を main.tsx で呼ぶ。`?dev=audio`。音は未試聴(要確認)
+- [合流] kinematics(KIN-1〜6)→ main。ヤンセン脚先:歩幅 49.7cm、平らさ 0.31cm、足上げ 22.5cm、デューティ 0.37。
+  性能:100 ジョイント×4 サブステップ(微分込み)0.02ms/フレーム(予算 4ms)、解析 180 サンプル 0.1ms(予算 10ms)。
+  → JS で予算の 1/200。WASM(PERF-2)は計測結果を見て判断するが、運動学に限れば必要性は低い見込み
+  挙動変更:冗長リンクがあると solvePose が ok=false。チェビシェフのプリセットは直線区間が上側(要対応)

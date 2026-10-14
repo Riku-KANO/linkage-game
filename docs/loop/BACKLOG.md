@@ -173,7 +173,7 @@
 | SEC-1 | 本番ヘッダー:CSP(外部通信・外部スクリプト禁止、WASM は 'wasm-unsafe-eval' のみ)、X-Frame-Options、Permissions-Policy、COOP/CORP、HSTS。`pnpm serve:dist` で手元検証 | done |
 | KIN-7 | 変位点(平行四辺形など)を通るときの組立モード選択 | done:前の 2 姿勢からの外挿で解を選ぶ(sampleCycle・脚列・試走・エディタのアニメーション)+ 余分なリンクの検査に失敗したら変位点付近の解を反転して解き直す。二重平行四辺形は一回転でき「特殊な寸法で動く」と表示、試走前チェックは警告のみ。章 2 の固めた機械は今まで通りエラー |
 | E2E-1 | Playwright の E2E を導入:全画面の表示(CSP 違反・コンソールエラーなし)、セキュリティヘッダー、エディタで四節を組んで自由度 1、sim の段差コース(Rapier の遅延読み込み)、結果画面のスキップ。合流ゲートで毎回実行 | done |
-| SEC-2 | sim・scene 合流後に本番ビルドを `pnpm serve:dist` で開き、CSP 違反がないこと(Rapier の WASM、drei の外部アセット読み込みがないこと)を確認 | E2E で自動化(scene 合流で `/` も対象) |
+| SEC-2 | sim・scene 合流後に本番ビルドを `pnpm serve:dist` で開き、CSP 違反がないこと(Rapier の WASM、drei の外部アセット読み込みがないこと)を確認 | done:E2E で自動化。3D の工房(`/`)も CSP 違反なし |
 
 
 - タイトルロゴ(T-00)、図鑑と設定のパネル、性能監査(60fps、初回ロード 15MB 以下)、ブラウザでの通しプレイ確認

@@ -22,7 +22,7 @@ export interface ModelEntry {
 export const MODEL_MANIFEST = {
   room: {
     file: 'workshop-room.glb',
-    present: false,
+    present: true,
     note: '工房の床・壁・天井・梁・窓の戸・有孔ボード(Room)。窓枠はメニュー物体なので別',
   },
   workbench: {

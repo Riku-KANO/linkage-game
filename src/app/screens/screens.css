@@ -152,6 +152,12 @@
   z-index: 5;
   pointer-events: none;
 }
+/* 結果画面は右に結果パネルがあるので、通知は上の中央に出す */
+html[data-screen='result'] .ak-overlay > .app-notices {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .app-notices .hud-notice {
   pointer-events: auto;
 }

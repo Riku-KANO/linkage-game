@@ -46,6 +46,9 @@ import {
   tutorialCallout,
 } from './guide';
 
+/** 製図用紙の上は表示範囲が固定(カメラと位置合わせ)なので、移動・拡大・全体表示の操作は一覧に出さない */
+const PAPER_FIXED_VIEW_ROWS = ['pointer.pan', 'pointer.zoom', 'fit'] as const;
+
 /**
  * 設計画面の HUD と案内(INT-7a)。DesignScreen の差し込み口に、flow のセッションから組んだ部品を入れる。
  *
@@ -221,7 +224,7 @@ function DesignHelp() {
         />
       )}
       {top === 'glossary' && <GlossaryDialog onClose={close} />}
-      {top === 'keys' && <ShortcutSheet onClose={close} />}
+      {top === 'keys' && <ShortcutSheet onClose={close} omit={PAPER_FIXED_VIEW_ROWS} />}
     </div>
   );
 }

@@ -310,3 +310,15 @@ describe('一言の吹き出しと、はじめての方へ(GUIDE-4)', () => {
     expect(cb.onLater).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('ShortcutSheet omit (design screen has a fixed view)', () => {
+  it('hides the rows listed in omit', async () => {
+    const { render, screen, cleanup } = await import('@testing-library/react');
+    const { ShortcutSheet } = await import('./ShortcutSheet');
+    const { t } = await import('@/i18n');
+    render(<ShortcutSheet onClose={() => {}} omit={['pointer.zoom']} reducedMotion />);
+    expect(screen.queryByText(t('guide.keys.pointer.zoom'))).toBeNull();
+    expect(screen.getByText(t('guide.keys.pointer.addSelect'))).toBeTruthy();
+    cleanup();
+  });
+});

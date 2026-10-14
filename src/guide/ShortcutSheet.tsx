@@ -15,14 +15,20 @@ export interface ShortcutSheetProps {
   isMac?: boolean;
   /** 省略時はアプリと OS の設定に従う */
   reducedMotion?: boolean;
+  /** 出さない行の id(製図用紙の上では表示範囲が固定なので、移動・拡大・全体表示を外すなど) */
+  omit?: readonly string[];
 }
 
-export function ShortcutSheet({ onClose, isMac, reducedMotion }: ShortcutSheetProps) {
+export function ShortcutSheet({ onClose, isMac, reducedMotion, omit }: ShortcutSheetProps) {
   const reduced = useReducedMotion(reducedMotion);
   const mac = isMac ?? detectMac();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
-  const rows = useMemo(() => shortcutRows(mac), [mac]);
+  const omitKey = (omit ?? []).join(',');
+  const rows = useMemo(() => {
+    const skip = new Set(omitKey ? omitKey.split(',') : []);
+    return shortcutRows(mac).filter((r) => !skip.has(r.id));
+  }, [mac, omitKey]);
   return (
     <GuideOverlay
       onClose={onClose}

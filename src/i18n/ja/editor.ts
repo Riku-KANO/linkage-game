@@ -103,6 +103,7 @@ export const editor: Record<string, string> = {
 
   // 脚列(E-06)
   'editor.legs.title': '脚列',
+  'editor.legs.locked': '脚列の設定は章 2 で使えるようになります',
   'editor.legs.count': '組数',
   'editor.legs.phase': '位相差(°)',
   'editor.legs.spacing': '間隔(cm)',

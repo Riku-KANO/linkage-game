@@ -105,6 +105,7 @@ export function DesignView() {
         lockedJoints={lockedJoints}
         ghost={hintGhost}
         budget={stage.budget}
+        legArray={stage.features.legArray}
       />
     </div>
   );

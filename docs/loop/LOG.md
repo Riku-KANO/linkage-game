@@ -19,3 +19,5 @@
   `cf init` が固定した `@cloudflare/vite-plugin` の古いベータが miniflare 経由で undici(<7.29.1)と sharp(<0.35.5)の
   既知の脆弱性 11 件(high 3)を持ち込んでいたので最新ベータへ更新 → 0 件。`trustPolicy: no-downgrade` を有効化。
   外側ループの手順 0 と `pnpm deploy` の前提に deps:check を入れた
+- [合流] model(MOD-1〜5)→ main。86 テスト。共有 URL:見本機+スコア 334 文字、30 秒ゴースト込み 2949 文字。
+  統合時の注意:LoadFailReason / SaveFailReason を i18n キーに写す、ゴーストは 8 値/フレーム(姿勢+モーター角)

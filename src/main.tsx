@@ -24,7 +24,8 @@ const routes: Record<string, () => Promise<{ default: ComponentType }>> = {
 installAudio();
 
 const name = new URLSearchParams(location.search).get('dev') ?? 'app';
-const Page = lazy(routes[name] ?? routes.app!);
+// 自分のキーだけを見る(?dev=constructor などで Object.prototype の値を拾わない)
+const Page = lazy(Object.hasOwn(routes, name) ? routes[name]! : routes.app!);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

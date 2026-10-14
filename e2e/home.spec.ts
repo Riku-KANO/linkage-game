@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { skipBootLogo, watchErrors } from './helpers';
+import { watchErrors } from './helpers';
 
 /**
  * ホーム側の画面(INT-4 ステージ選択、INT-5 ホーム・設定・通知)。
@@ -9,10 +9,16 @@ import { skipBootLogo, watchErrors } from './helpers';
 const html = (page: Page) => page.locator('html');
 const menuItem = (page: Page, name: RegExp) => page.getByRole('menuitem', { name });
 
-/** 起動してロゴを飛ばし、ホームのメニューが出るまで待つ */
+/**
+ * 起動してロゴ(T-00)を飛ばし、ホームのメニューが出るまで待つ。ロゴは任意のキーで飛ばせるが、
+ * 読み込み中に押すと効かないことがあるので、メニューが出るまで害のない Shift を繰り返す(scene.spec と同じ)
+ */
 async function bootToHome(page: Page) {
-  await skipBootLogo(page);
-  await expect(menuItem(page, /ステージ選択/)).toBeVisible();
+  const menu = menuItem(page, /ステージ選択/);
+  await expect(async () => {
+    await page.keyboard.press('Shift');
+    await expect(menu).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 40_000 });
   await expect(html(page)).toHaveAttribute('data-screen', 'home');
 }
 

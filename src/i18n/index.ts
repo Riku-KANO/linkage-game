@@ -16,11 +16,14 @@ export function setLocale(locale: Locale) {
 
 /** `{name}` 形式のパラメータを埋める。キーが無ければキーそのものを返す */
 export function t(key: string, params?: Record<string, string | number>): string {
-  const s = dictionaries[current][key] ?? key;
+  const dict = dictionaries[current];
+  const s = Object.hasOwn(dict, key) ? dict[key]! : key;
   if (!params) return s;
-  return s.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? `{${k}}`));
+  return s.replace(/\{(\w+)\}/g, (_, k: string) =>
+    Object.hasOwn(params, k) ? String(params[k]) : `{${k}}`,
+  );
 }
 
 export function hasKey(key: string): boolean {
-  return key in dictionaries[current];
+  return Object.hasOwn(dictionaries[current], key);
 }

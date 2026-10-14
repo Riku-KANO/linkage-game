@@ -441,3 +441,6 @@ export function sampleCycle(
 export function jointPos(positions: Float64Array, index: number): { x: number; y: number } {
   return { x: positions[index * 2]!, y: positions[index * 2 + 1]! };
 }
+
+/** S-04 クランク角に対する各点の速度 ∂p/∂θ(実装は derivative.ts) */
+export { poseDerivative, type PoseDerivativeOptions } from './derivative';

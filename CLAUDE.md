@@ -7,7 +7,7 @@
 
 | コマンド | 内容 |
 | --- | --- |
-| `pnpm dev` | 開発サーバー。`?dev=editor` `?dev=sim` `?dev=scene` で各プレイグラウンド |
+| `pnpm dev` | 開発サーバー。`?dev=editor|sim|scene|testrun|result|audio` で各プレイグラウンド |
 | `pnpm verify` | **検証ゲート**:format → typecheck → test → build。合否はこれだけで決める |
 | `pnpm verify --quick` | build を省く(内側ループ用) |
 | `pnpm verify --fix` | prettier で整形してから検証 |

@@ -1687,7 +1687,7 @@
   top: 14px;
   left: 50%;
   display: grid;
-  grid-template-columns: 112px 280px 128px;
+  grid-template-columns: 112px 280px 140px;
   align-items: center;
   gap: 14px;
   padding: 8px 16px 10px;
@@ -1853,6 +1853,7 @@
 .hud-runhud__loadText {
   display: flex;
   flex-direction: column;
+  white-space: nowrap;
 }
 .hud-runhud__loadText strong {
   min-width: 4ch;

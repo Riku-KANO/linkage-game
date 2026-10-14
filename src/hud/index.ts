@@ -6,7 +6,7 @@
  * - HUD-2 ステージ選択:StageSelectPanel、ホームのテキストメニュー TextMenu
  * - HUD-3 設定:SettingsPanel
  * - HUD-4 通知:NoticeStack(列の操作は pushNotice・dismissNotice)
- * - HUD-5 試走中:RunHud
+ * - HUD-5 試走中:RunHud(毎フレームの値を React の外で書き換える LiveRunHud も)
  * - 置き場:HudDock(画面の端に寄せ、中央の機械を空ける)
  */
 export { HudDock, type HudDockProps } from './HudDock';
@@ -24,7 +24,18 @@ export {
   type SettingsPanelProps,
 } from './SettingsPanel';
 export { NoticeStack, NOTICE_EXIT_MS, type NoticeStackProps } from './NoticeStack';
-export { RunHud, RUN_BADGES, type RunBadge, type RunHudProps } from './RunHud';
+export {
+  RunHud,
+  LiveRunHud,
+  runHudView,
+  RUN_BADGES,
+  type RunBadge,
+  type RunHudProps,
+  type LiveRunHudProps,
+  type RunHudFrame,
+  type RunHudSource,
+  type RunHudView,
+} from './RunHud';
 export { MedalPips, MEDAL_AXES, type MedalPipsProps } from './MedalPips';
 export type { CollapsibleProps } from './common';
 export {

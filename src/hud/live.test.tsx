@@ -1,17 +1,20 @@
 // @vitest-environment jsdom
-import { useState } from 'react';
+import { Profiler, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerSfx, type SfxName } from '@/audio/sfx';
 import {
   dismissNotice,
+  LiveRunHud,
   NOTICE_DURATION,
   NOTICE_EXIT_MS,
   NoticeStack,
   RunHud,
   UNLOCK_DURATION,
   type HudNotice,
+  type RunHudFrame,
   type RunHudProps,
+  type RunHudSource,
 } from './index';
 
 let sounds: SfxName[] = [];
@@ -195,5 +198,94 @@ describe('RunHud', () => {
     expect(back.getAttribute('aria-keyshortcuts')).toBe('Esc');
     fireEvent.click(back);
     expect(onBackToDesign).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('LiveRunHud', () => {
+  /** 試走の進行役の代わり:emit で値を変えて購読者を呼ぶ */
+  function fakeSource(initial: RunHudFrame) {
+    let frame = initial;
+    const listeners = new Set<() => void>();
+    const source: RunHudSource = {
+      read: () => frame,
+      subscribe: (cb) => {
+        listeners.add(cb);
+        return () => listeners.delete(cb);
+      },
+    };
+    const emit = (f: RunHudFrame) => {
+      frame = f;
+      act(() => listeners.forEach((l) => l()));
+    };
+    return { source, emit, listeners };
+  }
+
+  it('毎フレームの値は React を描き直さずに書き換え、札・ゴーストが変わったときだけ描き直す', () => {
+    const { source, emit, listeners } = fakeSource({ elapsed: 0, distance: 0, motorLoad: 0 });
+    let commits = 0;
+    const r = render(
+      <Profiler id="hud" onRender={() => commits++}>
+        <LiveRunHud
+          source={source}
+          timeLimit={30}
+          goalDistance={3}
+          onBackToDesign={vi.fn()}
+          backShortcut="Esc"
+          reducedMotion
+        />
+      </Profiler>,
+    );
+    expect(screen.getByRole('timer').textContent).toContain('0.0/ 30');
+    const base = commits;
+
+    emit({ elapsed: 12.34, distance: 1.2, motorLoad: 0.42 });
+    expect(commits).toBe(base);
+    expect(screen.getByRole('timer', { name: '時間' }).textContent).toContain('12.3/ 30');
+    const bar = screen.getByRole('progressbar', { name: '距離' });
+    expect(bar.getAttribute('aria-valuenow')).toBe('40');
+    expect(bar.getAttribute('aria-valuetext')).toBe('ゴールまで 40%');
+    expect(screen.getByText('1.20 / 3.00 m')).toBeTruthy();
+    const load = screen.getByRole('meter', { name: 'モーター負荷' });
+    expect(load.getAttribute('aria-valuenow')).toBe('42');
+    expect(load.textContent).toContain('42%');
+    expect(document.querySelector<HTMLElement>('.hud-track__fill')!.style.transform).toBe(
+      'scaleX(0.4)',
+    );
+    expect(document.querySelector('.hud-track__ghost')).toBeNull();
+
+    // 残り時間・停動の負荷・札・ゴーストの印
+    emit({
+      elapsed: 27,
+      distance: 1.5,
+      motorLoad: 1.3,
+      badges: ['stalled'],
+      ghostDistance: 2.4,
+    });
+    expect(commits).toBeGreaterThan(base);
+    expect(screen.getByRole('timer').getAttribute('data-level')).toBe('low');
+    expect(load.getAttribute('data-level')).toBe('stall');
+    expect(load.getAttribute('aria-valuenow')).toBe('100');
+    expect(load.getAttribute('aria-valuetext')).toBe('130%');
+    expect(screen.getByRole('status').textContent).toBe('停動');
+    const ghostRail = () => document.querySelector<HTMLElement>('[data-live="ghost"]')!;
+    expect(ghostRail().style.transform).toBe('translateX(80%)');
+
+    const after = commits;
+    emit({
+      elapsed: 27.5,
+      distance: -0.3,
+      motorLoad: 0.5,
+      badges: ['stalled'],
+      ghostDistance: 2.7,
+    });
+    expect(commits).toBe(after);
+    expect(ghostRail().style.transform).toBe('translateX(90%)');
+    expect(bar.getAttribute('aria-valuenow')).toBe('0');
+    expect(screen.getByText('-0.30 / 3.00 m')).toBeTruthy();
+    expect(screen.getByRole('timer').textContent).toContain('27.5/ 30');
+
+    fireEvent.click(screen.getByRole('button', { name: /設計に戻る/ }));
+    r.unmount();
+    expect(listeners.size).toBe(0);
   });
 });

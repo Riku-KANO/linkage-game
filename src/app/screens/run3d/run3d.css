@@ -20,75 +20,77 @@
   font-size: 14px;
 }
 
-/* 上の帯:戻る / ステージ・時間・距離・進み具合 / 結果へ */
-.ak-run-strip {
+/*
+ * 試走の計器(INT-7b:HUD の LiveRunHud)。帯は上の中央、状態の札はその下(機械は画面の中央)。
+ * 「設計に戻る」は左上へ(左下は testrun の設計図の縮小版)、その下にステージ名と凡例、右下に「結果へ」
+ */
+.ak-run-screen .ak-run-gauges .hud-runhud__back {
+  top: 16px;
+  bottom: auto;
+}
+
+.ak-run-info {
   position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(620px, calc(100% - 460px));
-  min-width: 380px;
+  top: 72px;
+  left: 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  pointer-events: auto;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(48, 34, 25, 0.92), rgba(30, 21, 15, 0.92));
-  border: 1px solid rgba(242, 166, 90, 0.28);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  color: var(--text);
-  font-size: 13px;
-}
-
-.ak-run-strip .ak-btn {
-  white-space: nowrap;
-  flex: none;
-}
-
-.ak-run-strip__body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
+  max-width: 280px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(27, 19, 14, 0.72);
+  border: 1px solid rgba(201, 154, 91, 0.25);
+  color: var(--text);
+  font-size: 12.5px;
+  pointer-events: none;
 }
 
-.ak-run-strip__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.ak-run-strip__stage {
+.ak-run-info__stage {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ak-run-strip__nums {
-  justify-content: space-between;
-  font-variant-numeric: tabular-nums;
-}
-
-.ak-run-strip__nums b {
-  font-weight: 600;
-}
-
-.ak-run-progress {
-  position: relative;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(239, 230, 210, 0.14);
-  overflow: hidden;
-}
-
-.ak-run-progress__bar {
+/* 右下(「Esc・右クリックで戻る」の添え書きの上) */
+.ak-run-skip {
   position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  transform: scaleX(0);
-  background: linear-gradient(90deg, #c98a43, var(--accent));
+  right: 16px;
+  bottom: 44px;
+  pointer-events: auto;
+}
+
+/* クランクトルクの計器を隠しているときは、表示の切り替えを右上に詰める */
+.ak-run-screen .tr-hud:not(:has(.tr-gauge)) .tr-toggles {
+  top: 16px;
+}
+
+/* 狭い画面:計器の帯を少し縮める。さらに狭ければ右に寄せ、表示の切り替えはその下へ */
+@media (max-width: 1100px) {
+  .ak-run-screen .ak-run-gauges .hud-runhud__strip {
+    transform: translateX(-50%) scale(0.86);
+    transform-origin: top center;
+  }
+}
+@media (max-width: 900px) {
+  .ak-run-screen .ak-run-gauges .hud-runhud__strip {
+    left: auto;
+    right: 8px;
+    transform: scale(0.8);
+    transform-origin: top right;
+  }
+  .ak-run-screen .ak-run-gauges .hud-runhud__badges {
+    left: auto;
+    right: 16px;
+    top: 76px;
+    transform: none;
+  }
+  .ak-overlay > .ak-run-screen .tr-gauge,
+  .ak-run-screen .tr-hud:not(:has(.tr-gauge)) .tr-toggles {
+    top: 120px;
+  }
 }
 
 .ak-run-chip {
@@ -100,24 +102,8 @@
   color: var(--text);
 }
 
-.ak-run-chip.is-goal {
-  background: var(--ok);
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.ak-run-chip.is-bad {
-  background: var(--danger);
-  color: #fff;
-  font-weight: 700;
-}
-
-.ak-run-chip.is-warn {
-  background: #ffc24d;
-  color: var(--ink);
-}
-
 .ak-run-legend {
+  display: flex;
   font-size: 11px;
   color: var(--muted);
   gap: 12px;
@@ -138,19 +124,6 @@
 
 .ak-run-dot.is-opponent {
   background: #ffb36b;
-}
-
-@media (max-width: 900px) {
-  .ak-run-strip {
-    left: 12px;
-    right: 12px;
-    width: auto;
-    min-width: 0;
-    transform: none;
-  }
-  .ak-overlay > .ak-run-screen .tr-gauge {
-    top: 120px;
-  }
 }
 
 /* 結果画面:右に寄せる(カメラは機械を左寄りに映す。幅は bridge の RESULT_PANEL_PX と合わせる) */

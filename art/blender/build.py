@@ -26,6 +26,7 @@ MODELS = {
     "workbench": "workbench",
     "shelf": "shelf",
     "toolbox": "toolbox",
+    "wasteland": "wasteland",
     "logo": "logo",
 }
 

@@ -45,7 +45,7 @@ export const MODEL_MANIFEST = {
     present: true,
     note: '工具箱の本体(Toolbox)。トレイとリンクは手続き生成',
   },
-  wasteland: { file: 'wasteland.glb', present: false, note: '窓の外の地面と台地(Wasteland)' },
+  wasteland: { file: 'wasteland.glb', present: true, note: '窓の外の地面と台地(Wasteland)' },
   logo: {
     file: 'logo.glb',
     present: true,

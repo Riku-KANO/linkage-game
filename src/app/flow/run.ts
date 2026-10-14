@@ -86,6 +86,8 @@ export class LiveRun {
   readonly startX: number;
   /** スタート時(直立)の重心の高さ(m、足元の地形から)。失敗理由「重心が高い」の判定に使う */
   readonly comHeight: number;
+  /** 胴体の箱(機体ローカル、m)。2D の側面図やゴーストの描画に使う */
+  readonly chassis: { min: readonly number[]; max: readonly number[] };
   /** 再生速度(advance の実時間に掛ける) */
   speed = 1;
   paused = false;
@@ -118,6 +120,7 @@ export class LiveRun {
     });
     this.sim = this.walker;
     const w = this.walker;
+    this.chassis = { min: [...w.mass.chassisMin], max: [...w.mass.chassisMax] };
     this.startX = w.com[0]!;
     const ground = terrain.heightAt(w.com[0]!, w.com[2]!);
     this.comHeight = Number.isFinite(ground) ? w.com[1]! - ground : w.com[1]!;

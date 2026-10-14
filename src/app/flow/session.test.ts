@@ -225,6 +225,29 @@ describe('design slots and autosave (FLOW-1)', () => {
     expect(selectTutorial(S())).toBeNull();
     expect(selectAllowedParts(S())).toEqual(c1s1.parts);
   });
+  it('derived selectors return stable references (safe for useSession(selector))', () => {
+    boot();
+    S().startStage('c1-s1');
+    const sels = [
+      selectStage,
+      selectTutorial,
+      selectAllowedParts,
+      selectLockedJoints,
+      selectRevealedHints,
+      selectHintGhost,
+    ] as const;
+    const check = () => sels.forEach((sel) => expect(sel(S())).toBe(sel(S())));
+    check();
+    const parts = selectAllowedParts(S());
+    // 設計を変えても部品の組が同じなら同じ配列
+    editor().commit({ ...editor().design, name: 'renamed' });
+    expect(selectAllowedParts(S())).toBe(parts);
+    S().revealHint();
+    S().revealHint();
+    check();
+    S().tutorialClick();
+    check();
+  });
 });
 
 describe('run lifecycle through the session (FLOW-2)', () => {

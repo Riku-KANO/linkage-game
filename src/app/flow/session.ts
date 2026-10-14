@@ -780,30 +780,57 @@ export interface TutorialView {
   waitsForClick: boolean;
 }
 
+// selector の結果はキャッシュして同じ参照を返す(useSession(selector) でそのまま使えるように)
+const tutorialViews = new WeakMap<TutorialState, TutorialView | null>();
+const allowedCache = new WeakMap<StageDef, Map<TutorialState | null, PartKind[]>>();
+const hintCache = new WeakMap<StageDef, Map<number, RevealedHint[]>>();
+
 /** 進行中のチュートリアル(なければ・終わっていれば null) */
 export function selectTutorial(s: SessionState): TutorialView | null {
   if (!s.stageId) return null;
   const steps = getStage(s.stageId)?.tutorial;
   const state = s.tutorials[s.stageId];
-  if (!steps || !state || isTutorialDone(steps, state)) return null;
-  const step = steps[state.index]!;
-  return {
-    steps,
-    state,
-    step,
-    index: state.index,
-    total: steps.length,
-    textKey: step.key,
-    waitsForClick: step.until.kind === 'click',
-  };
+  if (!steps || !state) return null;
+  const cached = tutorialViews.get(state);
+  if (cached !== undefined) return cached;
+  let view: TutorialView | null = null;
+  if (!isTutorialDone(steps, state)) {
+    const step = steps[state.index]!;
+    view = {
+      steps,
+      state,
+      step,
+      index: state.index,
+      total: steps.length,
+      textKey: step.key,
+      waitsForClick: step.until.kind === 'click',
+    };
+  }
+  tutorialViews.set(state, view);
+  return view;
 }
 
+const NO_PARTS: PartKind[] = [];
 /** エディタに渡す使える部品(ステージの部品 ∩ チュートリアルで渡した部品) */
 export function selectAllowedParts(s: SessionState): PartKind[] {
   const st = selectStage(s);
-  if (!st) return [];
+  if (!st) return NO_PARTS;
   const tut = s.stageId ? (s.tutorials[s.stageId] ?? null) : null;
-  return tutorialAllowedParts(st, tut);
+  let byState = allowedCache.get(st);
+  if (!byState) allowedCache.set(st, (byState = new Map()));
+  let parts = byState.get(tut);
+  if (!parts) {
+    const next = tutorialAllowedParts(st, tut);
+    // 同じ部品の組なら前の配列を使い回す(設計の変更ごとに新しい配列にしない)
+    parts = [...byState.values()].find((p) => sameList(p, next)) ?? next;
+    if (byState.size > 64) byState.clear();
+    byState.set(tut, parts);
+  }
+  return parts;
+}
+
+function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
 const NO_JOINTS: JointId[] = [];
@@ -813,11 +840,17 @@ export function selectLockedJoints(s: SessionState): JointId[] {
   return st?.lockedJoints ?? NO_JOINTS;
 }
 
+const NO_HINTS: RevealedHint[] = [];
 /** 開いたヒント(レベル順) */
 export function selectRevealedHints(s: SessionState): RevealedHint[] {
   const st = selectStage(s);
-  if (!st || isSandboxStage(st)) return [];
-  return revealedHints(st, s.hints[st.id] ?? 0);
+  if (!st || isSandboxStage(st)) return NO_HINTS;
+  const n = s.hints[st.id] ?? 0;
+  let byCount = hintCache.get(st);
+  if (!byCount) hintCache.set(st, (byCount = new Map()));
+  let list = byCount.get(n);
+  if (!list) byCount.set(n, (list = revealedHints(st, n)));
+  return list;
 }
 
 /** 設計ビューに重ねるヒントの影(開いた中で一番進んだもの) */

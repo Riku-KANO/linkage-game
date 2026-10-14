@@ -80,7 +80,9 @@ describe('decompression bombs and huge inputs', () => {
     const n = 100_000;
     d[1] = new Array<string>(n).fill('j');
     d[2] = new Array<number>(n * 2).fill(0);
-    const { value, ms } = timed(() => decodeShare(enc(p)));
+    // 圧縮(テストの準備)は時間に含めない
+    const link = enc(p);
+    const { value, ms } = timed(() => decodeShare(link));
     expect(!value.ok && value.reason).toBe('invalid');
     expect(!value.ok && value.errors.join()).toMatch(/多すぎ/);
     // 検査は配列の長さだけで決まる(10 万個のジョイントを作らない)
@@ -308,7 +310,9 @@ describe('ghosts and runs in share links', () => {
     const ghost = p[3] as [number, number[], number[]];
     // 5 万フレーム(上限 6000)。展開後の JSON は上限の内側
     ghost[2] = new Array<number>(8 * 50_000).fill(0);
-    const { value, ms } = timed(() => decodeShare(enc(p)));
+    // 圧縮(テストの準備)は時間に含めない
+    const link = enc(p);
+    const { value, ms } = timed(() => decodeShare(link));
     expect(value.ok && value.payload.ghost).toBeUndefined();
     expect(ms).toBeLessThan(300);
   });

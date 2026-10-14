@@ -63,9 +63,14 @@ export function resolveShortcut(e: KeyLike): Command | null {
     case 'p':
       return { kind: 'togglePlay' };
     case ',':
-      return { kind: 'stepAngle', deg: e.shiftKey ? -15 : -5 };
+      return { kind: 'stepAngle', deg: -5 };
     case '.':
-      return { kind: 'stepAngle', deg: e.shiftKey ? 15 : 5 };
+      return { kind: 'stepAngle', deg: 5 };
+    // Shift+, / Shift+. は多くのキー配列(US・JIS)で < / > として届く
+    case '<':
+      return { kind: 'stepAngle', deg: -15 };
+    case '>':
+      return { kind: 'stepAngle', deg: 15 };
     case 'ArrowLeft':
       return { kind: 'nudge', dx: e.shiftKey ? -10 : -1, dy: 0 };
     case 'ArrowRight':
@@ -142,9 +147,9 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
     },
   ]),
   { id: 'togglePlay', group: 'view', key: 'p', command: { kind: 'togglePlay' } },
-  { id: 'step', group: 'view', key: ',', shift: false, command: { kind: 'stepAngle', deg: -5 } },
-  { id: 'step', group: 'view', key: '.', shift: false, command: { kind: 'stepAngle', deg: 5 } },
-  { id: 'stepFar', group: 'view', key: ',', shift: true, command: { kind: 'stepAngle', deg: -15 } },
-  { id: 'stepFar', group: 'view', key: '.', shift: true, command: { kind: 'stepAngle', deg: 15 } },
+  { id: 'step', group: 'view', key: ',', command: { kind: 'stepAngle', deg: -5 } },
+  { id: 'step', group: 'view', key: '.', command: { kind: 'stepAngle', deg: 5 } },
+  { id: 'stepFar', group: 'view', key: '<', command: { kind: 'stepAngle', deg: -15 } },
+  { id: 'stepFar', group: 'view', key: '>', command: { kind: 'stepAngle', deg: 15 } },
   { id: 'fit', group: 'view', key: '0', command: { kind: 'fit' } },
 ];

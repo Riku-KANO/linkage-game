@@ -2,6 +2,7 @@ import type { DesignDoc } from '@/core/model/types';
 import { compileMechanism, type CompiledMechanism, type CompileIssue } from './compile';
 import { sampleCycle, type CycleSample } from './solve';
 import { findGrashofLoops, grashofVariant } from './grashof';
+import { analyzeConstraints, type ConstraintAnalysis } from './constraints';
 
 /**
  * 機構の静的・動的な解析結果(E-04 自由度、E-05 不正状態の警告)。
@@ -33,6 +34,14 @@ export interface MechanismAnalysis {
   compiled: CompiledMechanism;
   /** 組立不能になる角度の範囲(サンプル点の連続区間。サンプル順に thetaStart → thetaEnd) */
   failRanges?: AngleRange[];
+  /** E-04 余分な拘束にかかわるリンク(過拘束の部分。problemLinks にも入る) */
+  redundantLinks?: string[];
+  /** E-04 クランクを止めても動ける点(ぐらつく部分。problemJoints にも入る) */
+  looseJoints?: string[];
+  /** E-04 クランクを止めても動けるリンク */
+  looseLinks?: string[];
+  /** E-04 拘束のヤコビアンによる解析の詳細 */
+  constraints?: ConstraintAnalysis;
 }
 
 /** モーター角の区間(rad)。サンプル順に start → end(1 周をまたぐことがある) */
@@ -173,6 +182,25 @@ export function analyzeMechanism(
     });
   }
 
+  // E-04 過拘束・ぐらつく部分(拘束のヤコビアンの零空間・左零空間)
+  const constraints = constraintsAtRegularPose(compiled, cycle);
+  for (const l of constraints.redundantLinks) problemLinks.add(l);
+  for (const jt of constraints.looseJoints) problemJoints.add(jt);
+  if (constraints.redundantLinks.length > 0) {
+    messages.push({
+      severity: 'warn',
+      key: 'analysis.redundantLinks',
+      params: { count: constraints.redundancy },
+    });
+  }
+  if (constraints.looseJoints.length > 0) {
+    messages.push({
+      severity: 'warn',
+      key: 'analysis.looseJoints',
+      params: { count: constraints.freedom },
+    });
+  }
+
   // E-05 グラスホフ判定(同じ判定は 1 つのメッセージにまとめる)
   const grashof = findGrashofLoops(compiled);
   const grashofCounts = new Map<string, number>();
@@ -203,7 +231,29 @@ export function analyzeMechanism(
     cycle,
     compiled,
     failRanges,
+    redundantLinks: constraints.redundantLinks,
+    looseJoints: constraints.looseJoints,
+    looseLinks: constraints.looseLinks,
+    constraints,
   };
+}
+
+/**
+ * 設計姿勢で拘束を解析する。設計姿勢がたまたま特異(リンクが一直線に並ぶなど)だと、
+ * 見かけの過拘束とぐらつきが同時に出るので、そのときは余裕(slack)の最も大きい別の姿勢でも確かめる。
+ */
+function constraintsAtRegularPose(mech: CompiledMechanism, cycle: CycleSample): ConstraintAnalysis {
+  const atDesign = analyzeConstraints(mech);
+  if (atDesign.redundancy === 0 || atDesign.freedom === 0) return atDesign;
+  let best = -1;
+  for (let s = 1; s < cycle.steps; s++) {
+    if (!cycle.ok[s]) continue;
+    const sl = cycle.slack?.[s] ?? 1;
+    if (best < 0 || sl > (cycle.slack?.[best] ?? 1)) best = s;
+  }
+  if (best < 0) return atDesign;
+  const alt = analyzeConstraints(mech, cycle.positions[best]);
+  return alt.redundancy + alt.freedom < atDesign.redundancy + atDesign.freedom ? alt : atDesign;
 }
 
 /** rad → 0..359 の整数の度 */

@@ -8,6 +8,10 @@ export const analysis: Record<string, string> = {
   'analysis.noFullRotation': 'クランクが一回転できません({from}°〜{to}° でリンクが届きません)',
   'analysis.deadPoint':
     'クランク {angle}° 付近で死点に近づきます(リンクが一直線に並び、動きが不安定になります)',
+  'analysis.redundantLinks':
+    '赤いリンクのあたりが固まっています(余分なリンクが {count} 本分あります。どれかを外すと動きます)',
+  'analysis.looseJoints':
+    '赤い点はクランクを止めても動いてしまいます(あと {count} 本リンクを足して支えてください)',
   'analysis.issue.unknown-joint': '存在しないジョイントを参照しています',
   'analysis.issue.link-too-few-joints': 'つながっていないリンクがあります',
   'analysis.issue.crank-pivot-not-fixed': 'クランクの軸は固定点に置いてください',

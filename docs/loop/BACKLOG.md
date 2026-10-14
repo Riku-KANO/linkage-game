@@ -196,8 +196,9 @@
 | INT-6 | 演出:T-03 組み上げ(部品が立ち上がり脚列が複製されクレーンで降ろす)、T-05 逆再生、T-04 ゴールでスロー+半周 | testrun | done(`src/scene/fx`)— 図面の部品がクランクから順に立ち上がって厚みを持ち、脚は z = 0 から各組の位相までクランクを回しながら複製、胴体がはまり、手続き生成のクレーンが窓を抜けてコースのスタートへ降ろす。MachineModel と同じ配置・形・色・θ = 0 の姿勢に着地して引き継ぐ(行列の一致をテスト)。T-05・T-03 の逆再生は試走の今の姿勢から逆にたどる(割り込みは途中から)。T-04 は時間の倍率 1 → 0.2 → 0 と機械の周りの半周。スキップ・reduced-motion・音(はまる・クレーン・着地)。GPU で 16.7ms/フレーム。統合の約束は `src/scene/fx/index.ts`(registerTrackMachine・useFx の machineInFx・getFxTimeScale・onFxHandover・setPaperMapping)。統合前は代わりの機体(運動学の簡易 sim)がコースを歩く。`e2e/fx.spec.ts` |
 | WORLD-1 | ステージ選択のジオラマ:章ごとの台地にステージの目印(未解放・クリア・メダル)、ホバーと選択、T-06 で機械が次のステージまで歩く | scene, game | done(stream `world`)— `src/scene/world`:台地+S 字の小道+橋、章 2 は地形から段と溝、目印はインスタンス描画(南京錠/光る/旗+軸ごとのメダル)、ホバーで輪郭とステージ名、クリックは `activateStage`(`setStageSelectHandler` で差し替え)。T-06 は模型が見え始める遷移の 80% から歩き出し、カメラが着いた後に次の目印へ(遷移の 0.75 倍、クリック・キーでスキップ)。ステージ選択のカメラは world が `setStationOverride('stageSelect')` で持つ(右下の一覧 `.app-dock--stage` を避けて遊べる章を左側に、T-06 は歩く区間に寄る)。ラベルはホバー中、なければ一覧で選んだステージ。統合は `src/app/worldBridge.ts`(`noteRun`・`enterStage`・`setProgress`・`selectStage`・`setStageSelectHandler`)。E2E `e2e/world.spec.ts` |
 | WORLD-2 | 工房が育つ:クリアした章の機械が棚に並ぶ、図鑑の額(中身は MVP 外)、作業台の見本機を自分の機械に | scene | done(stream `world`)— 棚の空いた段に章ごとの台座(クリアした機械 `useWorld.chapterMachines`、未クリアは影絵、図鑑の画面で足踏み)、奥の壁に「?」の札の額 3×2(`progress.zukan` の数だけ紙に)、作業台は `BenchWalker` が `useWorld.machineDesign`(なければヤンセン型)を歩かせる。機械は `installWorldSave` で `ashikumi/v1/world` に保存・復元(設計ごとに validateDesign、worldBridge が起動時に呼ぶ) |
-| INT-7 | チュートリアルの吹き出し・ヒントの影・通知・遊び方と用語解説・状況の一言を設計画面とホームに | flow, hud, guide | todo |
-| INT-8 | E2E 通しプレイ:章 1-1 の修理 → 試走 → クリア → 次が解放 | 全部 | 3D なしの版は done(`e2e/flow.spec.ts`)。3D の工房での版は統合後 |
+| INT-7a | 設計画面:チュートリアルの吹き出し(道具を順に渡す・動かせない点)、StageHeader、HintPanel と影、状況の一言(TipBubble)、試走ボタンと試走前チェックの一覧(RunLayer を置き換え)、操作一覧(?)、遊び方・用語、章 1 は脚列を固定 | flow, hud, guide | doing(stream `int-tutorial`) |
+| INT-7b | ホーム:初回の WelcomeCard(チュートリアルから / 遊び方を見る)、遊び方の入口、試走画面の帯を HUD の RunHud に | hud, guide | doing(stream `int-polish`) |
+| INT-8 | E2E 通しプレイ:章 1-1 の修理 → 試走 → クリア → 次が解放 | 全部 | 3D なしの版は done(`e2e/flow.spec.ts`)。3D の工房での版は stream `int-tutorial` |
 
 ## ウェーブ 2(予定:統合と性能)
 

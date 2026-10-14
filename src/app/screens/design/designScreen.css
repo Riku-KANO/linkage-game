@@ -205,8 +205,8 @@
 /* ---------- 横のパネルの列に積む案内(INT-7a、layout.ts の sideDocks) ---------- */
 .ds-dock {
   position: absolute;
-  left: var(--ds-side-left);
-  width: var(--ds-side-w);
+  left: var(--ds-dock-left);
+  width: var(--ds-dock-w);
   pointer-events: none;
 }
 
@@ -340,6 +340,37 @@
 
 .ds-root.is-compact .ds-header .hud-hints__body {
   width: min(340px, calc(100vw - 2 * var(--ds-m)));
+}
+
+/* ---------- チュートリアルが押してほしいもの(道具のボタン・試走ボタン)をそっと光らせる ---------- */
+.ds-root[data-callout-tool='link'] .ed-toolbar .ed-btn[data-tool='link'],
+.ds-root[data-callout-tool='fixed'] .ed-toolbar .ed-btn[data-tool='fixed'],
+.ds-root[data-callout-tool='crank'] .ed-toolbar .ed-btn[data-tool='crank'],
+.ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 14px rgba(242, 166, 90, 0.7);
+  animation: ds-callout 1.6s ease-in-out infinite;
+}
+
+@keyframes ds-callout {
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(242, 166, 90, 0.35),
+      0 0 4px rgba(242, 166, 90, 0.2);
+  }
+}
+
+.ds-root.is-reduced[data-callout-tool] .ed-toolbar .ed-btn[data-tool],
+.ds-root.is-reduced .ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-root[data-callout-tool] .ed-toolbar .ed-btn[data-tool],
+  .ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+    animation: none;
+  }
 }
 
 /* ---------- 遊び方・操作一覧のボタン ---------- */

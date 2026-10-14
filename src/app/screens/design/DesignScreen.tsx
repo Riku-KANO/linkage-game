@@ -19,6 +19,7 @@ import {
 } from '@/app/flow';
 import { useApp } from '@/app/store';
 import { MechanismEditor, type MechanismEditorProps } from '@/editor';
+import type { ToolId } from '@/editor/keyboard';
 import { stageNumber } from '@/hud/stageSelect';
 import { stageTextParams } from '@/game';
 import { t } from '@/i18n';
@@ -55,6 +56,7 @@ import './designScreen.css';
  * - testRun:横のパネルの列の下に積む試走ボタン(INT-7a:HUD の TestRunButton と試走前チェックの一覧)。
  *   渡すと上の帯の試走ボタンは出さない
  * - onTestRun:上の帯の試走ボタン(testRun を渡さないとき)。既定は useApp.go('testRun')
+ * - calloutTool:そっと光らせる道具のボタン(チュートリアルが「上の『リンク』を押して」と言っている間)
  * - editor:エディタの制約の上書き。既定は flow のセッションの今のステージから:使える部品
  *   (チュートリアルで渡した分だけ、selectAllowedParts)、動かせない点、開いたヒントの影
  *   (designGuide で「重ねない」にしたものを除く)、予算、脚列を変えられるか(章 2 から)
@@ -67,6 +69,7 @@ export interface DesignScreenProps extends ScreenOverlayProps {
   guide?: ReactNode;
   testRun?: ReactNode;
   onTestRun?: () => void;
+  calloutTool?: ToolId | null;
   editor?: Pick<
     MechanismEditorProps,
     'allowedParts' | 'lockedJoints' | 'ghost' | 'budget' | 'legArray'
@@ -80,6 +83,7 @@ export function DesignScreen({
   guide,
   testRun,
   onTestRun,
+  calloutTool = null,
   editor,
 }: DesignScreenProps) {
   const reduced = useApp((s) => s.settings.reducedMotion);
@@ -130,6 +134,8 @@ export function DesignScreen({
     '--ds-side-top': docks.side.top,
     '--ds-side-w': docks.side.width,
     '--ds-side-h': docks.side.height,
+    '--ds-dock-left': docks.top.left,
+    '--ds-dock-w': docks.top.width,
     '--ds-col-top': lay.side.top,
     '--ds-col-bottom': size.height - (lay.side.top + lay.side.height),
     '--ds-dock-top-h': docks.top.height,
@@ -151,6 +157,7 @@ export function DesignScreen({
       className={cls}
       style={vars}
       data-live={live ? 'true' : 'false'}
+      data-callout-tool={calloutTool ?? undefined}
       data-paper-rect={[paper.left, paper.top, paper.width, paper.height]
         .map((v) => v.toFixed(2))
         .join(',')}

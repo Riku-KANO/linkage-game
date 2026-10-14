@@ -77,6 +77,12 @@ describe('設計画面の HUD(INT-7a)', () => {
     fireEvent.click(within(bubble()).getByRole('button', { name: /次へ/ }));
     expect(bubble().textContent).toContain('ステップ 3 / 6');
     expect(tool('リンク').disabled).toBe(false);
+    // 吹き出しが「リンク」を押してと言っている間は、リンクの道具をそっと光らせる
+    const root = container.querySelector('.ds-root') as HTMLElement;
+    expect(root.dataset.calloutTool).toBe('link');
+    expect(tool('リンク').dataset.tool).toBe('link');
+    fireEvent.click(tool('リンク'));
+    expect(root.dataset.calloutTool).toBeUndefined();
     // 動かせない点はエディタに渡る
     expect(container.querySelectorAll('.ed-lock').length).toBe(stage11.lockedJoints?.length ?? 0);
     // 試走ボタンは上の帯ではなく列の下

@@ -43,6 +43,7 @@ import {
   installDesignGuide,
   problemSelection,
   setGhostShown,
+  tutorialCallout,
 } from './guide';
 
 /**
@@ -61,9 +62,14 @@ export interface DesignHudScreenProps extends ScreenOverlayProps {
 export function DesignHudScreen({ screen, onTestRun }: DesignHudScreenProps) {
   const stage = useSession(selectStage);
   const real = stage && !isSandboxStage(stage) ? stage : null;
+  // チュートリアルが押してほしい道具・試走ボタンをそっと光らせる
+  const step = useSession((s) => selectTutorial(s)?.step ?? null);
+  const tool = useEditor((s) => s.tool);
+  const callout = tutorialCallout(step, tool);
   return (
     <DesignScreen
       screen={screen}
+      calloutTool={callout.tool}
       stageHeader={real ? <DesignStageHeader stage={real} /> : undefined}
       hints={
         <>
@@ -72,7 +78,7 @@ export function DesignHudScreen({ screen, onTestRun }: DesignHudScreenProps) {
         </>
       }
       guide={<DesignGuide />}
-      testRun={<DesignTestRun onTestRun={onTestRun} />}
+      testRun={<DesignTestRun onTestRun={onTestRun} callout={callout.testRun} />}
     />
   );
 }
@@ -293,7 +299,7 @@ function DesignTip() {
  * 試走ボタンと試走前チェック。チェックは設計が変わるたびに行い、ボタンの状態(押せる・直すところ N 件)に出す。
  * 一覧は押して止められてから開く(それまでは状態の 1 行だけ)。行を押すと図面でその点・棒を選んで示す。
  */
-function DesignTestRun({ onTestRun }: { onTestRun: () => void }) {
+function DesignTestRun({ onTestRun, callout }: { onTestRun: () => void; callout: boolean }) {
   const design = useEditor((s) => s.design);
   const stage = useSession(selectStage);
   const progress = useSession((s) => s.progress);
@@ -321,6 +327,7 @@ function DesignTestRun({ onTestRun }: { onTestRun: () => void }) {
       highlighted={highlighted}
       collapsed={!open}
       disabled={loading}
+      className={callout ? 'ds-callout' : undefined}
     />
   );
 }

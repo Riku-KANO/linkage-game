@@ -103,7 +103,9 @@ export function designLayout(width: number, height: number): DesignLayout {
 /**
  * 横のパネルの列に積む案内(INT-7a)。紙の上には何も置かない(主役は機械)ので、
  * チュートリアルの吹き出し・状況の一言は列の上に、試走ボタン(と試走前チェックの一覧)は列の下に置き、
- * エディタのパネルはその間の残りに縮める(中身はスクロール)。幅の狭い画面では下に回したパネルの中で同じように積む。
+ * エディタのパネルはその間の残りに縮める(中身はスクロール)。
+ * 幅の狭い画面(パネルを紙の下に回す配置)では、下の帯を左右に分けて左に案内、右にパネル(幅はいつもと同じ)。
+ * それも入らないほど狭ければ、下の帯の中で縦に積む。
  */
 export interface SideDocks {
   /** 列の上(吹き出し・一言)。height は実際に使える高さ(中身が高すぎればスクロール) */
@@ -116,6 +118,8 @@ export interface SideDocks {
 
 /** 案内を積んでも、エディタのパネルにはこれだけの高さを残す */
 export const MIN_SIDE_PANEL = 120;
+/** 下の帯を左右に分けるとき、案内の列に最低限ほしい幅 */
+export const MIN_DOCK_WIDTH = 260;
 
 /**
  * 列(lay.side)に、上の案内(高さ topH)と下の試走ボタン(高さ bottomH)を積んだ配置。
@@ -125,7 +129,25 @@ export const MIN_SIDE_PANEL = 120;
 export function sideDocks(lay: DesignLayout, topH: number, bottomH: number): SideDocks {
   const G = DESIGN_UI.gap;
   const col = lay.side;
-  const room = Math.max(0, col.height - Math.min(MIN_SIDE_PANEL, col.height));
+  const empty = topH <= 0 && bottomH <= 0;
+  const split = lay.compact && !empty && col.width >= DESIGN_UI.sideWidth + G + MIN_DOCK_WIDTH;
+  if (split) {
+    // 左:案内の列(上に吹き出し、下に試走ボタン)、右:いつもの幅のパネル
+    const dock: Box = { ...col, width: col.width - DESIGN_UI.sideWidth - G };
+    const docks = stack(dock, topH, bottomH, 0);
+    return {
+      top: docks.top,
+      bottom: docks.bottom,
+      side: { ...col, left: dock.left + dock.width + G, width: DESIGN_UI.sideWidth },
+    };
+  }
+  return stack(col, topH, bottomH, Math.min(MIN_SIDE_PANEL, col.height));
+}
+
+/** 列の上下に差し込み口を積み、残り(minRest 以上)を side にする */
+function stack(col: Box, topH: number, bottomH: number, minRest: number): SideDocks {
+  const G = DESIGN_UI.gap;
+  const room = Math.max(0, col.height - minRest);
   let bottom = Math.max(0, bottomH);
   let top = Math.max(0, topH);
   const gaps = () => (bottom > 0 ? G : 0) + (top > 0 ? G : 0);

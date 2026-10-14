@@ -15,6 +15,7 @@ import {
   problemSelection,
   RUN_EVENTS_KEPT,
   setGhostShown,
+  tutorialCallout,
   type DesignGuideState,
 } from './guide';
 import { createStore } from 'zustand/vanilla';
@@ -136,5 +137,27 @@ describe('installDesignGuide', () => {
     off();
     session.setState({ lastOutcome: outcome as never });
     expect(store.getState().runs).toEqual({});
+  });
+});
+
+describe('チュートリアルが押してほしいもの', () => {
+  const steps = getStage('c1-s1')!.tutorial!;
+  const c13 = getStage('c1-s3')!.tutorial!;
+
+  it('部品を置くステップでは、その道具を選ぶまで道具のボタン', () => {
+    // 1-1 の 3:「リンク」を押して…
+    expect(tutorialCallout(steps[2], 'select')).toEqual({ tool: 'link', testRun: false });
+    expect(tutorialCallout(steps[2], 'link')).toEqual({ tool: null, testRun: false });
+    // 1-3:固定点・クランク
+    const fixed = c13.find((s) => s.until.kind === 'place' && s.until.part === 'fixed');
+    const crank = c13.find((s) => s.until.kind === 'place' && s.until.part === 'crank');
+    expect(tutorialCallout(fixed, 'select').tool).toBe('fixed');
+    expect(tutorialCallout(crank, 'link').tool).toBe('crank');
+  });
+
+  it('試走で進むステップは試走ボタン。「次へ」のステップや終わった後は何も光らせない', () => {
+    expect(tutorialCallout(steps[5], 'link')).toEqual({ tool: null, testRun: true });
+    expect(tutorialCallout(steps[0], 'select')).toEqual({ tool: null, testRun: false });
+    expect(tutorialCallout(null, 'select')).toEqual({ tool: null, testRun: false });
   });
 });

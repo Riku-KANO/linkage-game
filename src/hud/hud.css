@@ -537,7 +537,9 @@
   padding: 0 20px 0 18px;
   font-size: 17px;
 }
-.hud-run-btn__button[data-blocked] .mech-btn__cap {
+/* 押せない間はくすませる(ボタンの上にマウスがあっても明るくしない) */
+.hud-run-btn__button[data-blocked] .mech-btn__cap,
+.hud-run-btn__button[data-blocked]:hover:not(:disabled) .mech-btn__cap {
   filter: saturate(0.3) brightness(0.78);
 }
 .hud-run-btn__button[data-blocked] {

@@ -6,6 +6,7 @@ import { designStationPose, designToScreen, paperScreenRect } from '@/scene/rig/
 import { cameraForRect, toScreen } from '@/editor/viewport';
 import {
   DESIGN_UI,
+  MIN_DOCK_WIDTH,
   MIN_SIDE_PANEL,
   boxesOverlap,
   designLayout,
@@ -87,12 +88,34 @@ describe('横のパネルの列に積む案内(sideDocks)', () => {
       }
       expect(boxesOverlap(d.top, d.side)).toBe(false);
       expect(boxesOverlap(d.bottom, d.side)).toBe(false);
+      expect(boxesOverlap(d.top, d.bottom)).toBe(false);
       expect(d.top.top).toBe(lay.side.top);
       expect(d.bottom.top + d.bottom.height).toBeCloseTo(lay.side.top + lay.side.height, 9);
+      for (const box of Object.values(d)) {
+        expect(box.left).toBeGreaterThanOrEqual(lay.side.left);
+        expect(box.left + box.width).toBeLessThanOrEqual(lay.side.left + lay.side.width + 1e-9);
+      }
       expect(d.side.height).toBeGreaterThanOrEqual(
         Math.min(MIN_SIDE_PANEL, lay.side.height) - 1e-9,
       );
     }
+  });
+
+  it('幅の狭い画面では下の帯を左右に分け、左に案内、右にいつもの幅のパネル', () => {
+    const lay = designLayout(820, 900);
+    expect(lay.compact).toBe(true);
+    const d = sideDocks(lay, 120, 70);
+    expect(d.side.width).toBe(DESIGN_UI.sideWidth);
+    expect(d.side.top).toBe(lay.side.top);
+    expect(d.side.height).toBe(lay.side.height);
+    expect(d.top.width).toBeGreaterThanOrEqual(MIN_DOCK_WIDTH);
+    expect(d.top.left + d.top.width).toBeLessThanOrEqual(d.side.left);
+    expect(d.top.height).toBe(120);
+    expect(d.bottom.height).toBe(70);
+    // 中身がなければ分けない。さらに狭ければ縦に積む
+    expect(sideDocks(lay, 0, 0).side).toEqual(lay.side);
+    const phone = designLayout(390, 844);
+    expect(sideDocks(phone, 120, 70).side.width).toBe(phone.side.width);
   });
 
   it('空の差し込み口は場所を取らない(パネルは列いっぱい)', () => {

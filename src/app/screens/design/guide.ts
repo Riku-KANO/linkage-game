@@ -4,7 +4,8 @@ import type { RunOutcome, SessionState } from '@/app/flow';
 import type { MechanismAnalysis } from '@/core/kinematics';
 import type { DesignDoc, JointId } from '@/core/model/types';
 import type { DesignSlot } from '@/core/storage/persistence';
-import type { HintLevel, PreflightProblem, RevealedHint } from '@/game';
+import type { ToolId } from '@/editor/keyboard';
+import type { HintLevel, PreflightProblem, RevealedHint, TutorialStep } from '@/game';
 import type { GuideEvent, TipId } from '@/guide';
 
 /**
@@ -103,6 +104,26 @@ export function problemSelection(
   }
   return { joints, links };
 }
+
+/**
+ * チュートリアルが今押してほしいもの(そっと光らせる)。
+ * - 部品を置くステップ(リンク・固定点・クランク)で、その道具をまだ選んでいなければ道具のボタン
+ * - 試走で進むステップなら試走ボタン
+ */
+export function tutorialCallout(
+  step: Pick<TutorialStep, 'until'> | null | undefined,
+  tool: ToolId,
+): { tool: ToolId | null; testRun: boolean } {
+  const until = step?.until;
+  if (!until) return { tool: null, testRun: false };
+  if (until.kind === 'testRun') return { tool: null, testRun: true };
+  if (until.kind === 'place' && CALLOUT_TOOLS.has(until.part) && tool !== until.part) {
+    return { tool: until.part as ToolId, testRun: false };
+  }
+  return { tool: null, testRun: false };
+}
+
+const CALLOUT_TOOLS: ReadonlySet<string> = new Set(['link', 'fixed', 'crank']);
 
 /** アプリ全体で 1 つ */
 export const designGuide = createStore<DesignGuideState>(initialDesignGuide);

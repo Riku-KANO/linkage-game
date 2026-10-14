@@ -76,7 +76,7 @@ const PIN_Y = CY + (BIG_R + PIN_R) * Math.sin(PIN_DIR);
 const BIG_PATH = gearPath(BIG_T, BIG_R, DEPTH);
 const PIN_PATH = gearPath(PIN_T, PIN_R, DEPTH);
 /** 歯車の音の最短間隔(ms) */
-const TICK_MS = 42;
+const TICK_MS = 60;
 
 type Tone = 'gold' | 'silver' | 'bronze' | 'none';
 
@@ -126,13 +126,17 @@ export function GearMeter({
   });
   const settled = skip || instant || !(duration > 0) || t >= duration;
   const shown = settled ? target : meterValueAt(t, duration, target);
+  // 数字ドラムは表示の桁に丸めた値へ回す(最後の桁が半端な位置で止まらない)
+  const scale = 10 ** decimals;
+  const rounded = Math.round(target * scale) / scale;
+  const drumValue = settled ? rounded : meterValueAt(t, duration, rounded);
   const angle = angleAt(shown);
   const pinion = meshedAngle(angle, BIG_T, PIN_T, PIN_DIR);
 
-  const intDigits = digits ?? Math.max(digitCount(max), digitCount(target));
-  const drums = odometerDrums(shown, intDigits, decimals);
+  const intDigits = digits ?? Math.max(digitCount(max), digitCount(rounded));
+  const drums = odometerDrums(drumValue, intDigits, decimals);
   /** 最終値の上の桁の 0 は薄くする */
-  const leading = intDigits - digitCount(target);
+  const leading = intDigits - digitCount(rounded);
 
   const bands = useMemo(() => bandArcs(thresholds, max), [thresholds, max]);
   const ticks = useMemo(() => {

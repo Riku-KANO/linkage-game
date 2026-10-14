@@ -128,6 +128,16 @@ describe('GearMeter', () => {
     expect(sounds).toEqual([]);
   });
 
+  it('数字ドラムは表示の桁に丸めた値で止まる(半端な位置にならない)', () => {
+    const { container } = render(<GearMeter value={236.5} max={300} decimals={0} skip />);
+    expect(drumDigits(container.querySelector<HTMLElement>('.mech-meter')!)).toEqual([2, 3, 7]);
+    for (const el of container.querySelectorAll<HTMLElement>('.mech-odo__strip')) {
+      const m = /translateY\((-?[\d.]+)%\)/.exec(el.style.transform)!;
+      const pos = (-Number(m[1]) * 11) / 100;
+      expect(Math.abs(pos - Math.round(pos))).toBeLessThan(0.01);
+    }
+  });
+
   it('文字盤に金・銀・銅とメダルなしの帯、相手の針を描く', () => {
     const { container } = render(
       <GearMeter value={5} max={25} thresholds={[12, 16, 22]} ghostValue={14} skip />,

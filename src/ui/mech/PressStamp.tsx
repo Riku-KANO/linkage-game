@@ -94,8 +94,9 @@ export function PressStamp({
   return (
     <div
       className={['mech-press', className].filter(Boolean).join(' ')}
-      role="img"
+      role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
+      aria-hidden={ariaLabel ? undefined : true}
       data-medal={tone}
       data-stamped={stamped || undefined}
     >

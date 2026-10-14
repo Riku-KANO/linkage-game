@@ -11,6 +11,8 @@ const routes: Record<string, () => Promise<{ default: ComponentType }>> = {
   editor: () => import('@/dev/EditorPlayground'),
   sim: () => import('@/dev/SimPlayground'),
   scene: () => import('@/dev/ScenePlayground'),
+  testrun: () => import('@/dev/TestrunPlayground'),
+  result: () => import('@/dev/ResultPlayground'),
 };
 
 const name = new URLSearchParams(location.search).get('dev') ?? 'app';

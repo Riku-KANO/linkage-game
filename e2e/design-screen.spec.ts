@@ -90,6 +90,13 @@ test('the editor lies exactly on the drafting paper; panels leave the paper free
   expect(toolbar.y + toolbar.height).toBeLessThanOrEqual(r.y + 0.5);
   expect(header.y + header.height).toBeLessThanOrEqual(r.y + 0.5);
   expect(side.x).toBeGreaterThanOrEqual(r.x + r.width - 0.5);
+  // 横の列に積んだ案内(チュートリアルの吹き出し)と試走ボタンも紙の外。パネルはその間に縮む
+  const guide = (await page.locator('[data-slot="guide"]').boundingBox())!;
+  const run = (await page.locator('[data-slot="testRun"]').boundingBox())!;
+  for (const box of [guide, run]) expect(box.x).toBeGreaterThanOrEqual(r.x + r.width - 0.5);
+  await expect(page.getByRole('region', { name: 'チュートリアル', exact: true })).toBeVisible();
+  expect(side.y).toBeGreaterThanOrEqual(guide.y + guide.height - 0.5);
+  expect(side.y + side.height).toBeLessThanOrEqual(run.y + 0.5);
   await expect(page.getByRole('button', { name: '試走する' })).toBeVisible();
   await expect(page.getByRole('button', { name: /戻る/ })).toBeVisible();
   w.expectClean();
@@ -105,7 +112,14 @@ test('drag a joint on the paper, then Esc clears the selection and Esc again goe
   const badge = page.locator('.ed-canvas .ed-chips .ed-badge');
   await expect(badge).toContainText('自由度');
 
-  // 続きからの 1-1(こわれた機械)の点はどれも動かせないので、空いた所に棒を 1 本引いてから、その端を動かす
+  // 続きからの 1-1 はチュートリアルの最初(まだリンクを渡していない)。吹き出しの「飛ばす」で全部の道具を使う
+  const bubble = page.getByRole('region', { name: 'チュートリアル', exact: true });
+  await expect(page.getByRole('button', { name: 'リンク', exact: true })).toBeDisabled();
+  await bubble.getByRole('button', { name: 'チュートリアルを飛ばす' }).click();
+  await expect(bubble).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'リンク', exact: true })).toBeEnabled();
+
+  // 1-1(こわれた機械)の点はどれも動かせないので、空いた所に棒を 1 本引いてから、その端を動かす
   const r = await paperRect(root);
   const a = { x: r.x + r.width * 0.15, y: r.y + r.height * 0.78 };
   const b = { x: r.x + r.width * 0.3, y: r.y + r.height * 0.86 };

@@ -95,9 +95,9 @@
 
 | ID | 要件 | 内容 | 受け入れ条件 | 状態 |
 | --- | --- | --- | --- | --- |
-| AU-1 | 効果音 | Web Audio のエンジン(初回操作でアンロック、音量、ミュート)。`registerSfx` で `sfx.ts` に登録 | | todo |
-| AU-2 | 効果音 | 金属と木の機械音を合成で作る(snap, press, release, error, whoosh, gear, stamp, step, success)。音声ファイルなし | パラメータ写像のテスト | todo |
-| AU-3 | 効果音 | モーターのうなり(rpm と負荷で変化) | | todo |
+| AU-1 | 効果音 | Web Audio のエンジン(初回操作でアンロック、音量、ミュート)。`registerSfx` で `sfx.ts` に登録 | 偽の AudioContext でアンロック・音量・ミュート・発音数制限・タブ裏での停止をテスト。`installAudio()` は冪等、Node では何もしない | done |
+| AU-2 | 効果音 | 金属と木の機械音を合成で作る(snap, press, release, error, whoosh, gear, stamp, step, success)。音声ファイルなし | パラメータ写像のテスト。`?dev=audio` で試聴 | done |
+| AU-3 | 効果音 | モーターのうなり(rpm と負荷で変化) | rpm → 音程・負荷 → ざらつきの写像テスト、滑らかな追従(setTargetAtTime)。`?dev=audio` で試聴 | done |
 
 ## ウェーブ 2(予定:統合とゲーム)
 

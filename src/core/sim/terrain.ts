@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import type { TerrainCollider, TerrainContact, TerrainSpec, Vec3 } from './types';
+import { DEFAULT_FRICTION } from './constants';
 
 /**
  * 地形の衝突判定(SIM-1)。
@@ -12,8 +13,6 @@ import type { TerrainCollider, TerrainContact, TerrainSpec, Vec3 } from './types
  * 複数のコライダーに同時に触れたとき(段差の根元など)は、法線を深さで重み付けして足し合わせた
  * 向きを使い、深さは最大のものを使う(継ぎ目で力が 2 倍にならないように)。
  */
-
-export const DEFAULT_FRICTION = 0.9;
 
 /** 平面(y = 一定)の地形 */
 export function createFlatTerrain(y = 0, friction = DEFAULT_FRICTION): TerrainCollider {

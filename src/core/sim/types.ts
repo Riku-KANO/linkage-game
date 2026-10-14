@@ -215,10 +215,12 @@ export const DEFAULT_SIM_PARAMS: SimParams = {
   dt: 1 / 240,
   gravity: 9.81,
   footRadius: 0.02,
-  contactStiffness: 20000,
-  contactDamping: 600,
+  // 陰的に解くので硬くしても安定。70kg の機体が静止したときのめり込みは約 4mm
+  contactStiffness: 50000,
+  contactDamping: 1500,
   chassisMass: 8,
-  linkDensity: 1.5,
+  // PART_SPECS.linkPerCm.mass(0.012kg/cm)に合わせた参考値
+  linkDensity: 1.2,
   motor: { stallTorque: 60 },
   fallTilt: (60 * Math.PI) / 180,
 };

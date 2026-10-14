@@ -217,13 +217,18 @@ export function MechanismEditor({
         if (editing && deleteSelection(locked)) playSfx('release');
         return editing;
       case 'escape':
+        // 作図の取り消し → 選択の解除 → 選択の道具へ、の順に 1 段ずつ戻す。
+        // 何も残っていなければ処理しない(preventDefault しない)ので、外側の画面が「戻る」に使える
         if (canvasApi.current?.cancel()) return true;
         if (s.selection.joints.length + s.selection.links.length > 0) {
           s.setSelection({ joints: [], links: [] });
           return true;
         }
-        if (s.tool !== 'select') s.setTool('select');
-        return true;
+        if (s.tool !== 'select') {
+          s.setTool('select');
+          return true;
+        }
+        return false;
       case 'mirror':
         if (editing) mirrorCurrent(locked);
         return editing;

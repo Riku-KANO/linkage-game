@@ -6,4 +6,9 @@ export const app: Record<string, string> = {
   'app.design.stage': 'ステージ {id}',
   'app.design.free': '自由に設計',
   'app.design.testRun': '試走する',
+  // 設計画面の案内(INT-7a)
+  'app.design.help.region': '遊び方と操作',
+  'app.design.help.keys': '操作一覧(? キー)',
+  'app.design.help.book': '遊び方',
+  'app.design.tip.locate': '図面で場所を見る',
 };

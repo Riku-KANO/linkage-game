@@ -7,7 +7,4 @@ export const appRun: Record<string, string> = {
   'app.run.hud': '試走の状況',
   'app.run.sandbox': 'サンドボックス',
   'app.run.backKey': 'Esc',
-
-  // 設計画面に出す試走前チェック(試走ボタンで止まったとき)
-  'app.run.preflight.hint': '直すと試走できます',
 };

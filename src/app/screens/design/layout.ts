@@ -101,6 +101,76 @@ export function designLayout(width: number, height: number): DesignLayout {
 }
 
 /**
+ * 横のパネルの列に積む案内(INT-7a)。紙の上には何も置かない(主役は機械)ので、
+ * チュートリアルの吹き出し・状況の一言は列の上に、試走ボタン(と試走前チェックの一覧)は列の下に置き、
+ * エディタのパネルはその間の残りに縮める(中身はスクロール)。
+ * 幅の狭い画面(パネルを紙の下に回す配置)では、下の帯を左右に分けて左に案内、右にパネル(幅はいつもと同じ)。
+ * それも入らないほど狭ければ、下の帯の中で縦に積む。
+ */
+export interface SideDocks {
+  /** 列の上(吹き出し・一言)。height は実際に使える高さ(中身が高すぎればスクロール) */
+  top: Box;
+  /** 列の下(試走ボタン) */
+  bottom: Box;
+  /** エディタの横のパネル(残り) */
+  side: Box;
+}
+
+/** 案内を積んでも、エディタのパネルにはこれだけの高さを残す */
+export const MIN_SIDE_PANEL = 120;
+/** 下の帯を左右に分けるとき、案内の列に最低限ほしい幅 */
+export const MIN_DOCK_WIDTH = 260;
+
+/**
+ * 列(lay.side)に、上の案内(高さ topH)と下の試走ボタン(高さ bottomH)を積んだ配置。
+ * 高さ 0 の差し込み口は場所も間も取らない。入りきらないときは下(試走ボタン)を優先して残し、
+ * 上を縮める(上の案内はスクロールする)。
+ */
+export function sideDocks(lay: DesignLayout, topH: number, bottomH: number): SideDocks {
+  const G = DESIGN_UI.gap;
+  const col = lay.side;
+  const empty = topH <= 0 && bottomH <= 0;
+  const split = lay.compact && !empty && col.width >= DESIGN_UI.sideWidth + G + MIN_DOCK_WIDTH;
+  if (split) {
+    // 左:案内の列(上に吹き出し、下に試走ボタン)、右:いつもの幅のパネル
+    const dock: Box = { ...col, width: col.width - DESIGN_UI.sideWidth - G };
+    const docks = stack(dock, topH, bottomH, 0);
+    return {
+      top: docks.top,
+      bottom: docks.bottom,
+      side: { ...col, left: dock.left + dock.width + G, width: DESIGN_UI.sideWidth },
+    };
+  }
+  return stack(col, topH, bottomH, Math.min(MIN_SIDE_PANEL, col.height));
+}
+
+/** 列の上下に差し込み口を積み、残り(minRest 以上)を side にする */
+function stack(col: Box, topH: number, bottomH: number, minRest: number): SideDocks {
+  const G = DESIGN_UI.gap;
+  const room = Math.max(0, col.height - minRest);
+  let bottom = Math.max(0, bottomH);
+  let top = Math.max(0, topH);
+  const gaps = () => (bottom > 0 ? G : 0) + (top > 0 ? G : 0);
+  if (bottom + gaps() > room) bottom = Math.max(0, room - (bottom > 0 ? G : 0));
+  if (top + bottom + gaps() > room) top = Math.max(0, room - bottom - gaps());
+  const topBox: Box = { left: col.left, top: col.top, width: col.width, height: top };
+  const bottomBox: Box = {
+    left: col.left,
+    top: col.top + col.height - bottom,
+    width: col.width,
+    height: bottom,
+  };
+  const sideTop = col.top + (top > 0 ? top + G : 0);
+  const side: Box = {
+    left: col.left,
+    top: sideTop,
+    width: col.width,
+    height: nonNeg(bottomBox.top - (bottom > 0 ? G : 0) - sideTop),
+  };
+  return { top: topBox, bottom: bottomBox, side };
+}
+
+/**
  * 設計画面でカメラが落ち着いたときの紙の画面矩形(カメラを使わない予測)。
  * 紙は余白の内側に縦横比を保ってちょうど収まり、中央に来る(scene の designStationPose と同じ規則)。
  * 編集ビューを遷移の終わり前から正しい大きさで用意しておくのに使う。

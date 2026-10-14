@@ -23,6 +23,12 @@ export interface TestRunButtonProps {
   shortcut?: string;
   /** ほかの理由で押せない(遷移中など) */
   disabled?: boolean;
+  /**
+   * 一覧をたたみ、状態の 1 行(「直すところが 1 つあります」など)だけを出す。試走を押すまでは
+   * 一覧を出さず機械とパネルを隠さない、という使い方(INT-7a)。エラーで止められたときの
+   * onHighlight で統合側が開く。既定 false
+   */
+  collapsed?: boolean;
   /** 省略時はアプリと OS の設定に従う */
   reducedMotion?: boolean;
   className?: string;
@@ -47,6 +53,7 @@ export function TestRunButton({
   maxVisible = 3,
   shortcut,
   disabled = false,
+  collapsed = false,
   reducedMotion,
   className,
 }: TestRunButtonProps) {
@@ -58,6 +65,7 @@ export function TestRunButton({
   const summary = summarizePreflight(problems, expanded ? problems.length : maxVisible);
   const checking = preflight === null;
   const blocked = !checking && (summary.blocked || preflight.ok === false);
+  const listShown = problems.length > 0 && !collapsed;
 
   // 問題が減って一覧が短くなったら、開いた状態を戻す
   useEffect(() => {
@@ -102,7 +110,7 @@ export function TestRunButton({
       aria-label={t('hud.testRun.region')}
       data-state={checking ? 'checking' : blocked ? 'blocked' : summary.warnings ? 'warn' : 'ok'}
     >
-      {problems.length > 0 && (
+      {listShown && (
         <div ref={plaqueRef} className="hud-plate hud-problems" id={listId}>
           <p className="hud-problems__status" aria-live="polite">
             {status}
@@ -149,7 +157,7 @@ export function TestRunButton({
           </span>
         </div>
       )}
-      {problems.length === 0 && (
+      {!listShown && (
         <p className="hud-run-btn__status" aria-live="polite">
           {status}
         </p>
@@ -160,7 +168,7 @@ export function TestRunButton({
         reducedMotion={rm}
         disabled={disabled || checking}
         aria-disabled={blocked || undefined}
-        aria-describedby={problems.length > 0 ? listId : undefined}
+        aria-describedby={listShown ? listId : undefined}
         aria-keyshortcuts={shortcut}
         data-blocked={blocked || undefined}
         onClick={run}

@@ -185,6 +185,21 @@ describe('TestRunButton', () => {
     expect(active?.textContent).toContain('自由度が 2');
   });
 
+  it('たたむと一覧を出さず状態の 1 行だけ。押せば止めて最初のエラーを示す', () => {
+    const s = setup(SAMPLE_PREFLIGHT.error, { collapsed: true });
+    expect(screen.getByText('直すところが 1 つあります')).toBeTruthy();
+    expect(screen.queryByText('自由度が 2 で、機構がぐらつきます', { exact: false })).toBeNull();
+    expect(document.querySelector('.hud-run-btn')?.getAttribute('data-state')).toBe('blocked');
+    fireEvent.click(s.button);
+    expect(s.onTestRun).not.toHaveBeenCalled();
+    expect(s.onHighlight).toHaveBeenCalledWith(SAMPLE_PREFLIGHT.error.problems[0]);
+    cleanup();
+    const w = setup(SAMPLE_PREFLIGHT.warn, { collapsed: true });
+    expect(screen.getByText('注意が 2 つ(試走はできます)')).toBeTruthy();
+    fireEvent.click(w.button);
+    expect(w.onTestRun).toHaveBeenCalledTimes(1);
+  });
+
   it('ショートカットの表示', () => {
     setup(SAMPLE_PREFLIGHT.ok, { shortcut: 'T' });
     const btn = screen.getByRole('button', { name: /試走する/ });

@@ -537,7 +537,9 @@
   padding: 0 20px 0 18px;
   font-size: 17px;
 }
-.hud-run-btn__button[data-blocked] .mech-btn__cap {
+/* 押せない間はくすませる(ボタンの上にマウスがあっても明るくしない) */
+.hud-run-btn__button[data-blocked] .mech-btn__cap,
+.hud-run-btn__button[data-blocked]:hover:not(:disabled) .mech-btn__cap {
   filter: saturate(0.3) brightness(0.78);
 }
 .hud-run-btn__button[data-blocked] {
@@ -551,6 +553,13 @@
 }
 .hud-run-btn[data-state='ok'] .hud-run-btn__status {
   color: #a9dbac;
+}
+/* 一覧をたたんでいるとき(collapsed)の状態の行 */
+.hud-run-btn[data-state='blocked'] .hud-run-btn__status {
+  color: #f4a896;
+}
+.hud-run-btn[data-state='warn'] .hud-run-btn__status {
+  color: #f0c470;
 }
 .hud-problems {
   width: 340px;

@@ -117,6 +117,40 @@ describe('DesignScreen', () => {
     expect(screen.getByText('ヒント').closest('[data-slot="hints"]')).not.toBeNull();
   });
 
+  it('guide / testRun slots stack in the side column; testRun replaces the header button', () => {
+    const { container } = render(
+      <DesignScreen screen="design" guide={<p>吹き出し</p>} testRun={<button>走る</button>} />,
+    );
+    expect(screen.getByText('吹き出し').closest('[data-slot="guide"]')).not.toBeNull();
+    expect(screen.getByText('走る').closest('[data-slot="testRun"]')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: t('app.design.testRun') })).toBeNull();
+    // jsdom では高さを測れない(0)ので、パネルは列いっぱいのまま
+    const r = root(container);
+    const lay = designLayout(window.innerWidth, window.innerHeight);
+    expect(px(r, '--ds-side-top')).toBe(lay.side.top);
+    expect(px(r, '--ds-side-h')).toBe(lay.side.height);
+  });
+
+  it('chapter 1 keeps the leg array fixed; the tutorial narrows the parts', () => {
+    act(() => {
+      useSession.getState().startStage('c1-s1');
+    });
+    render(<DesignScreen screen="design" />);
+    const link = screen.getByRole('button', { name: 'リンク' }) as HTMLButtonElement;
+    expect(link.disabled).toBe(true);
+    act(() => useSession.getState().skipTutorial());
+    expect(link.disabled).toBe(false);
+    // 脚列は章 2 から:章 1 では変えられない(表示だけ)
+    expect(getStage('c1-s1')!.features.legArray).toBe(false);
+    expect((screen.getByLabelText('組数') as HTMLInputElement).disabled).toBe(true);
+    cleanup();
+    act(() => {
+      useSession.getState().startStage('c2-s2', { force: true });
+    });
+    render(<DesignScreen screen="design" />);
+    expect((screen.getByLabelText('組数') as HTMLInputElement).disabled).toBe(false);
+  });
+
   it('test run goes to the test run screen by default, or calls the given handler', () => {
     act(() => useApp.getState().go('design'));
     act(() => useApp.getState().finishTransition());

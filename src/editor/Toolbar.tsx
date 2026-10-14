@@ -45,6 +45,7 @@ export function Toolbar(p: ToolbarProps) {
               key={tool}
               type="button"
               className="ed-btn"
+              data-tool={tool}
               aria-pressed={p.tool === tool}
               disabled={!enabled}
               title={enabled ? `${label}(${TOOL_KEYS[tool]})` : t('editor.tool.disabled')}

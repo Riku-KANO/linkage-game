@@ -10,9 +10,10 @@ import { installRunBridge } from './bridge';
  *
  * App での組み立て(起動 bootApp() の後):
  *   useRunBridge();   // 画面とセッションと試走コースの表示をつなぐ
- *   <GameShell overlays={{ ...RUN_OVERLAYS }} scene3d={<RunWorld />}><RunLayer /></GameShell>
+ *   <GameShell overlays={{ ...RUN_OVERLAYS }} scene3d={<RunWorld />} />
  *
- * 設計画面(INT-1)の試走ボタンは beginTestRun() を呼ぶ。
+ * 設計画面(INT-1)の試走ボタンは beginTestRun() を呼ぶ。試走前チェックで止まったときの問題の一覧は
+ * 設計画面の試走ボタン(HUD の TestRunButton、INT-7a)が出す(runViewStore.preflightOpen が開く合図)。
  */
 export const RUN_OVERLAYS: Partial<Record<Screen, ScreenOverlay>> = {
   testRun: TestRunScreen,
@@ -27,7 +28,6 @@ export function useRunBridge(): void {
 export { TestRunScreen } from '../TestRunScreen';
 export { ResultScreen } from '../ResultScreen';
 export { RunWorld } from './RunWorld';
-export { RunLayer } from './RunLayer';
 export {
   beginTestRun,
   startRunHere,

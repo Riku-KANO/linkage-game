@@ -34,6 +34,8 @@
   border-radius: 12px;
   color: var(--text);
   animation: ak-in-top 0.22s ease-out both;
+  /* 開いた見出し・ヒントは帯の下へ垂れるので、横の列・道具の帯より上に重ねる */
+  z-index: 3;
 }
 
 /* 見出しの差し込み口。HUD の部品が開いたときは帯から下へはみ出してよい(紙の上に重なる) */
@@ -193,6 +195,220 @@
   animation-name: ak-in-bottom;
 }
 
+/* 案内を積んだ分だけ縮む(INT-7a)。高さが変わるときは滑らかに */
+.ds-root.is-live .ds-editor .ed-side {
+  transition:
+    top 0.2s ease-out,
+    height 0.2s ease-out;
+}
+
+/* ---------- 横のパネルの列に積む案内(INT-7a、layout.ts の sideDocks) ---------- */
+.ds-dock {
+  position: absolute;
+  left: var(--ds-dock-left);
+  width: var(--ds-dock-w);
+  pointer-events: none;
+}
+
+.ds-dock__inner > * {
+  pointer-events: auto;
+}
+
+/* 上:チュートリアルの吹き出し・状況の一言 */
+.ds-dock--guide {
+  top: var(--ds-col-top);
+}
+
+/* 下:試走ボタン(一覧はボタンの上へ伸びる) */
+.ds-dock--run {
+  bottom: var(--ds-col-bottom);
+}
+
+/* 入りきらないときだけ高さを切ってスクロール(普段は影・尾を切らない) */
+.ds-dock--guide[data-scroll] {
+  max-height: var(--ds-dock-top-h);
+  overflow: hidden auto;
+  pointer-events: auto;
+}
+
+.ds-dock--run[data-scroll] {
+  max-height: var(--ds-dock-bottom-h);
+  overflow: hidden auto;
+  pointer-events: auto;
+}
+
+.ds-dock__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-status-gap);
+}
+
+.ds-dock__inner:empty,
+.ds-dock__inner > .gd-tip-region:empty {
+  display: none;
+}
+
+/* 吹き出し・一言は列の幅いっぱい */
+.ds-dock .hud-tut,
+.ds-dock .gd-tip {
+  width: 100%;
+  max-width: none;
+}
+
+.ds-dock .hud-tut__textwrap {
+  min-height: 0;
+}
+
+/* 吹き出しの尾は左(紙の上の図面)を指す。下に回した配置では上(紙)を指す */
+.ds-root:not(.is-compact) .ds-dock .hud-tut::before {
+  top: 26px;
+  left: -9px;
+  margin-left: 0;
+  border: 9px solid transparent;
+  border-left: 0;
+  border-right-color: #f2e8d2;
+}
+
+/* 一言の尾(下向き)はこの列では使わない */
+.ds-dock .gd-tip::after {
+  display: none;
+}
+
+.ds-dock .hud-run-btn {
+  width: 100%;
+  max-width: none;
+}
+
+.ds-dock .hud-problems {
+  width: 100%;
+  max-width: none;
+}
+
+/* ---------- 上の帯の HUD(INT-7a):たたんだ 1 行は帯になじませ、開いた中身は帯の下へ垂らす ---------- */
+.ds-slot--stage {
+  align-self: stretch;
+}
+
+.ds-header .hud-header,
+.ds-header .hud-hints {
+  position: static;
+  flex: none;
+  width: auto;
+  max-width: none;
+  padding: 3px 6px 3px 8px;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+}
+
+.ds-header .hud-header__title {
+  font-size: 16px;
+}
+
+.ds-header .hud-header__body,
+.ds-header .hud-hints__body {
+  position: absolute;
+  top: calc(100% + var(--ds-status-gap) * 2);
+  z-index: 4;
+  margin: 0;
+  padding: 12px 12px 13px 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(42, 28, 19, 0.97) 0%, rgba(29, 20, 13, 0.97) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 154, 91, 0.35),
+    0 12px 28px rgba(0, 0, 0, 0.45);
+  animation: ak-in-top 0.18s ease-out both;
+}
+
+.ds-header .hud-header__body[hidden],
+.ds-header .hud-hints__body[hidden] {
+  display: none;
+}
+
+/* 見出しの中身は見出しの下(左寄せ) */
+.ds-header .hud-header__body {
+  left: 0;
+  width: min(360px, calc(100vw - 2 * var(--ds-m)));
+}
+
+/* ヒントの中身は右の列の上(紙には重ねない)。幅の狭い画面では帯の右端から */
+.ds-header .hud-hints__body {
+  right: 0;
+  width: var(--ds-side-w);
+  max-height: min(60vh, 420px);
+}
+
+.ds-root.is-compact .ds-header .hud-hints__body {
+  width: min(340px, calc(100vw - 2 * var(--ds-m)));
+}
+
+/* ---------- チュートリアルが押してほしいもの(道具のボタン・試走ボタン)をそっと光らせる ---------- */
+.ds-root[data-callout-tool='link'] .ed-toolbar .ed-btn[data-tool='link'],
+.ds-root[data-callout-tool='fixed'] .ed-toolbar .ed-btn[data-tool='fixed'],
+.ds-root[data-callout-tool='crank'] .ed-toolbar .ed-btn[data-tool='crank'],
+.ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 14px rgba(242, 166, 90, 0.7);
+  animation: ds-callout 1.6s ease-in-out infinite;
+}
+
+@keyframes ds-callout {
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(242, 166, 90, 0.35),
+      0 0 4px rgba(242, 166, 90, 0.2);
+  }
+}
+
+.ds-root.is-reduced[data-callout-tool] .ed-toolbar .ed-btn[data-tool],
+.ds-root.is-reduced .ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-root[data-callout-tool] .ed-toolbar .ed-btn[data-tool],
+  .ds-dock .ds-callout .hud-run-btn__button .mech-btn__cap {
+    animation: none;
+  }
+}
+
+/* ---------- 遊び方・操作一覧のボタン ---------- */
+.ds-help {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ds-help__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ds-help__btn--key {
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border-color: rgba(201, 162, 74, 0.55);
+  font-weight: 800;
+}
+
+.ds-help__icon {
+  flex: none;
+  color: var(--accent);
+}
+
+.ds-root.is-compact .ds-help__btn:not(.ds-help__btn--key) {
+  padding: 6px 8px;
+}
+
 /*
  * 降りきった瞬間:静止した図面は 3D の紙のインクと同じなので変わらない。
  * 動いている機構・死点・寸法線・バッジ・状態行だけがふわっと現れる。
@@ -213,6 +429,8 @@
 }
 
 .ds-root.is-reduced .ds-header,
+.ds-root.is-reduced .ds-header .hud-header__body,
+.ds-root.is-reduced .ds-header .hud-hints__body,
 .ds-root.is-reduced .ds-editor .ed-toolbar,
 .ds-root.is-reduced .ds-editor .ed-side,
 .ds-root.is-reduced.is-live .ds-editor .ed-live,
@@ -226,6 +444,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ds-header,
+  .ds-header .hud-header__body,
+  .ds-header .hud-hints__body,
   .ds-editor .ed-toolbar,
   .ds-editor .ed-side,
   .ds-root.is-live .ds-editor .ed-live,
@@ -235,5 +455,16 @@
   .ds-root.is-live .ds-editor .ed-chips,
   .ds-root.is-live .ds-editor .ed-statusbar {
     animation: none;
+  }
+}
+
+/* 動きを減らす:案内を積んだときのパネルの伸び縮みも止める */
+.ds-root.is-reduced.is-live .ds-editor .ed-side {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-root.is-live .ds-editor .ed-side {
+    transition: none;
   }
 }
